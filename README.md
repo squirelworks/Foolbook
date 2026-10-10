@@ -1,16 +1,23 @@
 # Foolbook
 
-A modular, incrementally improvable ToolBook-compatible player.
+A modular ToolBook-compatible player.
 
 Foolbook is not affiliated with Asymetrix, Click2learn, or SumTotal.  
-It is a clean-room reader and interpreter built from reverse-engineering work on ToolBook II 8.x books.
+It is a clean-room reader built to open a `.tbk` or `.sbk` and present it.
 
-## Goals
+## Main focus
 
-- Load a `.tbk` and walk its pages.
-- Decode OpenScript bytecode into source.
-- Execute the common navigation and conditional patterns so a viewer can be driven by the book itself.
-- Stay small and replaceable: each module has a narrow job and can be improved independently.
+Load a book and run it.
+
+```
+.tbk / .sbk
+    → loader
+    → model (Book / Page / state)
+    → engine (OpenScript)
+    → viewer (CLI today, GUI later)
+```
+
+Everything else is a module that supports that path.
 
 ## Layout
 
@@ -19,43 +26,45 @@ Foolbook/
   README.md
   foolbook/
     __init__.py
-    model.py        # Book, Page, Handler, RuntimeState
-    loader.py       # .tbk → Book (uses runtime.tbk when available)
-    decoder.py      # bytecode → source (wraps openscript_decode)
-    interpreter.py  # source → actions (go, send, assign, if)
-    cli.py          # simple command-line walker
+    model.py      # Book, Page, Handler, RuntimeState
+    loader.py     # .tbk / .sbk / JSON → Book
+    engine.py     # OpenScript engine: handlers → actions that drive the viewer
+    cli.py        # thin terminal viewer
+    decoder.py    # secondary: bytecode → source (authoring / learning)
+    author.py     # secondary: simple helper that uses the decoder
   examples/
-    using_grok.json # sample book in the internal format
+    using_grok.json
 ```
 
 ## Modules
 
-| Module | Responsibility | Status |
-|--------|----------------|--------|
-| `model` | Data classes for books, pages, handlers, and runtime state | scaffold |
-| `loader` | Read a `.tbk` (or a JSON shell) into a `Book` | scaffold (delegates) |
-| `decoder` | Turn handler bytecode into source text | scaffold (delegates) |
-| `interpreter` | Execute a small OpenScript subset and return actions | scaffold |
-| `cli` | Walk a book from the terminal | scaffold |
+| Module | Role | Priority |
+|--------|------|----------|
+| `loader` | Read a `.tbk`, `.sbk`, or JSON shell into a `Book` | core |
+| `model` | Data the rest of the system shares | core |
+| `engine` | Execute OpenScript so the book itself drives navigation and behavior | core |
+| `cli` | Minimal viewer that asks the engine what to do next | core (replaceable) |
+| `decoder` | Turn handler bytecode into source | secondary (authoring) |
+| `author` | Thin helper on top of the decoder | secondary (authoring) |
 
-## Usage (once filled in)
+## Usage
 
 ```bash
 cd Foolbook
-python3 -m foolbook.cli path/to/book.tbk
 python3 -m foolbook.cli examples/using_grok.json
+python3 -m foolbook.cli path/to/book.tbk
 ```
 
 ## Design notes
 
-- The interpreter does not paint. It only mutates state and yields actions (`goto`, `send`, `set`, `note`).
-- A GUI (Brickwall or otherwise) can sit on top and ask the interpreter what to do next.
-- New language features are added only when a real handler needs them.
-- System-book and DLL contracts (`nc81int`, `nc81rec`) stay outside the core until required.
+- The engine returns actions (`goto`, `send`, `set`, `note`). It does not paint.
+- A GUI can replace the CLI and call the same loader + engine.
+- The decoder stays available and will be updated as we learn more, but it is not required to view a book.
+- System-book and DLL contracts stay outside the core until a real book needs them.
 
 ## Next steps
 
-1. Wire `loader` fully to the existing `runtime.tbk` parser.
-2. Wire `decoder` to `openscript_decode.py` + `res_77.bin`.
-3. Implement the interpreter subset: `go to page`, `send`, simple `if`, assignments.
-4. Point the Brickwall GUI at Foolbook’s interpreter instead of pre-translated JSON.
+1. Strengthen the loader for real `.tbk` and `.sbk` files.
+2. Grow the engine only when a handler needs a new construct.
+3. Point a GUI at the engine so a loaded book produces the Foolbook experience.
+4. Keep the decoder and authoring helper improving in parallel, off the main path.
