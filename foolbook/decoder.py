@@ -1,7 +1,8 @@
 """OpenScript bytecode → source.
 
-Thin wrapper around the existing decoder. The decoder itself stays
-outside this package so it can be improved independently.
+Secondary module. Used by authoring tools and for learning the format.
+The main Foolbook path (load a .tbk/.sbk and run it) does not require
+this; the engine consumes handlers and drives the viewer.
 """
 
 from __future__ import annotations
