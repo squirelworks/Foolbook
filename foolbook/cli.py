@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from .loader import load
-from .interpreter import run_handler, goto
+from .engine import run_handler, goto
 from .model import RuntimeState
 
 
