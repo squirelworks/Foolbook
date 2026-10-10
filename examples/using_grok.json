@@ -1,0 +1,28 @@
+{
+  "id": "using_grok",
+  "title": "Using Grok",
+  "pages": [
+    {
+      "id": "P0",
+      "text": ["Using Grok", "A short introduction."],
+      "items": [{"label": "Begin", "page": "P100"}]
+    },
+    {
+      "id": "P100",
+      "text": ["Grok is an AI assistant built by xAI."],
+      "items": [
+        {"label": "Next", "page": "P200"},
+        {"label": "Back", "page": "P0"}
+      ]
+    },
+    {
+      "id": "P200",
+      "text": ["Ask specific questions. Include context and the format you want."],
+      "items": [
+        {"label": "Next", "page": "P100"},
+        {"label": "Back", "page": "P100"}
+      ],
+      "script": "to handle buttonClick\n  go to page \"P100\"\nend"
+    }
+  ]
+}
