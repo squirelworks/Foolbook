@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from engine.loader import load
-from foolbook.model import RuntimeState
+from main.model import RuntimeState
 from engine.engine import goto
 from progress.progress import Progress
 
