@@ -13,7 +13,11 @@ root = Path(__file__).resolve().parent
 if str(root) not in sys.path:
     sys.path.insert(0, str(root))
 
-from viewer.cli import main
+from viewer.cli import main as cli_main
+from viewer.gui import main as gui_main
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    args = sys.argv[1:]
+    if args and args[0] in ("--gui", "-g"):
+        raise SystemExit(gui_main(args[1:]))
+    raise SystemExit(cli_main(args))
