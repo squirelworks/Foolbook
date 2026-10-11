@@ -4,5 +4,7 @@ __pycache__/
 .DS_Store
 *.tmp
 *~
-progress.json
 _debug/checksums.json
+_debug/db-*
+
+
