@@ -31,6 +31,27 @@ def set_keep_decoded(keep: bool) -> None:
     _KEEP_DECODED = bool(keep)
 
 
+def find_book(name: str, near: str | Path) -> Path | None:
+    """Find a book named by a jump.
+
+    Looks in the directory below the loaded file, then beside it, then core/.
+    Accepts .fsk, .sbk, .fbk, .tbk, and .json.
+    """
+    stem = Path(name).stem
+    near = Path(near)
+    here = near.parent if near.is_file() else near
+    below = here.parent
+    root = Path(__file__).resolve().parents[1]
+    dirs = [below, here, root / "core"]
+    suffixes = (".fsk", ".sbk", ".fbk", ".tbk", ".json")
+    for d in dirs:
+        for suf in suffixes:
+            candidate = d / f"{stem}{suf}"
+            if candidate.exists():
+                return candidate
+    return None
+
+
 def load(path: str | Path) -> Book:
     path = Path(path)
     if not path.is_absolute() and not path.exists():
