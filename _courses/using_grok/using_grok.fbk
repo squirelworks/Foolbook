@@ -1,0 +1,104 @@
+{
+  "id": "using_grok",
+  "title": "Using Grok AI",
+  "format": "fbk",
+  "format_version": 1,
+  "will_become": "fbk",
+  "pages": [
+    {
+      "id": "P0",
+      "text": [
+        "Using Grok AI",
+        "A short course on getting useful answers from Grok."
+      ],
+      "items": [
+        {"label": "Begin", "page": "P100"}
+      ]
+    },
+    {
+      "id": "P100",
+      "text": [
+        "What Grok is",
+        "Grok is an AI assistant built by xAI. It answers questions, writes code, searches the web, and can run tools on your behalf.",
+        "It is not a search engine and not a calculator. It is a conversation."
+      ],
+      "items": [
+        {"label": "Next", "page": "P200"},
+        {"label": "Back", "page": "P0"}
+      ]
+    },
+    {
+      "id": "P200",
+      "text": [
+        "Ask a specific question",
+        "Vague prompts get vague answers. Tell Grok what you want, who it is for, and what done looks like.",
+        "Weak: 'Tell me about Python.'",
+        "Better: 'Write a 10-line Python function that reads a CSV and prints the sum of the second column.'"
+      ],
+      "items": [
+        {"label": "Next", "page": "P300"},
+        {"label": "Back", "page": "P100"}
+      ]
+    },
+    {
+      "id": "P300",
+      "text": [
+        "Give context and constraints",
+        "Include the pieces Grok cannot guess: your language, your file format, the error you saw, the length you want.",
+        "If you have a file, say so. If you want a table, say so. If you want code that runs, say so."
+      ],
+      "items": [
+        {"label": "Next", "page": "P400"},
+        {"label": "Back", "page": "P200"}
+      ]
+    },
+    {
+      "id": "P400",
+      "text": [
+        "Use tools when the answer is not in the model",
+        "Grok can search the web, open pages, run code, and talk to services you connect.",
+        "Ask it to check a current fact, run a snippet, or look at a file you point it at. Do not ask it to invent numbers it can look up."
+      ],
+      "items": [
+        {"label": "Next", "page": "P500"},
+        {"label": "Back", "page": "P300"}
+      ]
+    },
+    {
+      "id": "P500",
+      "text": [
+        "Iterate",
+        "The first answer is a draft. Tell Grok what is wrong or missing and ask for a revision.",
+        "Short corrections work: 'Make it shorter', 'Use the existing function names', 'That number is from 2022, check again.'"
+      ],
+      "items": [
+        {"label": "Next", "page": "P600"},
+        {"label": "Back", "page": "P400"}
+      ]
+    },
+    {
+      "id": "P600",
+      "text": [
+        "Check the work",
+        "Grok can be wrong. For anything that matters, verify the output yourself or ask Grok to show its source.",
+        "Code should be run. Numbers should be checked. Quotes should be traced."
+      ],
+      "items": [
+        {"label": "Next", "page": "P900"},
+        {"label": "Back", "page": "P500"}
+      ]
+    },
+    {
+      "id": "P900",
+      "text": [
+        "Done",
+        "Ask clearly, give context, use tools, iterate, and check.",
+        "That is the whole course."
+      ],
+      "items": [
+        {"label": "Menu", "page": "P0"},
+        {"label": "Back", "page": "P600"}
+      ]
+    }
+  ]
+}
