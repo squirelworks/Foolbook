@@ -24,5 +24,4 @@ Done:
 - Graphics: polygons, bounds, and pictures drawn in the viewer
 - Quizzes extracted from raw `.tbk` (the JSON path already has them)
 - System books (`.sbk` / `.fsk`) loaded and used at runtime
-- Progress wired into the viewer
 - Cross-book navigation
