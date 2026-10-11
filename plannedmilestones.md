@@ -2,13 +2,17 @@
 
 ## v1.0.0 (current)
 
-Opens a book and follows its handlers.
+Opens a book and follows its handlers. Authoring produces .fbk and .fsk.
 
 - Opens `.fbk` and `.tbk`; processes `.fsk` and `.sbk`
 - Asks for a file if none is passed; a course module can launch it with a path
 - Decodes OpenScript handlers and follows next / back / goto
 - CLI and GUI viewers
-- Authoring to `.fbk` / `.fsk`
+- Authoring: slide editor with page list, preview, toolbar, text and lists; saves `.fbk` / `.fsk`
+
+## v1.x authorship
+
+- Produce backwards-compatible `.tbk` and `.sbk` files
 
 ## v2.0.0 (planned)
 
