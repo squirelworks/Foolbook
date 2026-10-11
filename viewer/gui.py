@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import sys
+import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -187,6 +189,7 @@ function show(i) {
       b.className = 'choice';
       b.textContent = ch.label;
       b.onclick = () => {
+        fetch('/api/answer?page=' + encodeURIComponent(p.id) + '&correct=' + (ch.correct ? '1' : '0'));
         alert(ch.correct ? 'Correct' : 'Incorrect');
         const target = ch.correct ? p.quiz.next : p.quiz.again;
         if (target) {
@@ -210,6 +213,17 @@ function show(i) {
     };
     nav.appendChild(b);
   });
+  const finish = document.createElement('button');
+  finish.textContent = 'Finish';
+  finish.onclick = () => {
+    fetch('/api/finish').then(r => r.json()).then(s => {
+      const pct = (s.percent === null || s.percent === undefined) ? 'no quiz' : s.percent + '%';
+      document.getElementById('content').innerHTML =
+        '<h2>Course closed</h2><p>Score saved: ' + pct + '.</p><p>You can close this window.</p>';
+      document.getElementById('nav').innerHTML = '';
+    });
+  };
+  nav.appendChild(finish);
   if (!items.length) {
     if (i > 0) {
       const back = document.createElement('button');
@@ -328,6 +342,28 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
                     progress.mark_page(course_id, page)
                 self.send_response(204)
                 self.end_headers()
+            elif u.path == "/api/answer":
+                from urllib.parse import parse_qs
+                q = parse_qs(u.query)
+                page = (q.get("page") or [""])[0]
+                correct = (q.get("correct") or ["0"])[0] == "1"
+                score = progress.record_answer(course_id, page, correct) if page else {}
+                body = json.dumps(score).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            elif u.path == "/api/finish":
+                progress.complete(course_id)
+                score = progress.course_score(course_id)
+                body = json.dumps(score).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                threading.Thread(target=lambda: (time.sleep(0.4), server.shutdown()), daemon=True).start()
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -345,15 +381,35 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
     if locale:
         note = "course localized" if localized else "no course localization, text left as written"
         print(f"Locale {locale}  ({note})")
-    try:
-        webbrowser.open(url)
-    except Exception:
-        pass
+    opened = _open_browser(url)
+    if not opened:
+        print(f"Browser did not open. Go to {url}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print()
         server.shutdown()
+
+
+
+def _open_browser(url: str) -> bool:
+    """Open the viewer. Fall back to xdg-open when the default handler fails."""
+    import shutil
+    import subprocess
+    try:
+        if webbrowser.open(url, new=2):
+            return True
+    except Exception:
+        pass
+    for cmd in ("xdg-open", "gio"):
+        if shutil.which(cmd):
+            try:
+                args = [cmd, url] if cmd == "xdg-open" else [cmd, "open", url]
+                subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return True
+            except Exception:
+                continue
+    return False
 
 
 def _progress_path() -> Path:
