@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""Launcher so both of these work from the Foolbook directory:
+"""Launcher.
 
-  python3 -m foolbook [book]
-  python3 foolbook.py [book]
+  python3 foolbook.py                      # course menu
+  python3 foolbook.py path/to/book.tbk     # viewer
+  python3 foolbook.py --gui path/to/book   # GUI viewer
+  python3 foolbook.py --menu catalog.json  # course menu
+  python3 foolbook.py --author             # authoring editor
 """
 
 import sys
 from pathlib import Path
 
-# Allow running from the repo root without installing the package
 root = Path(__file__).resolve().parent
 if str(root) not in sys.path:
     sys.path.insert(0, str(root))
 
-from viewer.cli import main as cli_main
-from viewer.gui import main as gui_main
+from foolbook.__main__ import main
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if args and args[0] in ("--gui", "-g"):
-        raise SystemExit(gui_main(args[1:]))
-    raise SystemExit(cli_main(args))
+    raise SystemExit(main())
