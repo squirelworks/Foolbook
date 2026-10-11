@@ -37,13 +37,24 @@ def load(path: str | Path) -> Book:
         core = Path(__file__).resolve().parents[1] / "core" / path.name
         if core.exists():
             path = core
-    if path.suffix.lower() in (".json", ".fbk", ".fsk"):
+    if path.suffix.lower() == ".json":
         return _load_json(path)
+    if path.suffix.lower() in (".fbk", ".fsk"):
+        return _load_foolbook(path)
     return _load_tbk(path)
 
 
 def _load_json(path: Path) -> Book:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    return _book_from_dict(path, json.loads(path.read_text(encoding="utf-8")))
+
+
+def _load_foolbook(path: Path) -> Book:
+    """Load an .fbk or .fsk envelope, compressed or not."""
+    from author.formats import unpack
+    return _book_from_dict(path, unpack(path.read_bytes()))
+
+
+def _book_from_dict(path: Path, data: dict) -> Book:
     pages = []
     for raw in data.get("pages") or []:
         handlers = []
