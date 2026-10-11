@@ -92,23 +92,30 @@ def _take_bin(args: list[str]) -> str:
 
 
 def _ask_for_book() -> str:
-    """Prompt for a book path when none was passed in."""
+    """Prompt for a book path when none was passed in.
+
+    Loops until a real file is given or the line is empty.
+    Expands ~ and accepts either slash.
+    """
     print("Foolbook")
     print("Open a book. Pass a path, or type one now.")
     print("  .fbk / .tbk   book")
     print("  .fsk / .sbk   system book")
     print("  (empty to quit)")
-    try:
-        path = input("book> ").strip().strip('"').strip("'")
-    except (EOFError, KeyboardInterrupt):
-        print()
-        return ""
-    if not path:
-        return ""
-    if not Path(path).exists():
+    while True:
+        try:
+            raw = input("book> ").strip().strip('"').strip("'")
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return ""
+        if not raw:
+            return ""
+        path = Path(raw.replace("\\", "/")).expanduser()
+        if path.exists():
+            return str(path)
         print(f"not found: {path}")
-        return ""
-    return path
+        print(f"  looked in {path.resolve()}")
+        print("  try again, or empty to quit")
 
 
 if __name__ == "__main__":
