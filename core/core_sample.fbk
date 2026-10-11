@@ -1,0 +1,11 @@
+{
+  "format": "fbk",
+  "format_version": 1,
+  "will_become": "tbk",
+  "id": "core_sample",
+  "title": "Core sample book",
+  "note": "Drop real .tbk or working .fbk books in this folder.",
+  "pages": [
+    {"id": "P0", "text": ["Core sample. Replace this with a real book."], "items": []}
+  ]
+}
