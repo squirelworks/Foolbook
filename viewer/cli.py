@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.engine import run_handler, goto, follow, run_page_handlers
-from foolbook.model import RuntimeState
+from main.model import RuntimeState
 from progress.progress import Progress
 
 
