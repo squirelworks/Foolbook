@@ -1,0 +1,19 @@
+{
+  "subjects": [
+    {
+      "name": "Getting started",
+      "modules": [
+        {
+          "name": "AI assistants",
+          "courses": [
+            {
+              "id": "using_grok",
+              "title": "Using Grok AI",
+              "path": "_courses/using_grok/using_grok.fbk"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
