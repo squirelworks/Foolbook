@@ -253,7 +253,7 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 8765) -> None:
+def serve(path: str | Path, port: int = 1337) -> None:
     book = load(path)
     course_id = Path(path).stem
     progress = Progress(_progress_path())
