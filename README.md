@@ -34,6 +34,7 @@ Foolbook/
   viewer/                   # display what the engine produces
     __init__.py
     cli.py                  # terminal viewer
+    gui.py                  # browser GUI
   author/                   # secondary authoring / learning
     __init__.py
     decoder.py              # bytecode → source
@@ -48,6 +49,10 @@ Foolbook/
 python3 -m foolbook
 python3 -m foolbook examples/using_grok.json
 python3 -m foolbook path/to/book.tbk
+
+# GUI
+python3 -m foolbook --gui path/to/book.tbk
+python3 foolbook.py --gui path/to/book.tbk
 ```
 
 ## Design notes
