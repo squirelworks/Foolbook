@@ -1,6 +1,5 @@
-"""Authoring tools. Secondary to the Foolbook viewer."""
+"""Authoring tools.
 
-from .decoder import decode
-from .author import bytecode_to_source
-
-__all__ = ["decode", "bytecode_to_source"]
+  python3 -m author.gui          # coded editor
+  python3 -m author.gui book.json
+"""
