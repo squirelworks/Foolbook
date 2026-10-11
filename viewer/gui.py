@@ -26,22 +26,100 @@ HTML = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <title>Foolbook</title>
 <style>
-  body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; }
-  #sidebar { width: 220px; background: #1e1e1e; color: #ddd; overflow-y: auto; }
-  #sidebar h1 { font-size: 1rem; padding: 12px; margin: 0; background: #111; }
+  /* shared */
+  body { margin: 0; display: flex; height: 100vh; }
+  #sidebar { overflow-y: auto; }
   #pages { list-style: none; padding: 0; margin: 0; }
-  #pages li { padding: 6px 12px; cursor: pointer; border-bottom: 1px solid #333; }
-  #pages li:hover, #pages li.active { background: #333; }
+  #pages li { cursor: pointer; }
   #main { flex: 1; display: flex; flex-direction: column; }
-  #content { flex: 1; padding: 24px; overflow-y: auto; }
-  #content h2 { margin-top: 0; }
-  #nav { padding: 12px 24px; background: #f4f4f4; border-top: 1px solid #ddd; }
-  button { margin-right: 8px; padding: 6px 14px; }
-  .quiz { margin-top: 16px; }
-  .choice { display: block; margin: 4px 0; }
+  #content { flex: 1; overflow-y: auto; }
+  #nav button, .choice { cursor: pointer; }
+  #themebar { position: absolute; top: 4px; right: 8px; z-index: 2; }
+
+  /* default: Windows 95 */
+  body.win95 {
+    font-family: \"MS Sans Serif\", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+  }
+  body.win95 #sidebar {
+    width: 180px;
+    background: #c0c0c0;
+    border-right: 2px solid #808080;
+    color: #000;
+  }
+  body.win95 #sidebar h1 {
+    margin: 0; padding: 4px 6px;
+    background: #000080; color: #fff;
+    font-weight: bold; font-size: 12px;
+  }
+  body.win95 #pages li {
+    padding: 2px 6px;
+    border-bottom: 1px solid #dfdfdf;
+  }
+  body.win95 #pages li:hover { background: #000080; color: #fff; }
+  body.win95 #pages li.active { background: #000080; color: #fff; }
+  body.win95 #content {
+    background: #fff;
+    margin: 4px;
+    border: 2px inset #fff;
+    padding: 8px;
+  }
+  body.win95 #content h2 { margin: 0 0 8px 0; font-size: 14px; }
+  body.win95 #nav {
+    background: #c0c0c0;
+    padding: 4px;
+    border-top: 2px solid #fff;
+  }
+  body.win95 button, body.win95 .choice {
+    font-family: inherit; font-size: 11px;
+    background: #c0c0c0; color: #000;
+    border: 2px outset #fff;
+    padding: 2px 10px; margin-right: 4px;
+  }
+  body.win95 button:active, body.win95 .choice:active {
+    border-style: inset;
+  }
+  body.win95 #themebar button { font-size: 10px; padding: 1px 6px; }
+
+  /* modern */
+  body.modern {
+    font-family: system-ui, sans-serif;
+    background: #fafafa;
+  }
+  body.modern #sidebar {
+    width: 220px;
+    background: #1e1e1e;
+    color: #ddd;
+  }
+  body.modern #sidebar h1 {
+    font-size: 1rem; padding: 12px; margin: 0; background: #111;
+  }
+  body.modern #pages li {
+    padding: 6px 12px;
+    border-bottom: 1px solid #333;
+  }
+  body.modern #pages li:hover, body.modern #pages li.active { background: #333; }
+  body.modern #content { padding: 24px; }
+  body.modern #content h2 { margin-top: 0; }
+  body.modern #nav {
+    padding: 12px 24px;
+    background: #f4f4f4;
+    border-top: 1px solid #ddd;
+  }
+  body.modern button, body.modern .choice {
+    margin-right: 8px; padding: 6px 14px;
+    border: 1px solid #ccc; border-radius: 4px;
+    background: #fff;
+  }
+  body.modern #themebar button { padding: 4px 8px; }
 </style>
 </head>
-<body>
+<body class="win95">
+  <div id="themebar">
+    <button onclick="setTheme('win95')">Classic</button>
+    <button onclick="setTheme('modern')">Modern</button>
+  </div>
   <div id="sidebar">
     <h1>Foolbook</h1>
     <ul id="pages"></ul>
@@ -52,7 +130,15 @@ HTML = r"""<!DOCTYPE html>
   </div>
 <script>
 let book = null;
-let index = 0;
+
+function setTheme(name) {
+  document.body.className = name;
+  localStorage.setItem('foolbook-theme', name);
+}
+(function() {
+  const saved = localStorage.getItem('foolbook-theme');
+  if (saved) setTheme(saved);
+})();
 
 async function loadBook() {
   const r = await fetch('/api/book');
@@ -69,7 +155,6 @@ async function loadBook() {
 }
 
 function show(i) {
-  index = i;
   const p = book.pages[i];
   document.querySelectorAll('#pages li').forEach((el, j) => {
     el.classList.toggle('active', j === i);
