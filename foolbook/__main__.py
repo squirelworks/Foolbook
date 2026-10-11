@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import sys
 
-from .cli import main
+from viewer.cli import main
 
 
 if __name__ == "__main__":
