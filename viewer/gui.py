@@ -188,6 +188,11 @@ function show(i) {
       b.textContent = ch.label;
       b.onclick = () => {
         alert(ch.correct ? 'Correct' : 'Incorrect');
+        const target = ch.correct ? p.quiz.next : p.quiz.again;
+        if (target) {
+          const idx = book.pages.findIndex(x => x.id.toLowerCase() === target.toLowerCase());
+          if (idx >= 0) show(idx);
+        }
       };
       q.appendChild(b);
     });
