@@ -41,10 +41,13 @@ Foolbook/
 
 ## Formats
 
-- `.fbk` — Foolbook book (standard)
-- `.fsk` — Foolbook system book (standard)
+- `.fbk` — Foolbook book (standard). Binary envelope, compressed or not.
+- `.fsk` — Foolbook system book (standard). Same envelope.
+- `.json` — working copy
 - `.tbk` — ToolBook book (compatibility)
 - `.sbk` — ToolBook system book (compatibility)
+
+`.fbk` and `.fsk` start with `FBK1` or `FSK1`, then a flags byte, then a JSON payload. Bit 0 of the flags means the payload is zlib-compressed. The engine reads compressed, uncompressed, and the older plain-JSON files.
 
 The loader decodes OpenScript handlers from a `.tbk` using the clean keyword table in `engine/keywords.py`. The original ToolBook resource lives in `engine/compat/res_77.bin` and is only used if that table is missing. `.fbk` and `.fsk` already hold source and never use it.
 
