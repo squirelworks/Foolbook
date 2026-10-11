@@ -8,4 +8,3 @@ Things that are wrong or incomplete in the current release.
 - Graphics are not drawn. Polygons, bounds, and pictures are not placed in the viewer.
 - System books (`.sbk` / `.fsk`) open as files. They are not used at runtime.
 - Progress is a scaffold. It is not wired into the viewer.
-- The GUI has not been checked against both an `.fbk` and a `.tbk` for this release.
