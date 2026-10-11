@@ -1,6 +1,8 @@
 {
   "id": "using_grok",
   "title": "Using Grok AI",
+  "subject": "Getting started",
+  "module": "AI assistants",
   "format": "json",
   "format_version": 1,
   "pages": [
