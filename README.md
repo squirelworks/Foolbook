@@ -12,10 +12,9 @@ It is a clean-room reader. It opens `.fbk` and `.tbk` books, and processes `.fsk
 - Launched by a course module: the module passes the book path, and Foolbook opens it.
 
 ```bash
-python3 -m foolbook path/to/book.fbk          # open a Foolbook book
-python3 -m foolbook path/to/book.tbk          # open a ToolBook book
-python3 -m foolbook                           # ask for a file
-python3 -m foolbook --gui path/to/book        # GUI viewer
+python3 -m foolbook path/to/book.fbk          # open in the GUI
+python3 -m foolbook                           # ask for a file, then open the GUI
+python3 -m foolbook --cli path/to/book        # terminal viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
 python3 -m foolbook --author                  # slide editor
