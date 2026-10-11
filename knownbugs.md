@@ -7,4 +7,3 @@ Things that are wrong or incomplete in the current release.
 - Quizzes are followed on the `.json` / `.fbk` path. They are not extracted from a raw `.tbk`.
 - Graphics are not drawn. Polygons, bounds, and pictures are not placed in the viewer.
 - System books (`.sbk` / `.fsk`) open as files. They are not used at runtime.
-- Progress is a scaffold. It is not wired into the viewer.
