@@ -41,20 +41,50 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {line}")
         if page.quiz and page.quiz.get("choices"):
             print("  [quiz]")
-            for c in page.quiz["choices"]:
+            for i, c in enumerate(page.quiz["choices"], 1):
                 mark = "*" if c.get("correct") else " "
-                print(f"   {mark} {c.get('label')}")
+                print(f"   {mark} {i}. {c.get('label')}")
         buttons = page.items or [{"label": j, "page": j} for j in page.jumps]
+        prompts = []
         if buttons:
-            print("  actions:", ", ".join(b.get("label", "?") for b in buttons))
+            prompts.extend(b.get("label", "?").lower() for b in buttons)
+        else:
+            if state.index > 0:
+                prompts.append("back")
+            if state.index + 1 < len(state.book.pages):
+                prompts.append("next")
+        if page.quiz and page.quiz.get("choices"):
+            prompts.extend(str(i) for i in range(1, len(page.quiz["choices"]) + 1))
+        prompts.append("menu" if any(b.get("label", "").lower() == "menu" for b in buttons) else "")
+        prompts = [p for p in prompts if p]
+        if "menu" not in prompts and any("menu" in (b.get("label") or "").lower() for b in buttons):
+            prompts.append("menu")
+        prompt = "> (" + ", ".join(f"'{p}'" for p in prompts) + ") " if prompts else "> "
 
         try:
-            cmd = input("> ").strip()
+            cmd = input(prompt).strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
         if not cmd or cmd.lower() in ("q", "quit", "exit"):
             break
+        if cmd.lower() == "menu":
+            for b in buttons:
+                if "menu" in (b.get("label") or "").lower():
+                    goto(state, b.get("page"))
+                    break
+            continue
+        if page.quiz and page.quiz.get("choices") and cmd.isdigit():
+            n = int(cmd) - 1
+            choices = page.quiz["choices"]
+            if 0 <= n < len(choices):
+                c = choices[n]
+                print("  Correct" if c.get("correct") else "  Incorrect")
+                if c.get("correct") and page.quiz.get("next"):
+                    goto(state, page.quiz["next"])
+                elif not c.get("correct") and page.quiz.get("again"):
+                    goto(state, page.quiz["again"])
+            continue
         if cmd.lower() in ("n", "next"):
             if buttons:
                 target = buttons[0].get("page")
