@@ -4,6 +4,7 @@ Foolbook is the tool that opens a book. A course module (or Foolcourse)
 can launch it with a path; if none is given, Foolbook asks for one.
 
   python3 -m foolbook path/to/book.fbk     # open that book in the GUI
+  python3 -m foolbook --port 8080 book.fbk # viewer on that port (default 1337)
   python3 -m foolbook                      # ask for a file, then open the GUI
   python3 -m foolbook --cli path/to/book   # terminal viewer
   python3 -m foolbook --catalog            # rebuild _courses/catalog.json
@@ -25,6 +26,7 @@ if str(_root) not in sys.path:
 
 def main() -> int:
     args = sys.argv[1:]
+    port = _take_port(args)
     bin_path = _take_bin(args)
     if bin_path:
         from engine.loader import set_keyword_bin
@@ -58,7 +60,29 @@ def main() -> int:
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.gui import main as gui_main
-    return gui_main(args)
+    return gui_main(args, port=port)
+
+
+
+def _take_port(args: list[str]) -> int:
+    """Pull --port N out of argv. Default is 1337."""
+    if "--port" not in args:
+        return 1337
+    i = args.index("--port")
+    if i + 1 >= len(args):
+        print("--port needs a number")
+        raise SystemExit(2)
+    raw = args[i + 1]
+    try:
+        port = int(raw)
+    except ValueError:
+        print(f"--port needs a number, got {raw}")
+        raise SystemExit(2)
+    if not 1 <= port <= 65535:
+        print(f"--port out of range: {port}")
+        raise SystemExit(2)
+    del args[i:i + 2]
+    return port
 
 
 def _take_debug(args: list[str]) -> str | None:

@@ -312,16 +312,27 @@ def _progress_path() -> Path:
     return dest
 
 
-def main(argv: list[str] | None = None) -> int:
-    argv = argv if argv is not None else sys.argv[1:]
+def main(argv: list[str] | None = None, port: int = 1337) -> int:
+    argv = list(argv if argv is not None else sys.argv[1:])
+    if "--port" in argv:
+        i = argv.index("--port")
+        if i + 1 >= len(argv):
+            print("--port needs a number")
+            return 2
+        try:
+            port = int(argv[i + 1])
+        except ValueError:
+            print(f"--port needs a number, got {argv[i + 1]}")
+            return 2
+        del argv[i:i + 2]
     if not argv:
-        print("usage: python3 -m viewer.gui <book.tbk|book.json>")
+        print("usage: python3 -m viewer.gui [--port N] <book.tbk|book.json>")
         return 2
     path = Path(argv[0].replace("\\", "/")).expanduser()
     if not path.exists():
         print(f"not found: {path}")
         return 1
-    serve(path)
+    serve(path, port)
     return 0
 
 
