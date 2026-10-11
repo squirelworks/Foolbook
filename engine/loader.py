@@ -91,10 +91,18 @@ def _keywords():
     bin_path = here / "res_77.bin"
     if bin_path.exists():
         return load_keywords(bin_path)
+    try:
+        from .keywords import KEYWORDS
+        return KEYWORDS
+    except ImportError:
+        pass
     json_path = here / "keywords.json"
     if json_path.exists():
-        import json
-        return json.loads(json_path.read_text(encoding="utf-8"))
+        try:
+            import json
+            return json.loads(json_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
     return []
 
 
