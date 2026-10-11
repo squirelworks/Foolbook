@@ -10,4 +10,4 @@ python3 -m foolbook --debug engine       # one module
 
 Each run writes its results to `_debug/db-<timestamp>`. Those files are gitignored.
 
-Loading a `.tbk` or `.sbk` writes the decoded handler source to `_debug/decoded/<book>-<timestamp>.json`. That is the record of what the decoder produced. `.fbk` and `.fsk` already hold source and are not written there.
+Loading a `.tbk` or `.sbk` with `--debug` writes the decoded handler source to `_debug/decoded/<book>-<timestamp>.json`. A normal run does not write it. `.fbk` and `.fsk` already hold source and are never written there.
