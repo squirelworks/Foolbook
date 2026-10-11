@@ -1,9 +1,9 @@
 {
   "format": "fsk",
   "format_version": 1,
-  "will_become": "sbk",
+  "will_become": "fsk",
   "id": "tb80r",
   "title": "ToolBook Reader (core)",
-  "note": "Placeholder for the modern tb80r system book. Drop the real .sbk or a working .fsk here.",
+  "note": "The Foolbook reader system book. Drop a working .fsk here.",
   "pages": []
 }
