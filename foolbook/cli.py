@@ -1,7 +1,8 @@
-"""Simple command-line walker for Foolbook.
+"""Foolbook viewer (terminal).
 
-Usage:
-  python3 -m foolbook.cli <book.tbk|book.json>
+Called by the main entry point. Prefer:
+
+  python3 -m foolbook [book]
 """
 
 from __future__ import annotations
@@ -16,9 +17,11 @@ from .model import RuntimeState
 
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
+    print("Foolbook")
     if not argv:
-        print("usage: python3 -m foolbook.cli <book.tbk|book.json>")
-        return 2
+        print("No book given. Pass a .tbk, .sbk, or .json to open one.")
+        print("  python3 -m foolbook path/to/book.tbk")
+        return 0
     path = Path(argv[0])
     if not path.exists():
         print(f"not found: {path}")
