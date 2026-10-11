@@ -1,6 +1,9 @@
-""".fcs student file.
+""".fcs — Foolcourse Student.
 
-On disk this is encrypted. Extracted, it is the student JSON.
+.fcs is the Foolcourse student file. It is the standard.
+The layout is progress/FCS.md.
+
+On disk this is an encrypted envelope. Extracted, it is the student JSON.
 The password is recovered by the opener. A later module can replace it.
 
     FCS1            magic
@@ -19,6 +22,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
+NAME = "Foolcourse Student"
 MAGIC = b"FCS1"
 VERSION = 1
 # Recovered by the opener. Not stored as text.
