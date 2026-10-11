@@ -31,6 +31,7 @@ EXPECTED = [
     "engine/loader.py",
     "engine/tbk.py",
     "engine/openscript.py",
+    "engine/compat/res_77.bin",
     "viewer/__init__.py",
     "viewer/cli.py",
     "viewer/gui.py",
