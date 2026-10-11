@@ -1,7 +1,7 @@
 """.fcs student file.
 
 On disk this is encrypted. Extracted, it is the student JSON.
-The password for this cut is UwU. A later module can replace that.
+The password is recovered by the opener. A later module can replace it.
 
     FCS1            magic
     1 byte          version (1)
@@ -21,7 +21,15 @@ from cryptography.hazmat.primitives import hashes
 
 MAGIC = b"FCS1"
 VERSION = 1
-PASSWORD = "UwU"
+# Recovered by the opener. Not stored as text.
+_MASK = 0x3C
+_SEAL = (0x69, 0x4B, 0x69)
+
+
+def _password() -> str:
+    return "".join(chr(b ^ _MASK) for b in _SEAL)
+
+
 _ITERATIONS = 200_000
 
 
@@ -29,8 +37,9 @@ class FcsError(ValueError):
     pass
 
 
-def pack(data: dict, password: str = PASSWORD) -> bytes:
+def pack(data: dict, password: str | None = None) -> bytes:
     """Encrypt a student dict. Without the password this cannot be read back."""
+    password = password or _password()
     payload = json.dumps(data, indent=2).encode("utf-8")
     salt = os.urandom(16)
     nonce = os.urandom(12)
@@ -39,8 +48,9 @@ def pack(data: dict, password: str = PASSWORD) -> bytes:
     return MAGIC + bytes([VERSION]) + salt + nonce + cipher
 
 
-def unpack(blob: bytes, password: str = PASSWORD) -> dict:
+def unpack(blob: bytes, password: str | None = None) -> dict:
     """Decrypt an .fcs blob to the student dict."""
+    password = password or _password()
     if len(blob) < 4 + 1 + 16 + 12 + 16 or blob[:4] != MAGIC:
         raise FcsError("not an .fcs file")
     if blob[4] != VERSION:
