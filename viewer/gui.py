@@ -294,10 +294,10 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "") -> None:
+def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
     book = load(path)
     localized = _apply_locale(book, Path(path), locale) if locale else False
-    course_id = Path(path).stem
+    course_id = course or Path(path).stem
     progress = Progress(Path(student) if student else _progress_path())
     progress.touch(course_id)
 
@@ -363,7 +363,7 @@ def _progress_path() -> Path:
     return dest
 
 
-def main(argv: list[str] | None = None, port: int = 1337, student: str = "", locale: str = "") -> int:
+def main(argv: list[str] | None = None, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if "--port" in argv:
         i = argv.index("--port")
@@ -397,7 +397,7 @@ def main(argv: list[str] | None = None, port: int = 1337, student: str = "", loc
     if not path.exists():
         print(f"not found: {path}")
         return 1
-    serve(path, port, student, locale)
+    serve(path, port, student, locale, course)
     return 0
 
 
