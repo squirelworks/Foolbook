@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_REPLACE
+"""Foolbook author.\n\nSlide editor. Produces .fbk (and .fsk). .tbk / .sbk export is a later milestone.\n\n  python3 -m author.gui\n  python3 -m author.gui path/to/book.fbk\n"""
