@@ -2,22 +2,12 @@
 
 Parses and executes handlers from a loaded book and returns actions
 the Foolbook viewer should perform.
-
-Improvements here (better .tbk/.sbk parsing, richer interpretation)
-are what recover the NIDA and original ToolBook experience.
 """
 
 from __future__ import annotations
 
 import re
 from foolbook.model import RuntimeState, Page
-
-
-# Action kinds the viewer understands
-# {"kind": "goto", "page": "P400", "book": None}
-# {"kind": "send", "name": "next"}
-# {"kind": "set", "name": "...", "value": ...}
-# {"kind": "note", "text": "..."}
 
 
 _GOTO = re.compile(
@@ -29,15 +19,11 @@ _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 
 
 def run_handler(state: RuntimeState, source: str) -> list[dict]:
-    """Execute a handler source against the current state.
-
-    Returns the list of actions produced.
-    """
+    """Execute a handler source against the current state."""
     actions: list[dict] = []
     if not source:
         return actions
 
-    # Very shallow: split on lines, skip comments and structural keywords
     lines = [ln.strip() for ln in source.replace("\r", "").split("\n")]
     skipping = False
     for line in lines:
@@ -47,7 +33,6 @@ def run_handler(state: RuntimeState, source: str) -> list[dict]:
         if low.startswith("to handle") or low == "end" or low.startswith("end "):
             continue
         if low.startswith("if ") and " then" in low:
-            # Evaluate a trivial equality; otherwise skip the body
             cond = line[3:low.rfind(" then")].strip()
             skipping = not _eval_simple(cond, state)
             continue
@@ -81,10 +66,6 @@ def run_handler(state: RuntimeState, source: str) -> list[dict]:
 
 
 def _eval_simple(expr: str, state: RuntimeState):
-    """Extremely limited expression evaluator.
-
-    Supports literals, variable lookup, and a few obvious comparisons.
-    """
     expr = expr.strip()
     if expr.lower() == "true":
         return True
@@ -94,7 +75,6 @@ def _eval_simple(expr: str, state: RuntimeState):
         return expr[1:-1]
     if expr in state.variables:
         return state.variables[expr]
-    # trivial equality
     if " = " in expr:
         left, right = expr.split(" = ", 1)
         return _eval_simple(left, state) == _eval_simple(right, state)
@@ -109,6 +89,57 @@ def goto(state: RuntimeState, page_id: str) -> bool:
     state.index = idx
     state.note(f"goto {page_id}")
     return True
+
+
+def follow(state: RuntimeState, actions: list[dict]) -> bool:
+    """Apply the first navigation action. Returns True if the page changed."""
+    for act in actions:
+        if act.get("kind") == "goto":
+            page = act.get("page")
+            book = act.get("book")
+            if book:
+                state.note(f"cross-book {book} {page}")
+                continue
+            if page and goto(state, page):
+                return True
+        if act.get("kind") == "send":
+            name = (act.get("name") or "").lower()
+            if name == "next":
+                if _follow_label(state, "next"):
+                    return True
+                if state.index + 1 < len(state.book.pages):
+                    state.index += 1
+                    return True
+            if name in ("previous", "back"):
+                if _follow_label(state, "back"):
+                    return True
+                if state.index > 0:
+                    state.index -= 1
+                    return True
+    return False
+
+
+def _follow_label(state: RuntimeState, label: str) -> bool:
+    page = state.page
+    if not page:
+        return False
+    for item in page.items or []:
+        if (item.get("label") or "").lower() == label and item.get("page"):
+            return goto(state, item["page"])
+    return False
+
+
+def run_page_handlers(state: RuntimeState, kind: str = "enterpage") -> list[dict]:
+    """Run handlers of the given kind on the current page."""
+    page = state.page
+    if not page:
+        return []
+    actions: list[dict] = []
+    for h in page.handlers or []:
+        if h.name.lower() != kind.lower():
+            continue
+        actions.extend(run_handler(state, h.source))
+    return actions
 
 
 def current_page(state: RuntimeState) -> Page | None:
