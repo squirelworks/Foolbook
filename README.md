@@ -36,6 +36,8 @@ Foolbook/
   core/                     # system books (.fsk standard, .sbk compatible)
   _courses/                 # sample courses and catalog
   _debug/                   # debug package (only with --debug)
+  knownbugs.md
+  CHANGELOG.md
 ```
 
 ## Formats
