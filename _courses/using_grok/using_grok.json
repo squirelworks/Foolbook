@@ -3,7 +3,6 @@
   "title": "Using Grok AI",
   "subject": "Getting started",
   "module": "AI assistants",
-  "format": "json",
   "format_version": 1,
   "pages": [
     {
@@ -13,7 +12,10 @@
         "A short course on getting useful answers from Grok."
       ],
       "items": [
-        {"label": "Begin", "page": "P100"}
+        {
+          "label": "Begin",
+          "page": "P100"
+        }
       ]
     },
     {
@@ -24,8 +26,14 @@
         "It is not a search engine and not a calculator. It is a conversation."
       ],
       "items": [
-        {"label": "Next", "page": "P200"},
-        {"label": "Back", "page": "P0"}
+        {
+          "label": "Next",
+          "page": "P200"
+        },
+        {
+          "label": "Back",
+          "page": "P0"
+        }
       ]
     },
     {
@@ -37,8 +45,14 @@
         "Better: 'Write a 10-line Python function that reads a CSV and prints the sum of the second column.'"
       ],
       "items": [
-        {"label": "Next", "page": "P300"},
-        {"label": "Back", "page": "P100"}
+        {
+          "label": "Next",
+          "page": "P300"
+        },
+        {
+          "label": "Back",
+          "page": "P100"
+        }
       ]
     },
     {
@@ -49,8 +63,14 @@
         "If you have a file, say so. If you want a table, say so. If you want code that runs, say so."
       ],
       "items": [
-        {"label": "Next", "page": "P400"},
-        {"label": "Back", "page": "P200"}
+        {
+          "label": "Next",
+          "page": "P400"
+        },
+        {
+          "label": "Back",
+          "page": "P200"
+        }
       ]
     },
     {
@@ -61,8 +81,14 @@
         "Ask it to check a current fact, run a snippet, or look at a file you point it at. Do not ask it to invent numbers it can look up."
       ],
       "items": [
-        {"label": "Next", "page": "P500"},
-        {"label": "Back", "page": "P300"}
+        {
+          "label": "Next",
+          "page": "P500"
+        },
+        {
+          "label": "Back",
+          "page": "P300"
+        }
       ]
     },
     {
@@ -73,8 +99,14 @@
         "Short corrections work: 'Make it shorter', 'Use the existing function names', 'That number is from 2022, check again.'"
       ],
       "items": [
-        {"label": "Next", "page": "P600"},
-        {"label": "Back", "page": "P400"}
+        {
+          "label": "Next",
+          "page": "P600"
+        },
+        {
+          "label": "Back",
+          "page": "P400"
+        }
       ]
     },
     {
@@ -85,8 +117,14 @@
         "Code should be run. Numbers should be checked. Quotes should be traced."
       ],
       "items": [
-        {"label": "Next", "page": "P900"},
-        {"label": "Back", "page": "P500"}
+        {
+          "label": "Next",
+          "page": "P900"
+        },
+        {
+          "label": "Back",
+          "page": "P500"
+        }
       ]
     },
     {
@@ -97,9 +135,16 @@
         "That is the whole course."
       ],
       "items": [
-        {"label": "Menu", "page": "P0"},
-        {"label": "Back", "page": "P600"}
+        {
+          "label": "Menu",
+          "page": "P0"
+        },
+        {
+          "label": "Back",
+          "page": "P600"
+        }
       ]
     }
-  ]
+  ],
+  "format": "json"
 }
