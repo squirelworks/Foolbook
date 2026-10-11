@@ -5,8 +5,10 @@
   python3 foolbook.py path/to/book.tbk     # open a ToolBook book
   python3 foolbook.py                      # ask for a file
   python3 foolbook.py --gui path/to/book   # GUI viewer
-  python3 foolbook.py --menu catalog.json  # course menu
-  python3 foolbook.py --author             # authoring editor
+  python3 foolbook.py --menu _courses/catalog.json
+  python3 foolbook.py --catalog             # rebuild catalog
+  python3 foolbook.py --author              # authoring editor
+  python3 foolbook.py --debug               # files and checksums
 
 A course module launches this with the book path so Foolbook opens
 straight into that course.
