@@ -26,10 +26,11 @@ Foolbook/
   README.md
   foolbook/
     __init__.py
+    __main__.py   # main entry: python3 -m foolbook
     model.py      # Book, Page, Handler, RuntimeState
     loader.py     # .tbk / .sbk / JSON → Book
     engine.py     # OpenScript engine: handlers → actions that drive the viewer
-    cli.py        # thin terminal viewer
+    cli.py        # terminal viewer used by the main entry
     decoder.py    # secondary: bytecode → source (authoring / learning)
     author.py     # secondary: simple helper that uses the decoder
   examples/
@@ -47,13 +48,15 @@ Foolbook/
 | `decoder` | Turn handler bytecode into source | secondary (authoring) |
 | `author` | Thin helper on top of the decoder | secondary (authoring) |
 
-## Usage
+## Open Foolbook
 
 ```bash
-cd Foolbook
-python3 -m foolbook.cli examples/using_grok.json
-python3 -m foolbook.cli path/to/book.tbk
+python3 -m foolbook
+python3 -m foolbook examples/using_grok.json
+python3 -m foolbook path/to/book.tbk
 ```
+
+That is the main entry. Everything else supports it.
 
 ## Design notes
 
