@@ -1,9 +1,7 @@
 """Progression tracking.
 
-Scaffold. The menu records which courses have been opened and, later,
-which pages have been completed.
-
-Stored as a small JSON file next to the catalog.
+Scaffold. The viewer records which pages have been visited and resumes
+at the last page. Stored as progress/progress.json, which is gitignored.
 """
 
 from __future__ import annotations
@@ -50,6 +48,14 @@ class Progress:
             visited.append(page_id)
         rec["last_page"] = page_id
         self._save()
+
+    def last_page(self, course_id: str) -> str:
+        rec = (self.data.get("courses") or {}).get(course_id) or {}
+        return rec.get("last_page") or ""
+
+    def visited(self, course_id: str) -> list[str]:
+        rec = (self.data.get("courses") or {}).get(course_id) or {}
+        return list(rec.get("visited") or [])
 
     def complete(self, course_id: str) -> None:
         courses = self.data.setdefault("courses", {})
