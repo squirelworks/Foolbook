@@ -15,7 +15,8 @@ CATALOG = HERE / "catalog.json"
 
 def _read_book(path: Path) -> dict:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        from author.formats import load
+        data = load(path)
     except Exception:
         data = {}
     return data if isinstance(data, dict) else {}
