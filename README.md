@@ -28,6 +28,7 @@ Foolbook/
   viewer/                   # the main program (CLI and GUI)
   menu/                     # course menu (subject / module / course)
   progress/                 # progression tracking (scaffold)
+  core/                     # system and core books (.fbk/.fsk now, .tbk/.sbk later)
   author/                   # authoring editor (coded Tkinter GUI)
   examples/
 ```
@@ -43,6 +44,15 @@ python3 -m author.gui                       # authoring editor
 ```
 
 The menu lists courses by subject, module, and course. Selecting one opens it in the viewer. Progression (opened / started / done) is stored by the progress module and will grow as page tracking is wired in.
+
+## Core books
+
+Drop system and core books in `core/`.
+
+- `.fbk` and `.fsk` now (intermediate formats).
+- `.tbk` and `.sbk` later (original and modern).
+
+The loader checks `core/` when a relative path is not found beside the working directory. `core/tb80r.fsk` is the placeholder for the modern reader system book.
 
 ## Authoring formats
 
