@@ -15,12 +15,20 @@ from foolbook.model import Book, Page, Handler
 
 # Optional override set by --bin. Only used when decoding .tbk / .sbk.
 _BIN_OVERRIDE: Path | None = None
+# Decoded source is written to _debug/decoded only when this is set.
+_KEEP_DECODED = False
 
 
 def set_keyword_bin(path: str | Path | None) -> None:
     """Use this keyword resource instead of the clean table when decoding .tbk/.sbk."""
     global _BIN_OVERRIDE
     _BIN_OVERRIDE = Path(path) if path else None
+
+
+def set_keep_decoded(keep: bool) -> None:
+    """Keep decoded .tbk/.sbk source on disk. Only set by --debug."""
+    global _KEEP_DECODED
+    _KEEP_DECODED = bool(keep)
 
 
 def load(path: str | Path) -> Book:
@@ -85,7 +93,8 @@ def _load_tbk(path: Path) -> Book:
                 handlers=handlers,
                 raw={"offset": p.offset},
             ))
-        _write_decoded(path, pages)
+        if _KEEP_DECODED:
+            _write_decoded(path, pages)
         return Book(path=str(path), title=path.stem, pages=pages)
     except Exception as exc:
         book = Book(path=str(path), title=path.stem)
