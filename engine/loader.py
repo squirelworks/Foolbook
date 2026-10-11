@@ -2,6 +2,7 @@
 
 Currently supports:
 - Maybe2-style lessonshell JSON (items, quiz, text)
+- .fbk and .fsk intermediate formats
 - Placeholder for raw .tbk (delegates to runtime.tbk when present)
 """
 
@@ -15,7 +16,7 @@ from foolbook.model import Book, Page, Handler
 
 def load(path: str | Path) -> Book:
     path = Path(path)
-    if path.suffix.lower() == ".json":
+    if path.suffix.lower() in (".json", ".fbk", ".fsk"):
         return _load_json(path)
     return _load_tbk(path)
 
