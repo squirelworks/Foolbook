@@ -393,14 +393,13 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
 
 
 def _open_browser(url: str) -> bool:
-    """Open the viewer. Fall back to xdg-open when the default handler fails."""
+    """Open the viewer.
+
+    xdg-open first. webbrowser.open goes straight at Chrome on this
+    desktop and dies in the zygote (broken pipe), so it is the fallback.
+    """
     import shutil
     import subprocess
-    try:
-        if webbrowser.open(url, new=2):
-            return True
-    except Exception:
-        pass
     for cmd in ("xdg-open", "gio"):
         if shutil.which(cmd):
             try:
@@ -409,7 +408,10 @@ def _open_browser(url: str) -> bool:
                 return True
             except Exception:
                 continue
-    return False
+    try:
+        return bool(webbrowser.open(url, new=2))
+    except Exception:
+        return False
 
 
 def _progress_path() -> Path:
