@@ -289,6 +289,21 @@ def goto(state: RuntimeState, page_id: str) -> bool:
     return True
 
 
+def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
+    """Open another book found near the current one and go to page_id."""
+    from engine.loader import load, find_book
+    found = find_book(book_name, state.book.path)
+    if not found:
+        state.note(f"missing book {book_name}")
+        return False
+    state.book = load(found)
+    state.index = 0
+    state.note(f"open {found.name}")
+    if page_id:
+        return goto(state, page_id)
+    return True
+
+
 def follow(state: RuntimeState, actions: list[dict]) -> bool:
     """Apply the first navigation action. Returns True if the page changed."""
     for act in actions:
@@ -296,8 +311,7 @@ def follow(state: RuntimeState, actions: list[dict]) -> bool:
             page = act.get("page")
             book = act.get("book")
             if book:
-                state.note(f"cross-book {book} {page}")
-                continue
+                return open_book(state, book, page or "")
             if page and goto(state, page):
                 return True
         if act.get("kind") == "send":
