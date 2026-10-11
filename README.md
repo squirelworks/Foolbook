@@ -28,7 +28,7 @@ Foolbook/
   viewer/                   # the main program (CLI and GUI)
   menu/                     # course menu (subject / module / course)
   progress/                 # progression tracking (scaffold)
-  core/                     # system and core books (.fbk/.fsk now, .tbk/.sbk later)
+  core/                     # system and core books (.fbk/.fsk standard, .tbk/.sbk compatible)
   author/                   # authoring editor (coded Tkinter GUI)
   examples/
 ```
@@ -49,20 +49,18 @@ The menu lists courses by subject, module, and course. Selecting one opens it in
 
 Drop system and core books in `core/`.
 
-- `.fbk` and `.fsk` now (intermediate formats).
-- `.tbk` and `.sbk` later (original and modern).
+- `.fbk` and `.fsk` are the standard formats.
+- `.tbk` and `.sbk` are accepted for backward compatibility with existing ToolBook files.
 
-The loader checks `core/` when a relative path is not found beside the working directory. `core/tb80r.fsk` is the placeholder for the modern reader system book.
+The loader checks `core/` when a relative path is not found beside the working directory. `core/tb80r.fsk` is the reader system book.
 
-## Authoring formats
+## Formats
 
-The goal is to author original `.tbk` files. Until that format is ready:
+`.fbk` (book) and `.fsk` (system book) are the Foolbook standards. New work is authored in these.
 
-- `.json` is the working copy (default).
-- `.fbk` is written beside it. It is a Foolbook book and will become a `.tbk`.
-- `.fsk` is a Foolbook system book and will become a `.sbk`.
+`.tbk` and `.sbk` remain supported so existing ToolBook files still open.
 
-The editor saves both `.json` and `.fbk` on every save. The loader accepts all three.
+The editor saves a `.json` working copy and a sibling `.fbk` on every save. The loader accepts `.json`, `.fbk`, `.fsk`, `.tbk`, and `.sbk`.
 
 ## Design notes
 
