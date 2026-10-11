@@ -1,14 +1,19 @@
 # Foolbook milestones
 
-## v1.0.0 (current)
+## v1.0.0
 
 Opens a book and follows its handlers. Authoring produces .fbk and .fsk.
 
-- Opens `.fbk` and `.tbk`; processes `.fsk` and `.sbk`
+Done:
+
+- Opens `.fbk` and `.tbk`
+- `.fbk` and `.fsk` are a real envelope (compressed or not), not renamed JSON
 - Asks for a file if none is passed; a course module can launch it with a path
 - Decodes OpenScript handlers and follows next / back / goto
 - CLI and GUI viewers
 - Authoring: slide editor with page list, preview, toolbar, text and lists; saves `.fbk` / `.fsk`
+- `--debug` keeps decoded `.tbk` source; a normal run writes nothing
+- `--bin` overrides the keyword table for `.tbk` / `.sbk`
 
 ## v1.x authorship
 
@@ -18,6 +23,6 @@ Opens a book and follows its handlers. Authoring produces .fbk and .fsk.
 
 - Graphics: polygons, bounds, and pictures drawn in the viewer
 - Quizzes extracted from raw `.tbk` (the JSON path already has them)
-- System books loaded and used at runtime
+- System books (`.sbk` / `.fsk`) loaded and used at runtime
 - Progress wired into the viewer
 - Cross-book navigation
