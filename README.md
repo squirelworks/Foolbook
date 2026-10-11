@@ -55,7 +55,7 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 ## Design notes
 
 - Foolbook is the viewer. A course module drives which book it opens.
-- The entry point stays in `foolbook/`. Supporting work lives in subdirectories.
+- The entry point stays in `main/`. Supporting work lives in subdirectories.
 - The engine is responsible for understanding the files the user points at.
 - Authoring tools stay under `author/` and are not required to view a book.
 
