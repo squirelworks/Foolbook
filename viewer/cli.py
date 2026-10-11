@@ -13,6 +13,7 @@ from pathlib import Path
 from engine.loader import load
 from engine.engine import run_handler, goto, follow, run_page_handlers
 from foolbook.model import RuntimeState
+from progress.progress import Progress
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -33,8 +34,16 @@ def main(argv: list[str] | None = None) -> int:
     if scripted:
         print(f"  {scripted} pages with handlers")
     state = RuntimeState(book=book)
+    # reader defaults so EnterPage does not bounce to another book
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
+
+    progress = Progress(_progress_path())
+    course_id = path.stem
+    last = progress.last_page(course_id)
+    if last and book.index_of(last) >= 0 and last != book.pages[0].id:
+        print(f"  resume at {last}")
+        state.index = book.index_of(last)
 
     entered = None
     while True:
@@ -44,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
             break
         if entered != page.id:
             entered = page.id
+            progress.mark_page(course_id, page.id)
             actions = run_page_handlers(state, "enterpage")
             if follow(state, actions):
                 continue
@@ -87,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
                 elif not c.get("correct") and page.quiz.get("again"):
                     goto(state, page.quiz["again"])
             continue
+        # match a button, then follow it; fall back to running buttonClick
         matched = None
         for b in buttons:
             if (b.get("label") or "").lower() == cmd.lower():
@@ -123,6 +134,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  action: {act}")
         follow(state, actions)
     return 0
+
+
+def _progress_path() -> Path:
+    root = Path(__file__).resolve().parents[1]
+    dest = root / "progress" / "progress.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    return dest
 
 
 if __name__ == "__main__":
