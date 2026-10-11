@@ -5,6 +5,7 @@ can launch it with a path; if none is given, Foolbook asks for one.
 
   python3 -m foolbook path/to/book.fbk     # open that book in the GUI
   python3 -m foolbook --port 8080 book.fbk # viewer on that port (default 1337)
+  python3 -m foolbook --student _student/alex.json book.fbk
   python3 -m foolbook                      # ask for a file, then open the GUI
   python3 -m foolbook --cli path/to/book   # terminal viewer
   python3 -m foolbook --catalog            # rebuild _courses/catalog.json
@@ -27,6 +28,7 @@ if str(_root) not in sys.path:
 def main() -> int:
     args = sys.argv[1:]
     port = _take_port(args)
+    student = _take_student(args)
     bin_path = _take_bin(args)
     if bin_path:
         from engine.loader import set_keyword_bin
@@ -60,8 +62,22 @@ def main() -> int:
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.gui import main as gui_main
-    return gui_main(args, port=port)
+    return gui_main(args, port=port, student=student)
 
+
+
+
+def _take_student(args: list[str]) -> str:
+    """Pull --student PATH out of argv. Empty means the viewer's own file."""
+    if "--student" not in args:
+        return ""
+    i = args.index("--student")
+    if i + 1 >= len(args):
+        print("--student needs a path")
+        raise SystemExit(2)
+    path = args[i + 1]
+    del args[i:i + 2]
+    return path
 
 
 def _take_port(args: list[str]) -> int:

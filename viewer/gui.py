@@ -253,10 +253,10 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 1337) -> None:
+def serve(path: str | Path, port: int = 1337, student: str = "") -> None:
     book = load(path)
     course_id = Path(path).stem
-    progress = Progress(_progress_path())
+    progress = Progress(Path(student) if student else _progress_path())
     progress.touch(course_id)
 
     class Handler(BaseHTTPRequestHandler):
@@ -318,7 +318,7 @@ def _progress_path() -> Path:
     return dest
 
 
-def main(argv: list[str] | None = None, port: int = 1337) -> int:
+def main(argv: list[str] | None = None, port: int = 1337, student: str = "") -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if "--port" in argv:
         i = argv.index("--port")
@@ -331,6 +331,13 @@ def main(argv: list[str] | None = None, port: int = 1337) -> int:
             print(f"--port needs a number, got {argv[i + 1]}")
             return 2
         del argv[i:i + 2]
+    if "--student" in argv:
+        i = argv.index("--student")
+        if i + 1 >= len(argv):
+            print("--student needs a path")
+            return 2
+        student = argv[i + 1]
+        del argv[i:i + 2]
     if not argv:
         print("usage: python3 -m viewer.gui [--port N] <book.tbk|book.json>")
         return 2
@@ -338,7 +345,7 @@ def main(argv: list[str] | None = None, port: int = 1337) -> int:
     if not path.exists():
         print(f"not found: {path}")
         return 1
-    serve(path, port)
+    serve(path, port, student)
     return 0
 
 
