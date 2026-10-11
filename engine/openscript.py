@@ -96,6 +96,100 @@ def decode(bytecode, keywords):
                     output.append(0x3F)
     return output.decode('latin-1', errors='replace')
 
+def compile(source: str, keywords: list[str] | None = None) -> bytes:
+    """Compile OpenScript source to the bytecode FUN_1040_0970 expands.
+
+    Inverse of decode(). Known opcodes only:
+
+      00-7F   literal
+      80-BF   keyword (bit 4 = two-byte index, bit 5 clear = trailing space)
+      E0-EF   CRLF plus 0-15 spaces
+      F0-FE   2-16 spaces
+      FF      repeat
+
+    Back-references (C0-DF) are a compressor. This cut does not emit them.
+    The keyword table is the same one the decoder uses.
+    """
+    if keywords is None:
+        from engine.keywords import KEYWORDS
+        keywords = KEYWORDS
+    table = {w: i for i, w in enumerate(keywords) if w}
+    # longest first so "buttonClick" wins over "button"
+    words = sorted(table, key=len, reverse=True)
+    out = bytearray()
+    i = 0
+    n = len(source)
+    while i < n:
+        # newline
+        if source[i] == "\n" or source.startswith("\r\n", i):
+            if source.startswith("\r\n", i):
+                i += 2
+            else:
+                i += 1
+            spaces = 0
+            while i < n and source[i] == " " and spaces < 15:
+                spaces += 1
+                i += 1
+            out.append(0xE0 | spaces)
+            continue
+        # space run
+        if source[i] == " ":
+            j = i
+            while j < n and source[j] == " ":
+                j += 1
+            run = j - i
+            while run >= 2:
+                take = min(run, 16)
+                out.append(0xF0 | (take - 2))
+                run -= take
+            if run:
+                out.append(0x20)
+            i = j
+            continue
+        # keyword
+        matched = None
+        for w in words:
+            if source.startswith(w, i):
+                after = i + len(w)
+                # do not eat a keyword that is a prefix of an identifier
+                if after < n and (source[after].isalnum() or source[after] == "_"):
+                    continue
+                matched = w
+                break
+        if matched is not None:
+            idx = table[matched]
+            trailing = (i + len(matched) < n and source[i + len(matched)] == " ")
+            if idx < 16:
+                b = 0x80 | idx
+                if not trailing:
+                    b |= 0x20
+                out.append(b)
+            else:
+                b = 0x80 | 0x10 | ((idx >> 8) & 0xF)
+                if not trailing:
+                    b |= 0x20
+                out.append(b)
+                out.append(idx & 0xFF)
+            i += len(matched)
+            if trailing:
+                i += 1
+            continue
+        # literal, with a repeat if the same byte runs
+        ch = source[i].encode("latin-1", "replace")[0]
+        run = 1
+        while i + run < n and source[i + run].encode("latin-1", "replace")[0] == ch and run < 256:
+            run += 1
+        if run >= 4:
+            out.append(0xFF)
+            out.append(ch)
+            out.append(run - 1)
+            i += run
+        else:
+            out.append(ch)
+            i += 1
+    return bytes(out)
+
+
 def main():
     if len(sys.argv) < 3:
         print(f'Usage: {sys.argv[0]} <res_77.bin> <bytecode.bin>')

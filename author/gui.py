@@ -1,6 +1,6 @@
 """Foolbook author.
 
-Slide editor. Produces .fbk (and .fsk). .tbk / .sbk export is a later milestone.
+Slide editor. Produces .fbk (and .fsk). Export .tbk writes a shell with compiled OpenScript.
 
   python3 -m author.gui
   python3 -m author.gui path/to/book.fbk
@@ -46,6 +46,7 @@ class Editor:
         ttk.Button(bar, text="Open", command=self._open).pack(side="left", padx=2)
         ttk.Button(bar, text="Save", command=self._save).pack(side="left")
         ttk.Button(bar, text="Save as", command=self._save_as).pack(side="left", padx=2)
+        ttk.Button(bar, text="Export .tbk", command=self._export_tbk).pack(side="left", padx=2)
         ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=6)
         for name, label in (("select", "Select"), ("text", "Text"), ("box", "Box"), ("button", "Button")):
             ttk.Radiobutton(bar, text=label, value=name, variable=self.tool).pack(side="left", padx=2)
@@ -144,6 +145,28 @@ class Editor:
         self.path = Path(p)
         save_book(self.path, self.book)
         self.status.config(text=f"Saved {self.path.with_suffix('.json').name} and .fbk")
+
+
+    def _export_tbk(self):
+        """Write a best-effort .tbk with compiled OpenScript handlers.
+
+        The shell is what we know: JBO stub, one page record per page,
+        field text, and a buttonClick handler compiled by engine.openscript.
+        It is not a book the ToolBook 8.1 engine would open.
+        """
+        self._apply()
+        p = filedialog.asksaveasfilename(
+            title="Export .tbk",
+            defaultextension=".tbk",
+            filetypes=[("ToolBook shell", "*.tbk")],
+        )
+        if not p:
+            return
+        from engine.openscript import compile as compile_script
+        from author.tbkexport import write_tbk
+        dest = Path(p)
+        write_tbk(dest, self.book, compile_script)
+        self.status.config(text=f"Exported {dest.name} (shell, compiled handlers)")
 
     def _refresh_list(self):
         self.pages.delete(0, "end")
