@@ -43,7 +43,7 @@ python3 -m foolbook --gui path/to/book.tbk  # GUI viewer
 python3 -m author.gui                       # authoring editor
 ```
 
-The menu lists courses by subject, module, and course. Selecting one opens it in the viewer. Progression (opened / started / done) is stored by the progress module and will grow as page tracking is wired in.
+The loader decodes OpenScript handlers from a `.tbk` and the viewer follows them. On a page with a `buttonClick` that says `go to page "P400"`, choosing Next goes to P400. Cross-book targets are noted but not followed yet.
 
 ## Core books
 
