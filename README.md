@@ -44,7 +44,15 @@ python3 -m author.gui                       # authoring editor
 
 The menu lists courses by subject, module, and course. Selecting one opens it in the viewer. Progression (opened / started / done) is stored by the progress module and will grow as page tracking is wired in.
 
-The authoring editor is a coded Tkinter window: page list, text, next/back, quiz choices, open/save JSON. It is not HTML.
+## Authoring formats
+
+The goal is to author original `.tbk` files. Until that format is ready:
+
+- `.json` is the working copy (default).
+- `.fbk` is written beside it. It is a Foolbook book and will become a `.tbk`.
+- `.fsk` is a Foolbook system book and will become a `.sbk`.
+
+The editor saves both `.json` and `.fbk` on every save. The loader accepts all three.
 
 ## Design notes
 
