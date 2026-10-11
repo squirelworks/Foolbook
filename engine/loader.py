@@ -1,9 +1,8 @@
 """Load a book into the Foolbook model.
 
 Currently supports:
-- Maybe2-style lessonshell JSON (items, quiz, text)
-- .fbk and .fsk intermediate formats
-- Raw .tbk via the built-in engine.tbk parser
+- .json / .fbk / .fsk
+- Raw .tbk via the built-in parser, with handlers decoded from the page stream
 """
 
 from __future__ import annotations
@@ -50,9 +49,11 @@ def _load_json(path: Path) -> Book:
 
 
 def _load_tbk(path: Path) -> Book:
-    """Load a raw .tbk with the built-in parser."""
+    """Load a raw .tbk with the built-in parser and decode its handlers."""
     try:
         from . import tbk as rtbk
+        from .openscript import load_keywords, decode
+        keywords = _keywords()
         raw = rtbk.load(path)
         pages = []
         for p in raw.pages:
@@ -64,10 +65,14 @@ def _load_tbk(path: Path) -> Book:
             for para in getattr(p, "paragraphs", []) or []:
                 if para and para not in text:
                     text.append(para)
+            handlers = _handlers_from_blob(p.blob, keywords, decode)
+            items = _items_from_handlers(handlers)
             pages.append(Page(
                 id=p.name,
                 text=text,
+                items=items,
                 jumps=list(getattr(p, "quoted_jumps", None) or []),
+                handlers=handlers,
                 raw={"offset": p.offset},
             ))
         return Book(path=str(path), title=path.stem, pages=pages)
@@ -78,3 +83,74 @@ def _load_tbk(path: Path) -> Book:
             text=[f"Could not parse {path.name}: {exc}"],
         ))
         return book
+
+
+def _keywords():
+    from .openscript import load_keywords
+    here = Path(__file__).resolve().parent
+    bin_path = here / "res_77.bin"
+    if bin_path.exists():
+        return load_keywords(bin_path)
+    json_path = here / "keywords.json"
+    if json_path.exists():
+        import json
+        return json.loads(json_path.read_text(encoding="utf-8"))
+    return []
+
+
+def _handlers_from_blob(blob: bytes, keywords, decode) -> list:
+    """Find 'to handle' streams in a page blob and decode them."""
+    import re
+    found = []
+    if not blob or not keywords:
+        return found
+    for match in re.finditer(rb"(?i)to handle [A-Za-z][A-Za-z0-9]*", blob):
+        start = match.start()
+        end = blob.find(b"\rend", start)
+        if end < 0 or end - start > 4000:
+            end = blob.find(b"\nEND", start)
+        if end < 0 or end - start > 4000:
+            end = min(len(blob), start + 800)
+        else:
+            end = min(len(blob), end + 4)
+        raw = blob[start:end]
+        try:
+            source = decode(raw, keywords)
+        except Exception:
+            source = ""
+        if not source:
+            continue
+        kind = match.group().split()[-1].decode("latin1")
+        found.append(Handler(name=kind, source=source, offset=start))
+    return found
+
+
+def _items_from_handlers(handlers: list) -> list:
+    """Build next/back items from decoded buttonClick handlers."""
+    import re
+    items = []
+    goto = re.compile(r'go\s+to\s+page\s+"([^"]+)"(?:\s+of\s+book\s+"([^"]+)")?', re.IGNORECASE)
+    for h in handlers:
+        if h.name.lower() != "buttonclick":
+            continue
+        src = h.source or ""
+        low = src.lower()
+        cut = low.find("\nend")
+        if cut > 0:
+            src = src[:cut]
+            low = src.lower()
+        m = goto.search(src)
+        target = m.group(1) if m else ""
+        other = m.group(2) if m else None
+        if "go to next page" in low or (not target and "send next" in low):
+            label = "Next"
+        elif "go to previous" in low or "send previous" in low:
+            label = "Back"
+        elif other:
+            label = f"{target}@{other}"
+        elif target:
+            label = target
+        else:
+            continue
+        items.append({"label": label, "page": target, "book": other})
+    return items
