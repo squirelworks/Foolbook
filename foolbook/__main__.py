@@ -10,7 +10,7 @@ can launch it with a path; if none is given, Foolbook asks for one.
   python3 -m foolbook --catalog             # rebuild _courses/catalog.json
   python3 -m foolbook --debug              # files and checksums
   python3 -m foolbook --debug complete     # full check
-  python3 -m foolbook --debug engine       # one module
+  python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table
 """
 
 from __future__ import annotations
@@ -27,6 +27,10 @@ if str(_root) not in sys.path:
 
 def main() -> int:
     args = sys.argv[1:]
+    bin_path = _take_bin(args)
+    if bin_path:
+        from engine.loader import set_keyword_bin
+        set_keyword_bin(bin_path)
     if not args:
         path = _ask_for_book()
         if not path:
@@ -49,6 +53,19 @@ def main() -> int:
         return author_main(args[1:])
     from viewer.cli import main as cli_main
     return cli_main(args)
+
+
+def _take_bin(args: list[str]) -> str:
+    """Pull --bin PATH out of argv. Returns the path or ''."""
+    if "--bin" not in args:
+        return ""
+    i = args.index("--bin")
+    if i + 1 >= len(args):
+        print("--bin needs a path")
+        raise SystemExit(2)
+    path = args[i + 1]
+    del args[i:i + 2]
+    return path
 
 
 def _ask_for_book() -> str:
