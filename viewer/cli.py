@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from engine.loader import load
-from engine.engine import run_handler, goto
+from engine.engine import run_handler, goto, follow, run_page_handlers
 from foolbook.model import RuntimeState
 
 
@@ -29,13 +29,24 @@ def main(argv: list[str] | None = None) -> int:
 
     book = load(path)
     print(f"{book.title or path.name}  ({len(book.pages)} pages)")
+    scripted = sum(1 for p in book.pages if p.handlers)
+    if scripted:
+        print(f"  {scripted} pages with handlers")
     state = RuntimeState(book=book)
+    state.variables.setdefault("__import", True)
+    state.variables.setdefault("sysLevel", "reader")
 
+    entered = None
     while True:
         page = state.page
         if page is None:
             print("(no page)")
             break
+        if entered != page.id:
+            entered = page.id
+            actions = run_page_handlers(state, "enterpage")
+            if follow(state, actions):
+                continue
         print(f"\n=== {page.id} ===")
         for line in page.text[:6]:
             print(f"  {line}")
@@ -55,10 +66,7 @@ def main(argv: list[str] | None = None) -> int:
                 prompts.append("next")
         if page.quiz and page.quiz.get("choices"):
             prompts.extend(str(i) for i in range(1, len(page.quiz["choices"]) + 1))
-        prompts.append("menu" if any(b.get("label", "").lower() == "menu" for b in buttons) else "")
         prompts = [p for p in prompts if p]
-        if "menu" not in prompts and any("menu" in (b.get("label") or "").lower() for b in buttons):
-            prompts.append("menu")
         prompt = "> (" + ", ".join(f"'{p}'" for p in prompts) + ") " if prompts else "> "
 
         try:
@@ -68,12 +76,6 @@ def main(argv: list[str] | None = None) -> int:
             break
         if not cmd or cmd.lower() in ("q", "quit", "exit"):
             break
-        if cmd.lower() == "menu":
-            for b in buttons:
-                if "menu" in (b.get("label") or "").lower():
-                    goto(state, b.get("page"))
-                    break
-            continue
         if page.quiz and page.quiz.get("choices") and cmd.isdigit():
             n = int(cmd) - 1
             choices = page.quiz["choices"]
@@ -85,33 +87,41 @@ def main(argv: list[str] | None = None) -> int:
                 elif not c.get("correct") and page.quiz.get("again"):
                     goto(state, page.quiz["again"])
             continue
+        matched = None
+        for b in buttons:
+            if (b.get("label") or "").lower() == cmd.lower():
+                matched = b
+                break
         if cmd.lower() in ("n", "next"):
-            if buttons:
-                target = buttons[0].get("page")
-                if target:
-                    goto(state, target)
-                    continue
+            matched = matched or next((b for b in buttons if (b.get("label") or "").lower() == "next"), None)
+        if cmd.lower() in ("b", "back", "previous"):
+            matched = matched or next((b for b in buttons if (b.get("label") or "").lower() == "back"), None)
+        if matched:
+            if matched.get("book"):
+                print(f"  (cross-book {matched['book']} {matched.get('page')})")
+                continue
+            if matched.get("page") and state.book.page(matched["page"]):
+                goto(state, matched["page"])
+                continue
+        if cmd.lower() in ("n", "next", "back", "previous", "menu"):
+            actions = run_page_handlers(state, "buttonclick")
+            if follow(state, actions):
+                continue
+        if cmd.lower() in ("n", "next"):
             if state.index + 1 < len(state.book.pages):
                 state.index += 1
             continue
         if cmd.lower() in ("b", "back"):
-            if len(buttons) > 1:
-                target = buttons[1].get("page")
-                if target:
-                    goto(state, target)
-                    continue
             if state.index > 0:
                 state.index -= 1
             continue
-        # treat as a page id or a handler source snippet
         if state.book.page(cmd):
             goto(state, cmd)
             continue
         actions = run_handler(state, cmd)
         for act in actions:
             print(f"  action: {act}")
-            if act["kind"] == "goto":
-                goto(state, act["page"])
+        follow(state, actions)
     return 0
 
 
