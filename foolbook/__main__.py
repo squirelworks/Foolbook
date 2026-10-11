@@ -1,15 +1,24 @@
 """Foolbook main entry.
 
-  python3 -m foolbook                      # course menu
-  python3 -m foolbook path/to/book.tbk     # open a book in the viewer
-  python3 -m foolbook --gui path/to/book   # open a book in the GUI viewer
-  python3 -m foolbook --menu catalog.json  # course menu with a catalog
-  python3 -m author.gui                    # authoring editor
+From the Foolbook directory:
+
+  python3 -m foolbook path/to/book.tbk
+  python3 foolbook.py path/to/book.tbk
+
+Do not run `python3 foolbook` (that treats the package directory as a script
+and loses the sibling packages).
 """
 
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+# Ensure the Foolbook root is on the path so viewer/, engine/, menu/, author/
+# resolve even if this file is launched as a script.
+_root = Path(__file__).resolve().parents[1]
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 
 def main() -> int:
