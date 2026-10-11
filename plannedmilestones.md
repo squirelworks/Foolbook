@@ -16,13 +16,16 @@ Done:
 - `--bin` overrides the keyword table for `.tbk` / `.sbk`
 - A jump to another book opens it if found below the loaded file, beside it, or in `core/`
 
-## v1.x authorship
+## v1.x
 
+Furthering v1.
+
+- Graphics: polygons, bounds, and pictures drawn in the viewer
+- Quizzes extracted from a raw `.tbk`
+- System books used as a runtime shell, not only as a jump target
 - Produce backwards-compatible `.tbk` and `.sbk` files
 
 ## v2.0.0 (planned)
 
-- Graphics: polygons, bounds, and pictures drawn in the viewer
-- Quizzes extracted from raw `.tbk` (books that already carry quiz data follow it)
-- System books used as a runtime shell, not only as a jump target
 - Cross-book navigation beyond the shell lookup
+
