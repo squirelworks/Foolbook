@@ -1,5 +1,5 @@
 """Authoring tools.
 
-  python3 -m author.gui          # coded editor
-  python3 -m author.gui book.json
+  python3 -m author.gui
+  python3 -m author.gui book.fbk
 """
