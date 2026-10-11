@@ -233,6 +233,47 @@ loadBook();
 """
 
 
+
+_LOCALE_ALIASES = {"tlh": "klingon", "tlhingan": "klingon"}
+
+
+def _apply_locale(book, path: Path, locale: str):
+    """Overlay a sibling <stem>.<locale>.json onto the book.
+
+    Missing overlay leaves the course as written. Item and quiz labels
+    overlay by index so the page targets stay in the book.
+    """
+    import json
+    key = _LOCALE_ALIASES.get(locale.strip().lower(), locale.strip().lower())
+    if not key or key in ("en", "en_us", "en-us"):
+        return False
+    overlay = path.with_name(f"{path.stem}.{key}.json")
+    if not overlay.exists():
+        return False
+    try:
+        data = json.loads(overlay.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    if data.get("title"):
+        book.title = data["title"]
+    pages = {p.get("id"): p for p in (data.get("pages") or {}).values()} if isinstance(data.get("pages"), dict) else {}
+    if isinstance(data.get("pages"), dict):
+        pages = data["pages"]
+    for page in book.pages:
+        loc = pages.get(page.id) or {}
+        if loc.get("text"):
+            page.text = list(loc["text"])
+        for i, item in enumerate(loc.get("items") or []):
+            if i < len(page.items) and item.get("label"):
+                page.items[i]["label"] = item["label"]
+        quiz = loc.get("quiz") or {}
+        if page.quiz and quiz.get("choices"):
+            for i, choice in enumerate(quiz["choices"]):
+                if i < len(page.quiz.get("choices") or []) and choice.get("label"):
+                    page.quiz["choices"][i]["label"] = choice["label"]
+    return True
+
+
 def book_to_json(book, progress=None, course_id="") -> dict:
     visited = progress.visited(course_id) if progress else []
     last = progress.last_page(course_id) if progress else ""
@@ -255,6 +296,7 @@ def book_to_json(book, progress=None, course_id="") -> dict:
 
 def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "") -> None:
     book = load(path)
+    localized = _apply_locale(book, Path(path), locale) if locale else False
     course_id = Path(path).stem
     progress = Progress(Path(student) if student else _progress_path())
     progress.touch(course_id)
@@ -301,7 +343,8 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
     print(f"Foolbook GUI  {book.title or Path(path).name}  ({len(book.pages)} pages)")
     print(f"Open {url}")
     if locale:
-        print(f"Locale {locale}  (course text is not translated)")
+        note = "course localized" if localized else "no course localization, text left as written"
+        print(f"Locale {locale}  ({note})")
     try:
         webbrowser.open(url)
     except Exception:
