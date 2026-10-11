@@ -290,7 +290,13 @@ def serve(path: str | Path, port: int = 1337) -> None:
                 self.send_response(404)
                 self.end_headers()
 
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError as exc:
+        if exc.errno in (98, 48):  # EADDRINUSE on Linux, macOS
+            print("Server already running, cannot start a new instance")
+            raise SystemExit(1)
+        raise
     url = f"http://127.0.0.1:{port}/"
     print(f"Foolbook GUI  {book.title or Path(path).name}  ({len(book.pages)} pages)")
     print(f"Open {url}")
