@@ -3,13 +3,11 @@
 Foolbook is the tool that opens a book. A course module (or Foolcourse)
 can launch it with a path; if none is given, Foolbook asks for one.
 
-  python3 -m foolbook path/to/book.fbk     # open that book
-  python3 -m foolbook path/to/book.tbk     # open a ToolBook book
-  python3 -m foolbook                      # ask for a file
-  python3 -m foolbook --gui path/to/book   # GUI viewer
-  python3 -m foolbook --catalog             # rebuild _courses/catalog.json
+  python3 -m foolbook path/to/book.fbk     # open that book in the GUI
+  python3 -m foolbook                      # ask for a file, then open the GUI
+  python3 -m foolbook --cli path/to/book   # terminal viewer
+  python3 -m foolbook --catalog            # rebuild _courses/catalog.json
   python3 -m foolbook --debug              # files and checksums
-  python3 -m foolbook --debug complete     # full check
   python3 -m foolbook --debug book.tbk     # keep decoded source
 """
 
@@ -46,17 +44,19 @@ def main() -> int:
     if args[0] == "--menu":
         from menu.menu import main as menu_main
         return menu_main(args[1:])
+    if args[0] == "--cli":
+        from viewer.cli import main as cli_main
+        return cli_main(args[1:])
     if args[0] in ("--gui", "-g"):
-        from viewer.gui import main as gui_main
-        return gui_main(args[1:])
-    if args[0] == "--catalog":
+        args = args[1:]
+    if args and args[0] == "--catalog":
         from _courses.catalog import main as catalog_main
         return catalog_main(args[1:])
-    if args[0] == "--author":
+    if args and args[0] == "--author":
         from author.gui import main as author_main
         return author_main(args[1:])
-    from viewer.cli import main as cli_main
-    return cli_main(args)
+    from viewer.gui import main as gui_main
+    return gui_main(args)
 
 
 def _take_debug(args: list[str]) -> str | None:
