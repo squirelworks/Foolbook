@@ -55,15 +55,23 @@ def main(argv: list[str] | None = None) -> int:
             break
         if not cmd or cmd.lower() in ("q", "quit", "exit"):
             break
-        if cmd.lower() in ("n", "next") and buttons:
-            target = buttons[0].get("page")
-            if target:
-                goto(state, target)
+        if cmd.lower() in ("n", "next"):
+            if buttons:
+                target = buttons[0].get("page")
+                if target:
+                    goto(state, target)
+                    continue
+            if state.index + 1 < len(state.book.pages):
+                state.index += 1
             continue
-        if cmd.lower() in ("b", "back") and len(buttons) > 1:
-            target = buttons[1].get("page")
-            if target:
-                goto(state, target)
+        if cmd.lower() in ("b", "back"):
+            if len(buttons) > 1:
+                target = buttons[1].get("page")
+                if target:
+                    goto(state, target)
+                    continue
+            if state.index > 0:
+                state.index -= 1
             continue
         # treat as a page id or a handler source snippet
         if state.book.page(cmd):
