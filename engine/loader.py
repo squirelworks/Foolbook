@@ -3,7 +3,7 @@
 Currently supports:
 - Maybe2-style lessonshell JSON (items, quiz, text)
 - .fbk and .fsk intermediate formats
-- Placeholder for raw .tbk (delegates to runtime.tbk when present)
+- Raw .tbk via the built-in engine.tbk parser
 """
 
 from __future__ import annotations
@@ -50,18 +50,9 @@ def _load_json(path: Path) -> Book:
 
 
 def _load_tbk(path: Path) -> Book:
-    """Best-effort load of a raw .tbk.
-
-    Tries the project's runtime.tbk parser if it is importable.
-    Falls back to an empty book with a note.
-    """
+    """Load a raw .tbk with the built-in parser."""
     try:
-        import sys
-        # Allow running from Foolbook/ or from the artifacts root
-        for candidate in (path.parent, Path(__file__).resolve().parents[2]):
-            if str(candidate) not in sys.path:
-                sys.path.insert(0, str(candidate))
-        from runtime import tbk as rtbk
+        from . import tbk as rtbk
         raw = rtbk.load(path)
         pages = []
         for p in raw.pages:
