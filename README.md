@@ -46,7 +46,7 @@ Foolbook/
 - `.tbk` — ToolBook book (compatibility)
 - `.sbk` — ToolBook system book (compatibility)
 
-The loader decodes OpenScript handlers from a `.tbk` and the viewer follows them. On a page with a `buttonClick` that says `go to page "P400"`, choosing Next goes to P400. Cross-book targets are noted but not followed yet.
+The loader decodes OpenScript handlers from a `.tbk` using the clean keyword table in `engine/keywords.py`. The original ToolBook resource lives in `engine/compat/res_77.bin` and is only used if that table is missing. `.fbk` and `.fsk` already hold source and never use it.
 
 ## Design notes
 
