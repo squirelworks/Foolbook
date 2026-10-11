@@ -7,6 +7,7 @@ can launch it with a path; if none is given, Foolbook asks for one.
   python3 -m foolbook path/to/book.tbk     # open a ToolBook book
   python3 -m foolbook                      # ask for a file
   python3 -m foolbook --gui path/to/book   # GUI viewer
+  python3 -m foolbook --catalog             # rebuild _courses/catalog.json
   python3 -m foolbook --debug              # files and checksums
   python3 -m foolbook --debug complete     # full check
   python3 -m foolbook --debug engine       # one module
@@ -37,6 +38,9 @@ def main() -> int:
     if args[0] in ("--gui", "-g"):
         from viewer.gui import main as gui_main
         return gui_main(args[1:])
+    if args[0] == "--catalog":
+        from _courses.catalog import main as catalog_main
+        return catalog_main(args[1:])
     if args[0] == "--debug":
         from _debug.debug import main as debug_main
         return debug_main(args[1:])
