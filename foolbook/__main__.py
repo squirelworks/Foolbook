@@ -10,7 +10,7 @@ can launch it with a path; if none is given, Foolbook asks for one.
   python3 -m foolbook --catalog             # rebuild _courses/catalog.json
   python3 -m foolbook --debug              # files and checksums
   python3 -m foolbook --debug complete     # full check
-  python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table
+  python3 -m foolbook --debug book.tbk     # keep decoded source
 """
 
 from __future__ import annotations
@@ -31,6 +31,13 @@ def main() -> int:
     if bin_path:
         from engine.loader import set_keyword_bin
         set_keyword_bin(bin_path)
+    debug_mode = _take_debug(args)
+    if debug_mode is not None and not args:
+        from _debug.debug import main as debug_main
+        return debug_main([debug_mode] if debug_mode else [])
+    if debug_mode is not None:
+        from engine.loader import set_keep_decoded
+        set_keep_decoded(True)
     if not args:
         path = _ask_for_book()
         if not path:
@@ -45,14 +52,30 @@ def main() -> int:
     if args[0] == "--catalog":
         from _courses.catalog import main as catalog_main
         return catalog_main(args[1:])
-    if args[0] == "--debug":
-        from _debug.debug import main as debug_main
-        return debug_main(args[1:])
     if args[0] == "--author":
         from author.gui import main as author_main
         return author_main(args[1:])
     from viewer.cli import main as cli_main
     return cli_main(args)
+
+
+def _take_debug(args: list[str]) -> str | None:
+    """Pull --debug [mode] out of argv.
+
+    Returns None if --debug was not given, '' for a bare --debug, or the mode.
+    A mode that is a book path is left in argv so the book still opens.
+    """
+    if "--debug" not in args:
+        return None
+    i = args.index("--debug")
+    mode = ""
+    if i + 1 < len(args) and not args[i + 1].startswith("-"):
+        nxt = args[i + 1]
+        if not Path(nxt).exists() and not nxt.lower().endswith((".tbk", ".sbk", ".fbk", ".fsk", ".json")):
+            mode = nxt
+            del args[i + 1]
+    del args[i]
+    return mode
 
 
 def _take_bin(args: list[str]) -> str:
