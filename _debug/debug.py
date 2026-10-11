@@ -22,9 +22,9 @@ CHECKSUMS = HERE / "checksums.json"
 
 # Expected layout. Paths are relative to the Foolbook root.
 EXPECTED = [
-    "foolbook/__init__.py",
-    "foolbook/__main__.py",
-    "foolbook/model.py",
+    "main/__init__.py",
+    "main/__main__.py",
+    "main/model.py",
     "foolbook.py",
     "engine/__init__.py",
     "engine/engine.py",
