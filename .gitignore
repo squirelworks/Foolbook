@@ -5,3 +5,4 @@ __pycache__/
 *.tmp
 *~
 progress.json
+_debug/checksums.json
