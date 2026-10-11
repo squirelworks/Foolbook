@@ -8,4 +8,4 @@ python3 -m foolbook --debug complete     # full check, writes checksums.json
 python3 -m foolbook --debug engine       # one module
 ```
 
-Modules: engine, viewer, author, menu, progress.
+Each run writes its results to `_debug/db-<timestamp>`. Those files are gitignored.
