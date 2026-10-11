@@ -1,10 +1,13 @@
-"""Intermediate authoring formats.
+"""Foolbook formats.
 
-.fbk is a Foolbook book. It will become a .tbk when the binary format is ready.
-.fsk is a Foolbook system book. It will become a .sbk when that format is ready.
+.fbk is the Foolbook book format. It is the standard.
+.fsk is the Foolbook system-book format. It is the standard.
 
-Until then both are JSON with a format marker so the structure can evolve
-without changing the editor or the loader.
+.tbk and .sbk are supported for backward compatibility with existing
+ToolBook files. New work is authored as .fbk / .fsk.
+
+Both .fbk and .fsk are JSON with a format marker so the structure can
+evolve without changing the editor or the loader.
 """
 
 from __future__ import annotations
@@ -34,11 +37,7 @@ def load(path: Path) -> dict:
 
 
 def save_book(path: Path, book: dict) -> Path:
-    """Write a .json and a sibling .fbk.
-
-    The .json is the working copy. The .fbk is the intermediate that will
-    become a .tbk.
-    """
+    """Write a .json working copy and a sibling .fbk (the standard)."""
     path = Path(path)
     if path.suffix.lower() != ".json":
         path = path.with_suffix(".json")
@@ -51,19 +50,19 @@ def save_book(path: Path, book: dict) -> Path:
     fbk_book = dict(book)
     fbk_book["format"] = FBK
     fbk_book["format_version"] = FORMAT_VERSION
-    fbk_book["will_become"] = "tbk"
+    fbk_book["will_become"] = "fbk"
     fbk.write_text(json.dumps(fbk_book, indent=2), encoding="utf-8")
     return path
 
 
 def save_system(path: Path, system: dict) -> Path:
-    """Write a .fsk. It will become a .sbk."""
+    """Write a .fsk (the standard system-book format)."""
     path = Path(path)
     if path.suffix.lower() != ".fsk":
         path = path.with_suffix(".fsk")
     system = dict(system)
     system["format"] = FSK
     system["format_version"] = FORMAT_VERSION
-    system["will_become"] = "sbk"
+    system["will_become"] = "fsk"
     path.write_text(json.dumps(system, indent=2), encoding="utf-8")
     return path
