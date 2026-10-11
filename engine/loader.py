@@ -60,10 +60,18 @@ def _load_tbk(path: Path) -> Book:
         raw = rtbk.load(path)
         pages = []
         for p in raw.pages:
+            text = []
+            for f in getattr(p, "fields", []) or []:
+                t = getattr(f, "text", None)
+                if t:
+                    text.append(t)
+            for para in getattr(p, "paragraphs", []) or []:
+                if para and para not in text:
+                    text.append(para)
             pages.append(Page(
                 id=p.name,
-                text=[f.text for f in p.fields],
-                jumps=list(p.quoted_jumps or []),
+                text=text,
+                jumps=list(getattr(p, "quoted_jumps", None) or []),
                 raw={"offset": p.offset},
             ))
         return Book(path=str(path), title=path.stem, pages=pages)
