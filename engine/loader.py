@@ -16,6 +16,10 @@ from foolbook.model import Book, Page, Handler
 
 def load(path: str | Path) -> Book:
     path = Path(path)
+    if not path.is_absolute() and not path.exists():
+        core = Path(__file__).resolve().parents[1] / "core" / path.name
+        if core.exists():
+            path = core
     if path.suffix.lower() in (".json", ".fbk", ".fsk"):
         return _load_json(path)
     return _load_tbk(path)
