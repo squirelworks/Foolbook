@@ -86,16 +86,23 @@ def _load_tbk(path: Path) -> Book:
 
 
 def _keywords():
-    from .openscript import load_keywords
-    here = Path(__file__).resolve().parent
-    bin_path = here / "res_77.bin"
-    if bin_path.exists():
-        return load_keywords(bin_path)
+    """Keyword table for decoding .tbk / .sbk handlers.
+
+    Prefers the clean transcription in keywords.py. The original ToolBook
+    resource (engine/compat/res_77.bin) is only used if that table is missing.
+    .fbk and .fsk never call this.
+    """
     try:
         from .keywords import KEYWORDS
-        return KEYWORDS
+        if KEYWORDS:
+            return KEYWORDS
     except ImportError:
         pass
+    here = Path(__file__).resolve().parent
+    bin_path = here / "compat" / "res_77.bin"
+    if bin_path.exists():
+        from .openscript import load_keywords
+        return load_keywords(bin_path)
     json_path = here / "keywords.json"
     if json_path.exists():
         try:
@@ -114,6 +121,7 @@ def _handlers_from_blob(blob: bytes, keywords, decode) -> list:
         return found
     for match in re.finditer(rb"(?i)to handle [A-Za-z][A-Za-z0-9]*", blob):
         start = match.start()
+        # handlers end at a standalone END; cap the search
         end = blob.find(b"\rend", start)
         if end < 0 or end - start > 4000:
             end = blob.find(b"\nEND", start)
@@ -142,6 +150,7 @@ def _items_from_handlers(handlers: list) -> list:
         if h.name.lower() != "buttonclick":
             continue
         src = h.source or ""
+        # cut at the first END so trailing garbage does not confuse the label
         low = src.lower()
         cut = low.find("\nend")
         if cut > 0:
