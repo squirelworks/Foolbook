@@ -23,7 +23,7 @@ def main(argv: list[str] | None = None) -> int:
         print("No book given. Pass a .tbk, .sbk, or .json to open one.")
         print("  python3 -m foolbook path/to/book.tbk")
         return 0
-    path = Path(argv[0])
+    path = Path(argv[0].replace("\\", "/")).expanduser()
     if not path.exists():
         print(f"not found: {path}")
         return 1
