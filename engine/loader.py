@@ -13,6 +13,16 @@ from pathlib import Path
 from foolbook.model import Book, Page, Handler
 
 
+# Optional override set by --bin. Only used when decoding .tbk / .sbk.
+_BIN_OVERRIDE: Path | None = None
+
+
+def set_keyword_bin(path: str | Path | None) -> None:
+    """Use this keyword resource instead of the clean table when decoding .tbk/.sbk."""
+    global _BIN_OVERRIDE
+    _BIN_OVERRIDE = Path(path) if path else None
+
+
 def load(path: str | Path) -> Book:
     path = Path(path)
     if not path.is_absolute() and not path.exists():
@@ -88,10 +98,15 @@ def _load_tbk(path: Path) -> Book:
 def _keywords():
     """Keyword table for decoding .tbk / .sbk handlers.
 
-    Prefers the clean transcription in keywords.py. The original ToolBook
-    resource (engine/compat/res_77.bin) is only used if that table is missing.
+    --bin overrides everything. Otherwise the clean transcription in
+    keywords.py is used. engine/compat/res_77.bin is only a fallback.
     .fbk and .fsk never call this.
     """
+    if _BIN_OVERRIDE is not None:
+        from .openscript import load_keywords
+        if not _BIN_OVERRIDE.exists():
+            raise FileNotFoundError(f"keyword bin not found: {_BIN_OVERRIDE}")
+        return load_keywords(_BIN_OVERRIDE)
     try:
         from .keywords import KEYWORDS
         if KEYWORDS:
