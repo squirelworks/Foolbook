@@ -1,7 +1,11 @@
 """OpenScript bytecode decoder.
 
-Self-contained. Uses engine/res_77.bin or engine/keywords.json as the keyword table.
-The loader calls this to turn handler streams into source the engine can run.
+Used only for .tbk / .sbk backward compatibility.
+.fbk and .fsk already hold source; they never reach this module.
+
+Keyword table is the clean transcription in engine/keywords.py.
+engine/compat/res_77.bin is the original ToolBook resource and is only
+loaded if the clean table is missing.
 """
 import struct
 import sys
@@ -9,7 +13,7 @@ from pathlib import Path
 
 def load_keywords(res_path):
     """Load the keyword table from resource 0x77.
-
+    
     The offset table starts at byte 2 + count*4.
     Each entry is a word offset into the resource.
     """
@@ -30,9 +34,9 @@ def load_keywords(res_path):
 
 def decode(bytecode, keywords):
     """Decode a bytecode stream into source text.
-
+    
     Back-references (0xC0-0xFF) copy from the compressed input stream,
-    not the output buffer.
+    not the output buffer, per FUN_1040_0970.
     """
     output = bytearray()
     pos = 0
@@ -70,6 +74,7 @@ def decode(bytecode, keywords):
             if (b & 0x20) == 0:
                 output.append(0x20)
         else:
+            # back-ref into INPUT stream
             if (b & 0x10) == 0:
                 if pos + 1 >= len(bytecode):
                     break
@@ -80,6 +85,7 @@ def decode(bytecode, keywords):
                 if pos + 2 >= len(bytecode):
                     break
                 length = (b & 0xF) + 4
+                import struct
                 off = struct.unpack_from('<H', bytecode, pos + 1)[0]
                 src = (pos + 1) + (-1 - off)
                 pos += 3
@@ -89,3 +95,17 @@ def decode(bytecode, keywords):
                 else:
                     output.append(0x3F)
     return output.decode('latin-1', errors='replace')
+
+def main():
+    if len(sys.argv) < 3:
+        print(f'Usage: {sys.argv[0]} <res_77.bin> <bytecode.bin>')
+        sys.exit(1)
+    keywords = load_keywords(sys.argv[1])
+    print(f'Loaded {len(keywords)} keywords')
+    bytecode = Path(sys.argv[2]).read_bytes()
+    print(f'Bytecode: {len(bytecode)} bytes')
+    text = decode(bytecode, keywords)
+    print(text)
+
+if __name__ == '__main__':
+    main()
