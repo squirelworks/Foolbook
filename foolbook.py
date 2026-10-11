@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Launcher.
 
-  python3 foolbook.py path/to/book.fbk     # open that book
-  python3 foolbook.py path/to/book.tbk     # open a ToolBook book
-  python3 foolbook.py                      # ask for a file
-  python3 foolbook.py --gui path/to/book   # GUI viewer
+  python3 foolbook.py path/to/book.fbk     # open in the GUI
+  python3 foolbook.py                      # ask for a file, then open the GUI
+  python3 foolbook.py --cli path/to/book   # terminal viewer
   python3 foolbook.py --menu _courses/catalog.json
   python3 foolbook.py --catalog             # rebuild catalog
   python3 foolbook.py --author              # authoring editor
