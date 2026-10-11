@@ -317,7 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     if not argv:
         print("usage: python3 -m viewer.gui <book.tbk|book.json>")
         return 2
-    path = Path(argv[0])
+    path = Path(argv[0].replace("\\", "/")).expanduser()
     if not path.exists():
         print(f"not found: {path}")
         return 1
