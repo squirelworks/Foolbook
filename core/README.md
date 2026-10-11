@@ -2,8 +2,8 @@
 
 System books and core books live here.
 
-Eventually this is where the modern `tb80r.tbk` and the system `.sbk` files
-sit, and where original `.tbk` / `.sbk` files can be dropped.
+`.fbk` and `.fsk` are the standard formats. Drop them here.
+`.tbk` and `.sbk` are also accepted for backward compatibility with
+existing ToolBook files.
 
-Until the binary formats are ready, drop `.fbk` (book) and `.fsk` (system)
-files here. The loader and menu look in this directory.
+`tb80r.fsk` is the reader system book. The loader and menu look in this directory.
