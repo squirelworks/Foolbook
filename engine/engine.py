@@ -21,7 +21,7 @@ Handled:
 from __future__ import annotations
 
 import re
-from foolbook.model import RuntimeState, Page
+from main.model import RuntimeState, Page
 
 
 _GOTO = re.compile(
