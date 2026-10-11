@@ -8,9 +8,10 @@ Coded GUI (Tkinter). Not HTML.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
+
+from .formats import save_book, load as load_book
 
 try:
     import tkinter as tk
@@ -97,14 +98,13 @@ class Editor:
     def _open(self):
         p = filedialog.askopenfilename(
             title="Open book",
-            filetypes=[("JSON", "*.json"), ("All", "*.*")],
+            filetypes=[("JSON", "*.json"), ("Foolbook book", "*.fbk"), ("All", "*.*")],
         )
         if p:
             self._load(Path(p))
 
     def _load(self, path: Path):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        self.book = data
+        self.book = load_book(path)
         self.path = path
         self._refresh_list()
         self.status.config(text=str(path.name))
@@ -114,21 +114,21 @@ class Editor:
         if not self.path:
             self._save_as()
             return
-        self.path.write_text(json.dumps(self.book, indent=2), encoding="utf-8")
-        self.status.config(text=f"Saved {self.path.name}")
+        save_book(self.path, self.book)
+        self.status.config(text=f"Saved {self.path.with_suffix('.json').name} and .fbk")
 
     def _save_as(self):
         self._apply()
         p = filedialog.asksaveasfilename(
             title="Save book",
             defaultextension=".json",
-            filetypes=[("JSON", "*.json")],
+            filetypes=[("JSON (and .fbk)", "*.json"), ("Foolbook book", "*.fbk")],
         )
         if not p:
             return
         self.path = Path(p)
-        self.path.write_text(json.dumps(self.book, indent=2), encoding="utf-8")
-        self.status.config(text=f"Saved {self.path.name}")
+        save_book(self.path, self.book)
+        self.status.config(text=f"Saved {self.path.with_suffix('.json').name} and .fbk")
 
     def _refresh_list(self):
         self.pages.delete(0, "end")
