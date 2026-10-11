@@ -1,12 +1,6 @@
 __pycache__/
 *.pyc
-*.pyo
-.DS_Store
-*.tmp
-*~
 _debug/checksums.json
 _debug/db-*
 _debug/decoded/
-
-
-
+progress/progress.json
