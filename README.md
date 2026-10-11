@@ -19,7 +19,7 @@ python3 -m foolbook --gui path/to/book        # GUI viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
 python3 -m foolbook --author                  # slide editor
-python3 -m foolbook --debug                   # files and checksums
+python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 
 A course module (Foolcourse, when it exists) is the driver. It decides which course, then launches Foolbook with the book path.
