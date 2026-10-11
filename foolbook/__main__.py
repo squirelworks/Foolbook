@@ -1,12 +1,13 @@
 """Foolbook main entry.
 
-From the Foolbook directory:
+Foolbook is the tool that opens a book. A course module (or Foolcourse)
+can launch it with a path; if none is given, Foolbook asks for one.
 
-  python3 -m foolbook path/to/book.tbk
-  python3 foolbook.py path/to/book.tbk
-
-Do not run `python3 foolbook` (that treats the package directory as a script
-and loses the sibling packages).
+  python3 -m foolbook path/to/book.fbk     # open that book
+  python3 -m foolbook path/to/book.tbk     # open a ToolBook book
+  python3 -m foolbook                      # ask for a file
+  python3 -m foolbook --gui path/to/book   # GUI viewer
+  python3 -m foolbook --menu catalog.json  # course menu
 """
 
 from __future__ import annotations
@@ -24,8 +25,10 @@ if str(_root) not in sys.path:
 def main() -> int:
     args = sys.argv[1:]
     if not args:
-        from menu.menu import main as menu_main
-        return menu_main([])
+        path = _ask_for_book()
+        if not path:
+            return 0
+        args = [path]
     if args[0] == "--menu":
         from menu.menu import main as menu_main
         return menu_main(args[1:])
@@ -37,6 +40,26 @@ def main() -> int:
         return author_main(args[1:])
     from viewer.cli import main as cli_main
     return cli_main(args)
+
+
+def _ask_for_book() -> str:
+    """Prompt for a book path when none was passed in."""
+    print("Foolbook")
+    print("Open a book. Pass a path, or type one now.")
+    print("  .fbk / .tbk   book")
+    print("  .fsk / .sbk   system book")
+    print("  (empty to quit)")
+    try:
+        path = input("book> ").strip().strip('"').strip("'")
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
+    if not path:
+        return ""
+    if not Path(path).exists():
+        print(f"not found: {path}")
+        return ""
+    return path
 
 
 if __name__ == "__main__":
