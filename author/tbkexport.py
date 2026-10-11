@@ -25,6 +25,22 @@ from pathlib import Path
 
 MARK = bytes.fromhex("80650005000202")
 STUB = 0xC00
+# ZZZTBKBOOKLOC, copied from a real book at file 0x9EC:
+# dword offset of the book stream, then magic 0x22222222.
+LOCATOR = 0x9EC
+BOOK_OFF = 0xC00
+MAGIC = 0x22222222
+# Page property block from 9e954d01 P1: 14 00 00 11, then six words.
+PAGE_PROPS = bytes.fromhex("140000110000760068002001000100000000")
+# Book-level property tree copied from the real header, 0xC18..0xC80.
+BOOK_TREE = bytes.fromhex(
+    "1400001100000000"
+    "1400001000000000"
+    "140000700000000000000000000000000000000000000000"
+    "14000090140000b000000000"
+    "140000d00000000000000000"
+    "140000f00000000000000000"
+)
 
 
 def _script_for(page: dict) -> str:
@@ -53,15 +69,17 @@ def _record(name: str, oid: int, text: str, script: bytes) -> bytes:
         body = "\r\n" + body
     raw = body.encode("latin-1", "replace")
     field = b"Text\x00\x00" + b"\x00" * 8 + struct.pack("<H", len(raw)) + raw
-    props = b"\x14\x00\x00\x01" + b"\x00" * 12
-    return MARK + struct.pack("<I", oid) + name_b + props + field + b"\x00" + script + b"\x00"
+    return MARK + struct.pack("<I", oid) + name_b + PAGE_PROPS + field + b"\x00" + script + b"\x00"
 
 
 def write_tbk(path: Path, book: dict, compile_script) -> Path:
     path = Path(path)
     stub = bytearray(STUB)
     stub[0:2] = b"MZ"
-    stream = bytearray(bytes.fromhex("034a424f01000008") + b"\x00" * 8)
+    # locator the opener searches for: book offset, then 0x22222222
+    struct.pack_into("<II", stub, LOCATOR, BOOK_OFF, MAGIC)
+    stream = bytearray(bytes.fromhex("034a424f01000008") + b"\x00" * 16)
+    stream += BOOK_TREE
     for n, page in enumerate(book.get("pages") or [], start=1):
         text = "\n".join(page.get("text") or [])
         script = compile_script(_script_for(page))
