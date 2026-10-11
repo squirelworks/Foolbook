@@ -29,6 +29,7 @@ def main() -> int:
     args = sys.argv[1:]
     port = _take_port(args)
     student = _take_student(args)
+    locale = _take_locale(args)
     bin_path = _take_bin(args)
     if bin_path:
         from engine.loader import set_keyword_bin
@@ -62,9 +63,23 @@ def main() -> int:
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.gui import main as gui_main
-    return gui_main(args, port=port, student=student)
+    return gui_main(args, port=port, student=student, locale=locale)
 
 
+
+
+
+def _take_locale(args: list[str]) -> str:
+    """Pull --locale ID out of argv. Empty means the viewer default."""
+    if "--locale" not in args:
+        return ""
+    i = args.index("--locale")
+    if i + 1 >= len(args):
+        print("--locale needs an id")
+        raise SystemExit(2)
+    locale = args[i + 1]
+    del args[i:i + 2]
+    return locale
 
 
 def _take_student(args: list[str]) -> str:

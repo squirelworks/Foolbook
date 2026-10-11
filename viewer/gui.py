@@ -253,7 +253,7 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 1337, student: str = "") -> None:
+def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "") -> None:
     book = load(path)
     course_id = Path(path).stem
     progress = Progress(Path(student) if student else _progress_path())
@@ -300,6 +300,8 @@ def serve(path: str | Path, port: int = 1337, student: str = "") -> None:
     url = f"http://127.0.0.1:{port}/"
     print(f"Foolbook GUI  {book.title or Path(path).name}  ({len(book.pages)} pages)")
     print(f"Open {url}")
+    if locale:
+        print(f"Locale {locale}  (course text is not translated)")
     try:
         webbrowser.open(url)
     except Exception:
@@ -318,7 +320,7 @@ def _progress_path() -> Path:
     return dest
 
 
-def main(argv: list[str] | None = None, port: int = 1337, student: str = "") -> int:
+def main(argv: list[str] | None = None, port: int = 1337, student: str = "", locale: str = "") -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
     if "--port" in argv:
         i = argv.index("--port")
@@ -338,6 +340,13 @@ def main(argv: list[str] | None = None, port: int = 1337, student: str = "") -> 
             return 2
         student = argv[i + 1]
         del argv[i:i + 2]
+    if "--locale" in argv:
+        i = argv.index("--locale")
+        if i + 1 >= len(argv):
+            print("--locale needs an id")
+            return 2
+        locale = argv[i + 1]
+        del argv[i:i + 2]
     if not argv:
         print("usage: python3 -m viewer.gui [--port N] <book.tbk|book.json>")
         return 2
@@ -345,7 +354,7 @@ def main(argv: list[str] | None = None, port: int = 1337, student: str = "") -> 
     if not path.exists():
         print(f"not found: {path}")
         return 1
-    serve(path, port, student)
+    serve(path, port, student, locale)
     return 0
 
 
