@@ -46,7 +46,7 @@ def main() -> int:
         return menu_main(args[1:])
     if args[0] == "--cli":
         from viewer.cli import main as cli_main
-        return cli_main(args[1:])
+        return cli_main([str(normalize_path(a)) if i == 0 else a for i, a in enumerate(args[1:])])
     if args[0] in ("--gui", "-g"):
         args = args[1:]
     if args and args[0] == "--catalog":
@@ -55,6 +55,8 @@ def main() -> int:
     if args and args[0] == "--author":
         from author.gui import main as author_main
         return author_main(args[1:])
+    if args:
+        args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.gui import main as gui_main
     return gui_main(args)
 
@@ -71,7 +73,8 @@ def _take_debug(args: list[str]) -> str | None:
     mode = ""
     if i + 1 < len(args) and not args[i + 1].startswith("-"):
         nxt = args[i + 1]
-        if not Path(nxt).exists() and not nxt.lower().endswith((".tbk", ".sbk", ".fbk", ".fsk", ".json")):
+        nxt_path = normalize_path(nxt)
+        if not nxt_path.exists() and not nxt.lower().endswith((".tbk", ".sbk", ".fbk", ".fsk", ".json")):
             mode = nxt
             del args[i + 1]
     del args[i]
@@ -89,6 +92,11 @@ def _take_bin(args: list[str]) -> str:
     path = args[i + 1]
     del args[i:i + 2]
     return path
+
+
+def normalize_path(raw: str) -> Path:
+    """Accept either slash and expand ~."""
+    return Path(raw.strip().strip('"').strip("'").replace("\\", "/")).expanduser()
 
 
 def _ask_for_book() -> str:
@@ -110,7 +118,7 @@ def _ask_for_book() -> str:
             return ""
         if not raw:
             return ""
-        path = Path(raw.replace("\\", "/")).expanduser()
+        path = normalize_path(raw)
         if path.exists():
             return str(path)
         print(f"not found: {path}")
