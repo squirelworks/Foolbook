@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 from engine.loader import load
 from foolbook.model import RuntimeState
 from engine.engine import goto
+from progress.progress import Progress
 
 
 HTML = r"""<!DOCTYPE html>
@@ -38,7 +39,7 @@ HTML = r"""<!DOCTYPE html>
 
   /* default: Windows 95 */
   body.win95 {
-    font-family: \"MS Sans Serif\", Tahoma, sans-serif;
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
     font-size: 11px;
     background: #c0c0c0;
   }
@@ -151,13 +152,22 @@ async function loadBook() {
     li.onclick = () => show(i);
     ul.appendChild(li);
   });
-  show(0);
+  let start = 0;
+  if (book.last_page) {
+    const idx = book.pages.findIndex(p => p.id === book.last_page);
+    if (idx >= 0) start = idx;
+  }
+  show(start);
 }
 
 function show(i) {
   const p = book.pages[i];
+  fetch('/api/visit?page=' + encodeURIComponent(p.id));
   document.querySelectorAll('#pages li').forEach((el, j) => {
     el.classList.toggle('active', j === i);
+    if (book.visited && book.visited.indexOf(book.pages[j].id) >= 0) {
+      el.style.opacity = '0.6';
+    }
   });
   const c = document.getElementById('content');
   c.innerHTML = '';
@@ -218,9 +228,13 @@ loadBook();
 """
 
 
-def book_to_json(book) -> dict:
+def book_to_json(book, progress=None, course_id="") -> dict:
+    visited = progress.visited(course_id) if progress else []
+    last = progress.last_page(course_id) if progress else ""
     return {
         "title": book.title,
+        "last_page": last,
+        "visited": visited,
         "pages": [
             {
                 "id": p.id,
@@ -236,7 +250,9 @@ def book_to_json(book) -> dict:
 
 def serve(path: str | Path, port: int = 8765) -> None:
     book = load(path)
-    payload = json.dumps(book_to_json(book)).encode("utf-8")
+    course_id = Path(path).stem
+    progress = Progress(_progress_path())
+    progress.touch(course_id)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
@@ -252,11 +268,19 @@ def serve(path: str | Path, port: int = 8765) -> None:
                 self.end_headers()
                 self.wfile.write(body)
             elif u.path == "/api/book":
+                payload = json.dumps(book_to_json(book, progress, course_id)).encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
+            elif u.path == "/api/visit":
+                from urllib.parse import parse_qs
+                page = (parse_qs(u.query).get("page") or [""])[0]
+                if page:
+                    progress.mark_page(course_id, page)
+                self.send_response(204)
+                self.end_headers()
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -274,6 +298,13 @@ def serve(path: str | Path, port: int = 8765) -> None:
     except KeyboardInterrupt:
         print()
         server.shutdown()
+
+
+def _progress_path() -> Path:
+    root = Path(__file__).resolve().parents[1]
+    dest = root / "progress" / "progress.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    return dest
 
 
 def main(argv: list[str] | None = None) -> int:
