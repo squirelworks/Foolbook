@@ -10,8 +10,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from .loader import load
-from .engine import run_handler, goto
+from engine.loader import load
+from engine.engine import run_handler, goto
 from .model import RuntimeState
 
 
