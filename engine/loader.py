@@ -85,6 +85,7 @@ def _load_tbk(path: Path) -> Book:
                 handlers=handlers,
                 raw={"offset": p.offset},
             ))
+        _write_decoded(path, pages)
         return Book(path=str(path), title=path.stem, pages=pages)
     except Exception as exc:
         book = Book(path=str(path), title=path.stem)
@@ -93,6 +94,33 @@ def _load_tbk(path: Path) -> Book:
             text=[f"Could not parse {path.name}: {exc}"],
         ))
         return book
+
+
+def _write_decoded(path: Path, pages: list) -> None:
+    """Save decoded handler source under _debug/decoded/ so a load can be inspected later."""
+    import json
+    from datetime import datetime
+    root = Path(__file__).resolve().parents[1]
+    dest_dir = root / "_debug" / "decoded"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    record = {
+        "book": path.name,
+        "decoded": stamp,
+        "pages": [
+            {
+                "id": p.id,
+                "handlers": [
+                    {"name": h.name, "offset": h.offset, "source": h.source}
+                    for h in (p.handlers or [])
+                ],
+            }
+            for p in pages
+            if p.handlers
+        ],
+    }
+    out = dest_dir / f"{path.stem}-{stamp}.json"
+    out.write_text(json.dumps(record, indent=2), encoding="utf-8")
 
 
 def _keywords():
