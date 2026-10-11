@@ -13,12 +13,14 @@ import hashlib
 import importlib
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 CHECKSUMS = HERE / "checksums.json"
 
+# Expected layout. Paths are relative to the Foolbook root.
 EXPECTED = [
     "foolbook/__init__.py",
     "foolbook/__main__.py",
@@ -60,6 +62,7 @@ def sha256(path: Path) -> str:
 
 
 def check_files() -> tuple[list[str], list[str]]:
+    """Return (missing, present)."""
     missing = []
     present = []
     for rel in EXPECTED:
@@ -71,6 +74,7 @@ def check_files() -> tuple[list[str], list[str]]:
 
 
 def check_checksums() -> tuple[list[str], list[str]]:
+    """Return (mismatches, ok). Empty checksums file means no baseline yet."""
     if not CHECKSUMS.exists():
         return [], []
     try:
@@ -93,6 +97,7 @@ def check_checksums() -> tuple[list[str], list[str]]:
 
 
 def write_checksums() -> None:
+    """Write current checksums as the baseline."""
     data = {}
     for rel in EXPECTED:
         path = ROOT / rel
@@ -102,6 +107,7 @@ def write_checksums() -> None:
 
 
 def check_module(name: str) -> list[str]:
+    """Import the named module's parts. Return error strings."""
     errors = []
     targets = MODULES.get(name)
     if not targets:
@@ -115,47 +121,61 @@ def check_module(name: str) -> list[str]:
 
 
 def run(mode: str | None = None) -> int:
-    print("Foolbook debug")
+    """Run the requested debug. mode is None, 'complete', or a module name."""
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    lines = [f"Foolbook debug  {stamp}", f"mode: {mode or 'default'}"]
+
     missing, present = check_files()
-    print(f"  files: {len(present)} present, {len(missing)} missing")
+    lines.append(f"files: {len(present)} present, {len(missing)} missing")
     for m in missing:
-        print(f"    missing {m}")
+        lines.append(f"  missing {m}")
 
     bad, ok = check_checksums()
     if CHECKSUMS.exists():
-        print(f"  checksums: {len(ok)} ok, {len(bad)} bad")
+        lines.append(f"checksums: {len(ok)} ok, {len(bad)} bad")
         for b in bad:
-            print(f"    {b}")
+            lines.append(f"  {b}")
     else:
-        print("  checksums: no baseline (run --debug complete to write one)")
+        lines.append("checksums: no baseline (run --debug complete to write one)")
 
+    rc = 0
     if mode == "complete":
         write_checksums()
-        print(f"  wrote {CHECKSUMS.name}")
+        lines.append(f"wrote {CHECKSUMS.name}")
         for name in MODULES:
             errs = check_module(name)
             if errs:
                 for e in errs:
-                    print(f"    {e}")
+                    lines.append(f"  {e}")
+                rc = 1
             else:
-                print(f"  {name}: ok")
-        return 1 if missing or bad else 0
-
-    if mode and mode in MODULES:
+                lines.append(f"{name}: ok")
+        if missing or bad:
+            rc = 1
+    elif mode and mode in MODULES:
         errs = check_module(mode)
         if errs:
             for e in errs:
-                print(f"    {e}")
-            return 1
-        print(f"  {mode}: ok")
-        return 0
+                lines.append(f"  {e}")
+            rc = 1
+        else:
+            lines.append(f"{mode}: ok")
+    elif mode and mode not in MODULES and mode != "complete":
+        lines.append(f"unknown debug target: {mode}")
+        lines.append(f"known: complete, {', '.join(MODULES)}")
+        rc = 2
+    else:
+        if missing or bad:
+            rc = 1
 
-    if mode and mode not in MODULES and mode != "complete":
-        print(f"  unknown debug target: {mode}")
-        print(f"  known: complete, {', '.join(MODULES)}")
-        return 2
+    lines.append(f"exit: {rc}")
+    report = "\n".join(lines) + "\n"
+    print(report, end="")
 
-    return 1 if missing or bad else 0
+    dest = HERE / f"db-{stamp}"
+    dest.write_text(report, encoding="utf-8")
+    print(f"wrote {dest.relative_to(ROOT)}")
+    return rc
 
 
 def main(argv: list[str] | None = None) -> int:
