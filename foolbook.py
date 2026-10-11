@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Launcher.
 
-  python3 foolbook.py                      # course menu
-  python3 foolbook.py path/to/book.tbk     # viewer
+  python3 foolbook.py path/to/book.fbk     # open that book
+  python3 foolbook.py path/to/book.tbk     # open a ToolBook book
+  python3 foolbook.py                      # ask for a file
   python3 foolbook.py --gui path/to/book   # GUI viewer
   python3 foolbook.py --menu catalog.json  # course menu
   python3 foolbook.py --author             # authoring editor
+
+A course module launches this with the book path so Foolbook opens
+straight into that course.
 """
 
 import sys
