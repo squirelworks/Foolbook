@@ -23,7 +23,7 @@ def open_book(path: str | Path, student: str = "", course: str = "") -> int:
 
     root = tk.Tk()
     root.title(book.title or Path(path).name)
-    root.geometry("800x500")
+    root.geometry("960x600")
 
     pages = book.pages
     last = progress.last_page(course_id)
@@ -32,7 +32,7 @@ def open_book(path: str | Path, student: str = "", course: str = "") -> int:
     # Splash
     splash = tk.Toplevel(root)
     splash.title("Foolbook")
-    splash.geometry("360x200")
+    splash.geometry("480x280")
     splash.transient(root)
     splash.grab_set()
     tk.Label(splash, text="2+2=5", font=("TkDefaultFont", 18, "bold")).pack(pady=(16, 4))
