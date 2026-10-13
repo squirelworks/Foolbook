@@ -1,5 +1,7 @@
 """OpenScript bytecode decoder.
 
+Foolbook imports Openscript. openscript_analysis is the package.
+
 Used only for .tbk / .sbk backward compatibility.
 .fbk and .fsk already hold source; they never reach this module.
 
@@ -10,6 +12,12 @@ loaded if the clean table is missing.
 import struct
 import sys
 from pathlib import Path
+
+try:
+    from openscript_analysis.decode import decode as _osa_decode, compile as _osa_compile
+except ImportError:
+    _osa_decode = None
+    _osa_compile = None
 
 def load_keywords(res_path):
     """Load the keyword table from resource 0x77.
