@@ -310,19 +310,93 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
-    book = load(path)
-    localized = _apply_locale(book, Path(path), locale) if locale else False
-    course_id = course or Path(path).stem
-    progress = Progress(Path(student) if student else _progress_path())
-    progress.touch(course_id)
+def serve(path: str | Path | None = None, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
+    """Long-lived server. Sessions switch books without restart.
+
+    One process holds multiple sessions. A session is a student plus a
+    course. Idle sessions drop after five minutes. /api/load creates or
+    replaces a session. Finish marks the course done; it does not exit.
+    """
+    sessions: dict[str, dict] = {}
+    lock = threading.Lock()
+    IDLE = 300  # seconds
+
+    def touch(sid: str):
+        with lock:
+            if sid in sessions:
+                sessions[sid]["seen"] = time.time()
+
+    def load_session(sid: str, book_path: Path, student_path: str, loc: str, cid: str):
+        book = load(book_path)
+        if loc:
+            _apply_locale(book, book_path, loc)
+        course_id = cid or book_path.stem
+        prog = Progress(Path(student_path) if student_path else _progress_path())
+        prog.touch(course_id)
+        with lock:
+            sessions[sid] = {
+                "book": book,
+                "progress": prog,
+                "course_id": course_id,
+                "path": book_path,
+                "seen": time.time(),
+            }
+        return course_id
+
+    def get(sid: str):
+        with lock:
+            s = sessions.get(sid)
+            if s:
+                s["seen"] = time.time()
+            return s
+
+    def expire():
+        while True:
+            time.sleep(30)
+            now = time.time()
+            with lock:
+                dead = [k for k, v in sessions.items() if now - v["seen"] > IDLE]
+                for k in dead:
+                    del sessions[k]
+
+    threading.Thread(target=expire, daemon=True).start()
+
+    # Optional first book
+    if path:
+        load_session("default", Path(path), student, locale, course)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             pass
 
+        def _sid(self, u):
+            from urllib.parse import parse_qs
+            return (parse_qs(u.query).get("s") or ["default"])[0]
+
         def do_GET(self):
             u = urlparse(self.path)
+            sid = self._sid(u)
+            if u.path == "/api/load":
+                from urllib.parse import parse_qs
+                q = parse_qs(u.query)
+                bp = (q.get("path") or [""])[0]
+                st = (q.get("student") or [""])[0]
+                loc = (q.get("locale") or [""])[0]
+                cid = (q.get("course") or [""])[0]
+                nsid = (q.get("s") or ["default"])[0]
+                if not bp or not Path(bp).exists():
+                    self.send_response(400)
+                    self.end_headers()
+                    return
+                load_session(nsid, Path(bp), st, loc, cid)
+                body = json.dumps({"ok": True, "session": nsid}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            sess = get(sid)
             if u.path in ("/", "/index.html"):
                 body = HTML.encode("utf-8")
                 self.send_response(200)
@@ -330,8 +404,16 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
-            elif u.path == "/api/book":
-                payload = json.dumps(book_to_json(book, progress, course_id)).encode("utf-8")
+                return
+            if not sess:
+                self.send_response(404)
+                self.end_headers()
+                return
+            book = sess["book"]
+            progress = sess["progress"]
+            course_id = sess["course_id"]
+            if u.path == "/api/book":
+                payload = json.dumps(book_to_json(book, progress, course_id)).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
@@ -350,7 +432,7 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
                 page = (q.get("page") or [""])[0]
                 correct = (q.get("correct") or ["0"])[0] == "1"
                 score = progress.record_answer(course_id, page, correct) if page else {}
-                body = json.dumps(score).encode("utf-8")
+                body = json.dumps(score).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
@@ -359,13 +441,15 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
             elif u.path == "/api/finish":
                 progress.complete(course_id)
                 score = progress.course_score(course_id)
-                body = json.dumps(score).encode("utf-8")
+                body = json.dumps(score).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
-                threading.Thread(target=lambda: (time.sleep(0.4), server.shutdown()), daemon=True).start()
+                # Drop the session; server stays up
+                with lock:
+                    sessions.pop(sid, None)
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -373,23 +457,17 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
     try:
         server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     except OSError as exc:
-        if exc.errno in (98, 48):  # EADDRINUSE on Linux, macOS
-            print("Server already running, cannot start a new instance")
+        if exc.errno in (98, 48):
+            print("Server already running")
             raise SystemExit(1)
         raise
     url = f"http://127.0.0.1:{port}/"
-    print(f"Foolbook GUI  {book.title or Path(path).name}  ({len(book.pages)} pages)")
-    print(f"Open {url}")
-    if locale:
-        note = "course localized" if localized else "no course localization, text left as written"
-        print(f"Locale {locale}  ({note})")
-    opened = _open_browser(url)
-    if not opened:
-        print(f"Browser did not open. Go to {url}")
+    print(f"Foolbook server on {url}")
+    if path:
+        print(f"Loaded {Path(path).name}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print()
         server.shutdown()
 
 
