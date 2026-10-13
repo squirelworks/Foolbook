@@ -8,6 +8,8 @@
 - A new install opens Using Foolbook, a picture book. First Light is the second example, opened from that book.
 - Open, in the window, loads another book. That includes a `.tbk`.
 - The window is twice as wide and twice as tall. A Back button sits on the left, a Next button on the right, and any other button between them. The ToolBook page order is left as the decoder read it.
+- An XML file with the TBX namespace is read as a TBX folder, not as a `.tbk`.
+
 
 ## 1.0.1r1
 

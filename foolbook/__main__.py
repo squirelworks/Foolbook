@@ -211,7 +211,7 @@ def _ask_for_book() -> str:
         path = filedialog.askopenfilename(
             title="Open a book",
             filetypes=[
-                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.pdf *.ppt *.pptx *.doc *.docx *.odt"),
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.pdf *.ppt *.pptx *.doc *.docx *.odt"),
                 ("All files", "*.*"),
             ],
         )

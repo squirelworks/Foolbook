@@ -3,6 +3,7 @@
 Currently supports:
 - .json / .fbk / .fsk
 - .pdf .ppt .pptx .doc .docx .odt as text pages
+- A TBX Book.xml (or any XML in that folder that carries the TBX namespace)
 - Raw .tbk via the built-in parser, with handlers decoded from the page stream
 """
 
@@ -66,6 +67,13 @@ def load(path: str | Path) -> Book:
     if path.suffix.lower() in {".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt"}:
         from engine.office import to_book
         return _book_from_dict(path, to_book(path))
+    if path.is_dir() and (path / "Book.xml").is_file():
+        from engine.tbx import load as load_tbx
+        return load_tbx(path / "Book.xml")
+    if path.suffix.lower() == ".xml":
+        from engine.tbx import is_tbx, load as load_tbx
+        if is_tbx(path):
+            return load_tbx(path)
     return _load_tbk(path)
 
 
