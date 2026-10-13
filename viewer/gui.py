@@ -356,12 +356,16 @@ def _serve_json(data: dict, port: int) -> int:
             else:
                 self.send_response(204)
                 self.end_headers()
-    try:
-        server = ThreadingHTTPServer(("127.0.0.1", port), H)
-    except OSError:
+    for p in (port, port + 1, port + 2):
+        try:
+            server = ThreadingHTTPServer(("127.0.0.1", p), H)
+            break
+        except OSError:
+            server = None
+    if server is None:
         print(f"Port {port} in use")
         return 1
-    url = f"http://127.0.0.1:{port}/"
+    url = f"http://127.0.0.1:{p}/"
     print(f"Foolbook (from network) on {url}")
     _open_browser(url)
     try:
