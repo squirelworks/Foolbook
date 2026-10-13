@@ -26,7 +26,39 @@ def open_book(path: str | Path, student: str = "", course: str = "") -> int:
     root.geometry("800x500")
 
     pages = book.pages
-    idx = tk.IntVar(value=0)
+    last = progress.last_page(course_id)
+    start_at = 0
+
+    # Splash
+    splash = tk.Toplevel(root)
+    splash.title("Foolbook")
+    splash.geometry("360x200")
+    splash.transient(root)
+    splash.grab_set()
+    tk.Label(splash, text="2+2=5", font=("TkDefaultFont", 18, "bold")).pack(pady=(16, 4))
+    tk.Label(splash, text="Open last page? Or start fresh?").pack(pady=8)
+
+    chosen = tk.IntVar(value=-1)
+
+    def pick(fresh: bool):
+        chosen.set(0 if fresh else 1)
+        splash.destroy()
+
+    btns = ttk.Frame(splash)
+    btns.pack(pady=8)
+    ttk.Button(btns, text="Start fresh", command=lambda: pick(True)).pack(side="left", padx=6)
+    if last:
+        ttk.Button(btns, text="Open last page", command=lambda: pick(False)).pack(side="left", padx=6)
+    tk.Label(splash, text="For greater values of 2.").pack(side="bottom", pady=8)
+    root.wait_window(splash)
+
+    if chosen.get() == 1 and last:
+        for i, p in enumerate(pages):
+            if p.id == last:
+                start_at = i
+                break
+
+    idx = tk.IntVar(value=start_at)
 
     sidebar = ttk.Frame(root, width=160)
     sidebar.pack(side="left", fill="y")
