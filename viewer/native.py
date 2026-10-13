@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.engine import enter_page, goto, press
+from engine.engine import enter_page, goto, open_book as open_other, press
 from foolbook.model import RuntimeState
 from progress.progress import Progress
 
@@ -81,10 +81,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)
+    gfx = tk.Canvas(main, height=0, highlightthickness=0, bg="white")
+    gfx.pack(fill="x", padx=8, pady=(8, 0))
     content = tk.Text(main, wrap="word", state="disabled")
     content.pack(fill="both", expand=True, padx=8, pady=8)
-    gfx = tk.Canvas(main, height=0, highlightthickness=0, bg="white")
-    gfx.pack(fill="x", padx=8)
     nav = ttk.Frame(main)
     nav.pack(fill="x", padx=8, pady=4)
     painting = {"on": False}
@@ -136,7 +136,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             for it in items:
                 label = it.get("label") or it.get("page") or "Go"
                 target = it.get("page") or ""
-                ttk.Button(nav, text=label, command=lambda l=label, t=target: on_button(l, t)).pack(side="left", padx=2)
+                other = it.get("book") or ""
+                ttk.Button(
+                    nav, text=label,
+                    command=lambda l=label, t=target, b=other: on_button(l, t, b),
+                ).pack(side="left", padx=2)
         else:
             if state.index > 0:
                 ttk.Button(nav, text="Back", command=lambda: on_button("Back", "")).pack(side="left", padx=2)
@@ -149,7 +153,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
                     command=lambda c=ch: answer(c),
                 ).pack(side="left", padx=2)
 
-    def on_button(label: str, target: str):
+    def on_button(label: str, target: str, book_name: str = ""):
+        if book_name and open_other(state, book_name, target or ""):
+            show(state.index)
+            return
         press(state, label, target)
         show(state.index)
 

@@ -40,6 +40,8 @@ def bottom(shapes: list[dict]) -> int:
         else:
             y = int(shape.get("y") or 0)
             h = int(shape.get("h") or 0)
+            if (shape.get("kind") or "").lower() == "text":
+                h = max(h, int(shape.get("size") or 12))
             low = max(low, y + h)
     return low
 
@@ -65,11 +67,14 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
+            size = int(shape.get("size") or 12)
+            font = ("TkDefaultFont", size, "bold") if shape.get("bold") else ("TkDefaultFont", size)
             canvas.create_text(
                 int(shape.get("x") or 0),
                 int(shape.get("y") or 0),
                 text=str(shape.get("text") or ""),
                 anchor="nw",
+                font=font,
                 fill=fill or "black",
             )
         elif kind == "image":

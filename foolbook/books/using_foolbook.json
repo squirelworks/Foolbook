@@ -1,38 +1,270 @@
 {
   "id": "using_foolbook",
   "title": "Using Foolbook",
-  "format_version": 1,
-  "format": "json",
+  "subject": "Foolbook",
+  "module": "Start here",
   "pages": [
     {
       "id": "P0",
       "text": [
-        "Using Foolbook",
-        "Foolbook opens a book. This is the default one.",
-        "Pass a path to open another book. Or use Foolcourse to pick from a catalog."
+        "You opened Foolbook.",
+        "The picture is part of the book. It is not a separate file.",
+        "Next is another page. First Light is a second book."
       ],
       "items": [
-        {"label": "Next", "page": "P100"}
+        {
+          "label": "Next",
+          "page": "P100"
+        },
+        {
+          "label": "First Light",
+          "page": "P0",
+          "book": "first_light"
+        }
       ],
       "shapes": [
-        {"kind": "rect", "x": 8, "y": 8, "w": 220, "h": 36, "fill": "#000080", "outline": "#000080"},
-        {"kind": "text", "x": 16, "y": 16, "text": "Foolbook", "fill": "#ffffff"},
-        {"kind": "ellipse", "x": 240, "y": 8, "w": 36, "h": 36, "fill": "#ffcc00", "outline": "#806000"},
-        {"kind": "polygon", "points": [[300, 44], [340, 8], [380, 44]], "fill": "#c0c0c0", "outline": "#000000"},
-        {"kind": "line", "points": [[8, 56], [380, 56]], "outline": "#808080"},
-        {"kind": "image", "x": 8, "y": 64, "w": 16, "h": 16, "data": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFUlEQVR4nGNgcFhAGhrVMKph+GoAAHca4AG0kSlPAAAAAElFTkSuQmCC"}
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 280,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 280,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 520,
+          "y": 36,
+          "w": 150,
+          "h": 150,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 558,
+          "y": 24,
+          "w": 130,
+          "h": 130,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "text",
+          "x": 44,
+          "y": 78,
+          "text": "Foolbook",
+          "fill": "#ffffff",
+          "size": 42,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 48,
+          "y": 138,
+          "text": "A book that draws.",
+          "fill": "#e6b325",
+          "size": 18
+        },
+        {
+          "kind": "rect",
+          "x": 48,
+          "y": 188,
+          "w": 36,
+          "h": 36,
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "ellipse",
+          "x": 100,
+          "y": 188,
+          "w": 36,
+          "h": 36,
+          "fill": "#ffffff",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              152,
+              224
+            ],
+            [
+              170,
+              188
+            ],
+            [
+              188,
+              224
+            ]
+          ],
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        }
       ]
     },
     {
       "id": "P100",
       "text": [
-        "Standalone",
-        "python3 -m foolbook opens this book.",
-        "python3 -m foolbook path/to/book.fbk opens that book."
+        "A page can be a picture.",
+        "This one is rectangles, ellipses, and polygons. The words underneath are the page text."
       ],
       "items": [
-        {"label": "Back", "page": "P0"}
+        {
+          "label": "Back",
+          "page": "P0"
+        },
+        {
+          "label": "First Light",
+          "page": "P0",
+          "book": "first_light"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 168,
+          "fill": "#8ecae6",
+          "outline": "#8ecae6"
+        },
+        {
+          "kind": "ellipse",
+          "x": 560,
+          "y": 22,
+          "w": 72,
+          "h": 72,
+          "fill": "#ffb703",
+          "outline": "#ffb703"
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              0,
+              168
+            ],
+            [
+              160,
+              96
+            ],
+            [
+              320,
+              168
+            ]
+          ],
+          "fill": "#2a9d8f",
+          "outline": "#2a9d8f"
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              220,
+              168
+            ],
+            [
+              420,
+              72
+            ],
+            [
+              640,
+              168
+            ]
+          ],
+          "fill": "#1b6b5a",
+          "outline": "#1b6b5a"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 168,
+          "w": 700,
+          "h": 112,
+          "fill": "#40916c",
+          "outline": "#40916c"
+        },
+        {
+          "kind": "rect",
+          "x": 86,
+          "y": 150,
+          "w": 150,
+          "h": 88,
+          "fill": "#f6f1e7",
+          "outline": "#c4b8a4"
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              72,
+              152
+            ],
+            [
+              161,
+              86
+            ],
+            [
+              250,
+              152
+            ]
+          ],
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "rect",
+          "x": 140,
+          "y": 184,
+          "w": 34,
+          "h": 54,
+          "fill": "#6b3a2a",
+          "outline": "#6b3a2a"
+        },
+        {
+          "kind": "rect",
+          "x": 104,
+          "y": 168,
+          "w": 28,
+          "h": 24,
+          "fill": "#ffd166",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "rect",
+          "x": 186,
+          "y": 168,
+          "w": 28,
+          "h": 24,
+          "fill": "#ffd166",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "text",
+          "x": 300,
+          "y": 196,
+          "text": "Rects, ellipses, polygons.",
+          "fill": "#ffffff",
+          "size": 16,
+          "bold": true
+        }
       ]
     }
-  ]
+  ],
+  "format_version": 1,
+  "format": "json"
 }

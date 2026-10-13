@@ -5,7 +5,7 @@
 - Browser author moved to FoolbookEditor. This repository is the reader.
 - `foolbook.core` is the door the editor calls. Loading, saving, office files, and OpenScript compile stay here.
 - Page graphics. A page's `shapes` are drawn in the window for that page: rect, ellipse, line, polygon, text, and image. Coordinates are the book's own pixels.
-- A ToolBook book still comes from its page stream. The stream is decoded to handlers and the window runs them with the existing engine. Shapes are not read out of that stream.
+- A new install opens Using Foolbook, a picture book. First Light is the second example, opened from that book.
 
 ## 1.0.1r1
 

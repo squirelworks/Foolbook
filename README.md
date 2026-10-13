@@ -13,7 +13,7 @@ It is a clean-room reader. It opens `.fbk` and `.tbk` books, and processes `.fsk
 
 ```bash
 python3 -m foolbook path/to/book.fbk          # open in the GUI
-python3 -m foolbook                           # ask for a file, then open the GUI
+python3 -m foolbook                           # open Using Foolbook, the picture book
 python3 -m foolbook --cli path/to/book        # terminal viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
@@ -57,8 +57,10 @@ A page may carry `shapes`. The window draws them for the page on screen. Coordin
 
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `line` and `polygon`: `points` as `[[x, y], ...]`.
-- `text`: `x`, `y`, `text`.
+- `text`: `x`, `y`, `text`. `size` is the type size. `bold` is optional.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
+
+A new install opens `using_foolbook`. Its First Light button opens the other example, `first_light`, which is shipped in the same folder.
 
 ## Design notes
 
