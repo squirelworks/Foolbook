@@ -479,6 +479,7 @@ def serve(path: str | Path | None = None, port: int = 1337, student: str = "", l
             raise SystemExit(1)
         raise
     print(f"Foolbook on http://127.0.0.1:{port}/")
+    _open_browser(f"http://127.0.0.1:{port}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
