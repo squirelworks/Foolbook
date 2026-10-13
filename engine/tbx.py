@@ -16,7 +16,8 @@ def _tbx():
         from openscript_analysis.formats import tbx
     except ImportError as exc:
         raise ImportError(
-            "TBX support is in openscript-analysis. Install that package."
+            "TBX support is the openscript_analysis module "
+            "(pip name openscript-analysis). Install that package."
         ) from exc
     return tbx
 
