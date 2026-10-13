@@ -54,10 +54,15 @@ def main() -> int:
         serve(path=None, port=port, student=student, locale=locale, course=course)
         return 0
     if not args:
-        path = _ask_for_book()
-        if not path:
-            return 0
-        args = [path]
+        # Default book ships with Foolbook
+        default = Path(__file__).resolve().parent / "books" / "using_foolbook.json"
+        if default.exists():
+            args = [str(default)]
+        else:
+            path = _ask_for_book()
+            if not path:
+                return 0
+            args = [path]
     if args[0] == "--menu":
         from menu.menu import main as menu_main
         return menu_main(args[1:])

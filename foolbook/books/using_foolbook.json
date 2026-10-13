@@ -1,0 +1,30 @@
+{
+  "id": "using_foolbook",
+  "title": "Using Foolbook",
+  "format_version": 1,
+  "format": "json",
+  "pages": [
+    {
+      "id": "P0",
+      "text": [
+        "Using Foolbook",
+        "Foolbook opens a book. This is the default one.",
+        "Pass a path to open another book. Or use Foolcourse to pick from a catalog."
+      ],
+      "items": [
+        {"label": "Next", "page": "P100"}
+      ]
+    },
+    {
+      "id": "P100",
+      "text": [
+        "Standalone",
+        "python3 -m foolbook opens this book.",
+        "python3 -m foolbook path/to/book.fbk opens that book."
+      ],
+      "items": [
+        {"label": "Back", "page": "P0"}
+      ]
+    }
+  ]
+}
