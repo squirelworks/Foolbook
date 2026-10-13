@@ -29,6 +29,7 @@ EXPECTED = [
     "engine/__init__.py",
     "engine/engine.py",
     "engine/loader.py",
+    "engine/office.py",
     "engine/tbk.py",
     "engine/openscript.py",
     "engine/compat/res_77.bin",
@@ -50,7 +51,7 @@ EXPECTED = [
 ]
 
 MODULES = {
-    "engine": ["engine.loader", "engine.engine", "engine.tbk"],
+    "engine": ["engine.loader", "engine.engine", "engine.tbk", "engine.office"],
     "viewer": ["viewer.cli"],
     "author": ["author.formats", "author.document", "author.web"],
     "menu": ["menu.menu"],

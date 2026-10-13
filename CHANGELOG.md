@@ -3,6 +3,7 @@
 ## Next
 
 - Browser author. `python3 -m foolbook --author` edits a book in the browser and writes `.fbk` and `.json`. `--author --desktop` is the previous window.
+- Office scaffold. The loader opens `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, and `.odt` as text pages. `engine.office.write` writes `.pdf`, `.pptx`, `.docx`, and `.odt`.
 
 ## 1.0.1r1
 

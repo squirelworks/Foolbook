@@ -48,6 +48,7 @@ Foolbook/
 - `.json` — working copy
 - `.tbk` — ToolBook book (compatibility)
 - `.sbk` — ToolBook system book (compatibility)
+- `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, `.odt` — imported as text pages. Pictures and styles are dropped. `.docx`, `.pptx`, `.odt`, and `.pdf` can be written back from a book. `.doc` and `.ppt` can be read; writing them is only for Foolbook to open again.
 
 `.fbk` and `.fsk` start with `FBK1` or `FSK1`, then a flags byte, then a JSON payload. Bit 0 of the flags means the payload is zlib-compressed. The engine reads compressed, uncompressed, and the older plain-JSON files.
 

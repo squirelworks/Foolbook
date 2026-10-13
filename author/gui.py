@@ -113,13 +113,18 @@ class Editor:
     def _open(self):
         p = filedialog.askopenfilename(
             title="Open book",
-            filetypes=[("Foolbook", "*.fbk *.json"), ("All", "*.*")],
+            filetypes=[
+                ("Foolbook", "*.fbk *.json"),
+                ("Office", "*.pdf *.ppt *.pptx *.doc *.docx *.odt"),
+                ("All", "*.*"),
+            ],
         )
         if p:
             self._load(Path(p))
 
     def _load(self, path: Path):
-        self.book = load_book(path)
+        from engine.office import is_office, to_book
+        self.book = to_book(path) if is_office(path) else load_book(path)
         self.path = path
         self.current = 0
         self._refresh_list()

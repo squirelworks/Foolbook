@@ -2,6 +2,7 @@
 
 Currently supports:
 - .json / .fbk / .fsk
+- .pdf .ppt .pptx .doc .docx .odt as text pages
 - Raw .tbk via the built-in parser, with handlers decoded from the page stream
 """
 
@@ -62,6 +63,9 @@ def load(path: str | Path) -> Book:
         return _load_json(path)
     if path.suffix.lower() in (".fbk", ".fsk"):
         return _load_foolbook(path)
+    if path.suffix.lower() in {".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt"}:
+        from engine.office import to_book
+        return _book_from_dict(path, to_book(path))
     return _load_tbk(path)
 
 

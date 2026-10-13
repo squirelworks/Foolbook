@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 from author.document import blank_book
 from author.formats import load as load_book
 from author.formats import save_book
+from engine.office import is_office, to_book
 
 
 HTML = """<!DOCTYPE html>
@@ -178,7 +179,7 @@ openBook();
 def serve(path: Path | None, port: int = 6767) -> None:
     state = {"book": blank_book(), "path": None}
     if path is not None:
-        state["book"] = load_book(path)
+        state["book"] = to_book(path) if is_office(path) else load_book(path)
         state["book"].setdefault("pages", [blank_book()["pages"][0]])
         state["path"] = Path(path).resolve()
 
@@ -284,8 +285,8 @@ def main(argv: list[str] | None = None) -> int:
     path = None
     if argv:
         path = Path(argv[0].replace("\\", "/")).expanduser()
-        if path.suffix.lower() not in (".fbk", ".fsk", ".json"):
-            print("The browser author edits .fbk, .fsk, and .json.")
+        if path.suffix.lower() not in (".fbk", ".fsk", ".json", ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt"):
+            print("The browser author edits .fbk, .fsk, and .json, and can open .pdf, .ppt, .pptx, .doc, .docx, and .odt.")
             return 2
         if not path.exists():
             print(f"not found: {path}")
