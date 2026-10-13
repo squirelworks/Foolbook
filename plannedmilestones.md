@@ -1,5 +1,17 @@
 # Foolbook milestones
 
+## Bookmark: install is heavier than the code
+
+Come back to this. Do not do it in passing.
+
+The tree is small. A fresh `pip install` of the git URL still feels slow, and `--force-reinstall` makes that the normal update. Some of that is just git and setuptools. The rest looks like bloat:
+
+- Foolbook depends on `openscript-analysis` from git, so one install clones two repositories.
+- `pyproject.toml` still packages `author*` and `foolbookeditor*` even though the editor is its own repository.
+- `--freshstart` reinstalls the old `v1.0.1r2` tag, not `main`.
+
+Leave the natural cost. Cut the extra clones and the packages that are no longer this program. Then see if install is still slow.
+
 ## v1.0.0
 
 Opens a book and follows its handlers. Editing lives in FoolbookEditor.
