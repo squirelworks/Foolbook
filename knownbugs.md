@@ -10,4 +10,12 @@ Opening a `.tbk` or `.sbk` does not yet show the book ToolBook would show.
 - Pages stay in the order the stream gave them. Do not sort that order.
 - Handlers that do decode are run with the small OpenScript subset already implemented. Most of the language is not.
 - A `.tbk` written by FoolbookEditor is a shell. ToolBook has not been shown to open one.
-- A TBX opens from `Book.xml`. Shapes are the export's bounds and vertices, scaled from twips. Object kinds other than rectangles, ellipses, lines, and polygons are not drawn. Scripts run through the same small OpenScript subset as a `.tbk`.
+
+## TBX support is spotty, at best
+
+`Book.xml` opens. That is not the same as showing the book.
+
+- Field text comes through. Rectangles, ellipses, lines, and polygons are drawn from bounds and vertices, scaled from twips. Groups, buttons, bitmaps, and the other object kinds are not.
+- Scripts run through the same small OpenScript subset as a `.tbk`. Most of the language is not.
+- A `.tbx` written by the editor is the folder Foolbook itself writes. It is not a SumTotal export.
+
