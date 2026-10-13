@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Rudimentary graphics in the GUI viewer: explicit polygons and bounds-only rectangles from the page blob.
+- System-book contract: core `.fsk` load first, user `.fsk` load after as mods.
+- `projectphilosophy.md` added.
+
 ## 1.0.0r1
 
 Revision of 1.0.0. The viewer, the student file, and a first `.tbk` export.
