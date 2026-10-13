@@ -1,4 +1,8 @@
 # Changelog
+## 1.0.1r1
+
+- Package is now `foolbook`. No more `main` collision.
+
 
 ## 1.0.1
 

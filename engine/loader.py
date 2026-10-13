@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from main.model import Book, Page, Handler
+from foolbook.model import Book, Page, Handler
 
 
 # Optional override set by --bin. Only used when decoding .tbk / .sbk.
