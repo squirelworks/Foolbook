@@ -181,30 +181,23 @@ def normalize_path(raw: str) -> Path:
 
 
 def _ask_for_book() -> str:
-    """Prompt for a book path when none was passed in.
-
-    Loops until a real file is given or the line is empty.
-    Expands ~ and accepts either slash.
-    """
-    print("Foolbook")
-    print("Open a book. Pass a path, or type one now.")
-    print("  .fbk / .tbk   book")
-    print("  .fsk / .sbk   system book")
-    print("  (empty to quit)")
-    while True:
-        try:
-            raw = input("book> ").strip().strip('"').strip("'")
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return ""
-        if not raw:
-            return ""
-        path = normalize_path(raw)
-        if path.exists():
-            return str(path)
-        print(f"not found: {path}")
-        print(f"  looked in {path.resolve()}")
-        print("  try again, or empty to quit")
+    """Open a file picker when no path was given."""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        path = filedialog.askopenfilename(
+            title="Open a book",
+            filetypes=[
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk"),
+                ("All files", "*.*"),
+            ],
+        )
+        root.destroy()
+        return path or ""
+    except Exception:
+        return ""
 
 
 if __name__ == "__main__":
