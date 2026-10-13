@@ -29,6 +29,7 @@ EXPECTED = [
     "engine/__init__.py",
     "engine/engine.py",
     "engine/loader.py",
+    "engine/formats.py",
     "engine/office.py",
     "engine/tbk.py",
     "engine/openscript.py",
@@ -36,11 +37,6 @@ EXPECTED = [
     "viewer/__init__.py",
     "viewer/cli.py",
     "viewer/gui.py",
-    "author/__init__.py",
-    "author/document.py",
-    "author/formats.py",
-    "author/gui.py",
-    "author/web.py",
     "menu/__init__.py",
     "menu/menu.py",
     "progress/__init__.py",
@@ -51,9 +47,8 @@ EXPECTED = [
 ]
 
 MODULES = {
-    "engine": ["engine.loader", "engine.engine", "engine.tbk", "engine.office"],
+    "engine": ["engine.loader", "engine.engine", "engine.tbk", "engine.office", "engine.formats"],
     "viewer": ["viewer.cli"],
-    "author": ["author.formats", "author.document", "author.web"],
     "menu": ["menu.menu"],
     "progress": ["progress.progress"],
 }

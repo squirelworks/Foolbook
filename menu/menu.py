@@ -39,7 +39,6 @@ class Menu:
         bar = ttk.Frame(self.root, padding=4)
         bar.pack(fill="x")
         ttk.Button(bar, text="Open catalog", command=self._open).pack(side="left")
-        ttk.Button(bar, text="Author", command=self._author).pack(side="left", padx=4)
         self.title = ttk.Label(bar, text="Foolbook")
         self.title.pack(side="left", padx=12)
         self.status = ttk.Label(bar, text="")
@@ -126,9 +125,6 @@ class Menu:
         if gui:
             cmd = [sys.executable, "-m", "foolbook", "--gui", path]
         subprocess.Popen(cmd)
-
-    def _author(self):
-        subprocess.Popen([sys.executable, "-m", "author.gui"])
 
 
 def main(argv: list[str] | None = None) -> int:

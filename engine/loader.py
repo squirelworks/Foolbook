@@ -75,7 +75,7 @@ def _load_json(path: Path) -> Book:
 
 def _load_foolbook(path: Path) -> Book:
     """Load an .fbk or .fsk envelope, compressed or not."""
-    from author.formats import unpack
+    from engine.formats import unpack
     return _book_from_dict(path, unpack(path.read_bytes()))
 
 

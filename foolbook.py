@@ -6,7 +6,6 @@
   python3 foolbook.py --cli path/to/book   # terminal viewer
   python3 foolbook.py --menu _courses/catalog.json
   python3 foolbook.py --catalog             # rebuild catalog
-  python3 foolbook.py --author              # authoring editor
   python3 foolbook.py --debug               # files and checksums
 
 A course module launches this with the book path so Foolbook opens

@@ -18,7 +18,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Ensure the Foolbook root is on the path so viewer/, engine/, menu/, author/
+# Ensure the Foolbook root is on the path so viewer/, engine/, and menu/
 # resolve even if this file is launched as a script.
 _root = Path(__file__).resolve().parents[1]
 if str(_root) not in sys.path:
@@ -81,14 +81,6 @@ def main() -> int:
     if args and args[0] == "--catalog":
         from _courses.catalog import main as catalog_main
         return catalog_main(args[1:])
-    if args and args[0] == "--author":
-        rest = args[1:]
-        if "--desktop" in rest:
-            rest = [a for a in rest if a != "--desktop"]
-            from author.gui import main as author_main
-            return author_main(rest)
-        from author.web import main as web_author
-        return web_author(rest)
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.native import open_book

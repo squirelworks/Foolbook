@@ -17,8 +17,6 @@ python3 -m foolbook                           # ask for a file, then open the GU
 python3 -m foolbook --cli path/to/book        # terminal viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
-python3 -m foolbook --author [book.fbk]         # browser editor, writes .fbk and .json
-python3 -m foolbook --author --desktop        # desktop slide editor
 python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 
@@ -31,7 +29,6 @@ Foolbook/
   foolbook/                 # entry point
   engine/                   # parse and interpret
   viewer/                   # CLI and GUI
-  author/                   # slide editor
   menu/                     # course menu
   progress/                 # progression tracking (scaffold)
   core/                     # system books (.fsk standard, .sbk compatible)
@@ -48,7 +45,7 @@ Foolbook/
 - `.json` — working copy
 - `.tbk` — ToolBook book (compatibility)
 - `.sbk` — ToolBook system book (compatibility)
-- `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, `.odt` — imported as text pages. Pictures and styles are dropped. `.docx`, `.pptx`, `.odt`, and `.pdf` can be written back from a book. `.doc` and `.ppt` can be read; writing them is only for Foolbook to open again.
+- `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, `.odt` — opened as text pages. Pictures and styles are dropped. Writing those files back is FoolbookEditor.
 
 `.fbk` and `.fsk` start with `FBK1` or `FSK1`, then a flags byte, then a JSON payload. Bit 0 of the flags means the payload is zlib-compressed. The engine reads compressed, uncompressed, and the older plain-JSON files.
 
@@ -59,5 +56,5 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 - Foolbook is the viewer. A course module drives which book it opens.
 - The entry point stays in `main/`. Supporting work lives in subdirectories.
 - The engine is responsible for understanding the files the user points at.
-- Authoring tools stay under `author/` and are not required to view a book.
+- Editing is not in this repository. It lives in FoolbookEditor.
 

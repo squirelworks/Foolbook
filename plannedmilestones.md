@@ -2,7 +2,7 @@
 
 ## v1.0.0
 
-Opens a book and follows its handlers. Authoring produces .fbk and .fsk.
+Opens a book and follows its handlers. Editing lives in FoolbookEditor.
 
 Done:
 

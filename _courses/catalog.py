@@ -15,7 +15,7 @@ CATALOG = HERE / "catalog.json"
 
 def _read_book(path: Path) -> dict:
     try:
-        from author.formats import load
+        from engine.formats import load
         data = load(path)
     except Exception:
         data = {}
