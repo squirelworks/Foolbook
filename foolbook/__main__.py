@@ -30,8 +30,10 @@ def main() -> int:
     if "--freshstart" in args:
         return _freshstart()
     if "--doctor" in args:
-        from foolbook._debug import run
-        return run()
+        from foolbook._debug.dump import dump
+        path = dump("doctor")
+        print(f"Wrote {path}")
+        return 0
     port = _take_port(args)
     student = _take_student(args)
     locale = _take_locale(args)
