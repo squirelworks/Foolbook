@@ -56,5 +56,5 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 - Foolbook is the viewer. A course module drives which book it opens.
 - The entry point stays in `main/`. Supporting work lives in subdirectories.
 - The engine is responsible for understanding the files the user points at.
-- Editing is not in this repository. It lives in FoolbookEditor.
+- Editing is not in this repository. It lives in FoolbookEditor, which calls `foolbook.core` for the work.
 

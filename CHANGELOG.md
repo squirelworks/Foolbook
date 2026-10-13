@@ -3,6 +3,7 @@
 ## Next
 
 - Browser author moved to FoolbookEditor. This repository is the reader.
+- `foolbook.core` is the door the editor calls. Loading, saving, office files, and OpenScript compile stay here.
 - Office scaffold. The loader opens `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, and `.odt` as text pages.
 
 ## 1.0.1r1
