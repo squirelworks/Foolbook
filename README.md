@@ -53,7 +53,7 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 
 ## Graphics
 
-A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels, not ToolBook units.
+A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels, not ToolBook units. A `.tbk` does not get shapes from its page stream. That stream is decoded to handlers, and the window runs those handlers.
 
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `line` and `polygon`: `points` as `[[x, y], ...]`.

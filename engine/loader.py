@@ -104,7 +104,10 @@ def _book_from_dict(path: Path, data: dict) -> Book:
 
 
 def _load_tbk(path: Path) -> Book:
-    """Load a raw .tbk with the built-in parser and decode its handlers."""
+    """Load a raw .tbk. The page stream is decoded to handler source and run as-is.
+
+    Shapes are not read from the stream. That waits until the stream is understood.
+    """
     try:
         from . import tbk as rtbk
         from .openscript import load_keywords, decode

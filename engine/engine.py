@@ -352,3 +352,32 @@ def run_page_handlers(state: RuntimeState, kind: str = "enterpage") -> list[dict
             continue
         actions.extend(run_handler(state, h.source))
     return actions
+
+
+def enter_page(state: RuntimeState, hops: int = 8) -> bool:
+    """Run enterPage and follow it. A ToolBook page is this source, not a new graphics pass."""
+    start = state.index
+    for _ in range(hops):
+        if not follow(state, run_page_handlers(state, "enterpage")):
+            break
+    return state.index != start
+
+
+def press(state: RuntimeState, label: str = "", target: str = "") -> bool:
+    """A button in the window.
+
+    buttonClick runs first, so a ToolBook handler is what moves the page.
+    The button's own page is used when that handler does not navigate.
+    Next and Back move one page only when neither did.
+    """
+    start = (id(state.book), state.index)
+    if follow(state, run_page_handlers(state, "buttonclick")):
+        return True
+    if target and goto(state, target):
+        return (id(state.book), state.index) != start
+    low = (label or "").lower()
+    if low in ("next", "n") and state.index + 1 < len(state.book.pages):
+        state.index += 1
+    elif low in ("back", "previous", "b") and state.index > 0:
+        state.index -= 1
+    return (id(state.book), state.index) != start

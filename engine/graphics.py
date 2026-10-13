@@ -1,7 +1,8 @@
 """Draw the shapes stored on a Foolbook page.
 
 A page carries its own shapes. Coordinates are pixels in the window.
-This does not read a ToolBook page stream.
+A ToolBook page stream is not a shape source. When a .tbk is open, that
+stream is decoded to handler source and the engine runs it.
 
   rect, ellipse   x, y, w, h, fill, outline
   line, polygon   points: [[x, y], ...]

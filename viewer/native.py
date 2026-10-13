@@ -12,6 +12,8 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
+from engine.engine import enter_page, goto, press
+from foolbook.model import RuntimeState
 from progress.progress import Progress
 
 
@@ -67,14 +69,15 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
                 break
 
     idx = tk.IntVar(value=start_at)
+    state = RuntimeState(book=book, index=start_at)
+    state.variables.setdefault("__import", True)
+    state.variables.setdefault("sysLevel", "reader")
 
     sidebar = ttk.Frame(root, width=160)
     sidebar.pack(side="left", fill="y")
     sidebar.pack_propagate(False)
     lb = tk.Listbox(sidebar)
     lb.pack(fill="both", expand=True)
-    for p in pages:
-        lb.insert("end", p.id)
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)
@@ -84,17 +87,35 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     gfx.pack(fill="x", padx=8)
     nav = ttk.Frame(main)
     nav.pack(fill="x", padx=8, pady=4)
+    painting = {"on": False}
 
     def show(i: int):
-        if not pages:
+        if painting["on"] or not state.book.pages:
             return
-        i = max(0, min(i, len(pages) - 1))
-        idx.set(i)
-        p = pages[i]
+        painting["on"] = True
+        try:
+            state.index = max(0, min(i, len(state.book.pages) - 1))
+            enter_page(state)
+            _paint()
+        finally:
+            painting["on"] = False
+
+    def _paint():
+        pages = state.book.pages
+        p = state.page
+        if p is None:
+            return
         progress.mark_page(course_id, p.id)
+        ids = tuple(page.id for page in pages)
+        if tuple(lb.get(0, "end")) != ids:
+            lb.delete(0, "end")
+            for page_id in ids:
+                lb.insert("end", page_id)
+        idx.set(state.index)
         lb.selection_clear(0, "end")
-        lb.selection_set(i)
-        lb.see(i)
+        lb.selection_set(state.index)
+        lb.see(state.index)
+        root.title(state.book.title or Path(state.book.path).name)
         content.config(state="normal")
         content.delete("1.0", "end")
         content.insert("end", p.id + "\n\n")
@@ -105,7 +126,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         gfx.delete("all")
         if shapes:
             gfx.config(height=min(320, max(48, bottom(shapes) + 8)))
-            draw(gfx, shapes, base=Path(book.path).parent)
+            draw(gfx, shapes, base=Path(state.book.path).parent)
         else:
             gfx.config(height=0)
         for w in nav.winfo_children():
@@ -115,30 +136,36 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             for it in items:
                 label = it.get("label") or it.get("page") or "Go"
                 target = it.get("page") or ""
-                ttk.Button(nav, text=label, command=lambda t=target: jump(t)).pack(side="left", padx=2)
+                ttk.Button(nav, text=label, command=lambda l=label, t=target: on_button(l, t)).pack(side="left", padx=2)
         else:
-            if i > 0:
-                ttk.Button(nav, text="Back", command=lambda: show(i - 1)).pack(side="left", padx=2)
-            if i + 1 < len(pages):
-                ttk.Button(nav, text="Next", command=lambda: show(i + 1)).pack(side="left", padx=2)
+            if state.index > 0:
+                ttk.Button(nav, text="Back", command=lambda: on_button("Back", "")).pack(side="left", padx=2)
+            if state.index + 1 < len(pages):
+                ttk.Button(nav, text="Next", command=lambda: on_button("Next", "")).pack(side="left", padx=2)
         if p.quiz:
             for ch in (p.quiz.get("choices") or []):
                 ttk.Button(
                     nav, text=ch.get("label") or "?",
-                    command=lambda c=ch: answer(c, p),
+                    command=lambda c=ch: answer(c),
                 ).pack(side="left", padx=2)
 
-    def jump(page_id: str):
-        for i, p in enumerate(pages):
-            if p.id.lower() == page_id.lower():
-                show(i)
-                return
+    def on_button(label: str, target: str):
+        press(state, label, target)
+        show(state.index)
 
-    def answer(choice: dict, page):
+    def answer(choice: dict):
+        page = state.page
+        if page is None:
+            return
         progress.record_answer(course_id, page.id, bool(choice.get("correct")))
-        target = choice.get("next") if choice.get("correct") else choice.get("again")
+        target = ""
+        if choice.get("correct"):
+            target = choice.get("next") or (page.quiz or {}).get("next") or ""
+        else:
+            target = choice.get("again") or (page.quiz or {}).get("again") or ""
         if target:
-            jump(target)
+            goto(state, target)
+            show(state.index)
 
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() else None)
     show(idx.get())
