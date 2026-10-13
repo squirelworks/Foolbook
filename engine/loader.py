@@ -62,7 +62,7 @@ def load(path: str | Path) -> Book:
             path = core
     if path.suffix.lower() == ".json":
         return _load_json(path)
-    if path.suffix.lower() in (".fbk", ".fsk"):
+    if path.suffix.lower() in (".fbk", ".fsk", ".fsc"):
         return _load_foolbook(path)
     if path.suffix.lower() in {".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt"}:
         from engine.office import to_book

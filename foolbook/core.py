@@ -57,7 +57,44 @@ def write_office(path: str | Path, book: dict) -> Path:
     return _office().write(path, book)
 
 
+def save_fsc(path: str | Path, book: dict, compress: bool = True) -> Path:
+    """Write an .fsc."""
+    return _formats().save_fsc(Path(path), book, compress=compress)
+
+
+def export_book(path: str | Path, book: dict, compile_script=None) -> Path:
+    """Save a book as whatever the suffix asks for.
+
+    .fbk .fsk .fsc .tbk .sbk .tbx .pdf .ppt .pptx .doc .docx .odt
+    .tbx is an expanded folder. .tbk and .sbk are shells.
+    """
+    path = Path(path)
+    suffix = path.suffix.lower()
+    if suffix in ("",) or path.is_dir() or suffix == ".tbx":
+        from openscript_analysis.formats.tbx import write_tbx
+        return write_tbx(path if suffix == ".tbx" or path.is_dir() else path.with_suffix(".tbx"), book)
+    if suffix == ".sbk":
+        from openscript_analysis.formats.tbk import write_sbk
+        return write_sbk(path, book, compile_script or _compile)
+    if suffix == ".tbk":
+        from openscript_analysis.formats.tbk import write_tbk
+        return write_tbk(path, book, compile_script or _compile)
+    if suffix == ".fsk":
+        return save_system(path, book)
+    if suffix == ".fsc":
+        return save_fsc(path, book)
+    if suffix in (".fbk", ".json"):
+        return save_book(path, book)
+    if _office().is_office(path):
+        return write_office(path, book)
+    raise ValueError(f"cannot save {path.suffix}")
+
+
 def compile_script(source: str, keywords: list[str] | None = None) -> bytes:
     """Compile OpenScript source to the bytecode a .tbk shell stores."""
     from engine.openscript import compile as compile_source
     return compile_source(source, keywords)
+
+
+def _compile(source: str, keywords: list[str] | None = None) -> bytes:
+    return compile_script(source, keywords)

@@ -22,8 +22,9 @@ from pathlib import Path
 
 FBK = "fbk"
 FSK = "fsk"
+FSC = "fsc"
 FORMAT_VERSION = 1
-MAGIC = {FBK: b"FBK1", FSK: b"FSK1"}
+MAGIC = {FBK: b"FBK1", FSK: b"FSK1", FSC: b"FSC1"}
 FLAG_COMPRESSED = 0x01
 
 
@@ -36,7 +37,12 @@ def is_system(path: Path) -> bool:
 
 
 def kind_of(path: Path) -> str:
-    return FSK if path.suffix.lower() == ".fsk" else FBK
+    suffix = path.suffix.lower()
+    if suffix == ".fsk":
+        return FSK
+    if suffix == ".fsc":
+        return FSC
+    return FBK
 
 
 def pack(data: dict, kind: str = FBK, compress: bool = True) -> bytes:
@@ -100,4 +106,17 @@ def save_system(path: Path, system: dict, compress: bool = True) -> Path:
     system["format"] = FSK
     system["format_version"] = FORMAT_VERSION
     path.write_bytes(pack(system, FSK, compress=compress))
+    return path
+
+
+def save_fsc(path: Path, book: dict, compress: bool = True) -> Path:
+    """Write an .fsc. Same envelope as a book, different magic."""
+    path = Path(path)
+    if path.suffix.lower() != ".fsc":
+        path = path.with_suffix(".fsc")
+    book = dict(book)
+    book.pop("will_become", None)
+    book["format"] = FSC
+    book["format_version"] = FORMAT_VERSION
+    path.write_bytes(pack(book, FSC, compress=compress))
     return path
