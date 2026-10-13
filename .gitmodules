@@ -1,0 +1,3 @@
+[submodule "openscript_analysis"]
+	path = openscript_analysis
+	url = https://github.com/squirelworks/openscript_analysis.git
