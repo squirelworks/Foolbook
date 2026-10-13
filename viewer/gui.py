@@ -310,31 +310,69 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def open_from(url: str, course: str = "") -> int:
-    """Fetch the book from a course server and open it in the browser."""
+def open_from(url: str, course: str = "", port: int = 1338) -> int:
+    """Network mode. Pull the book from a course server, then serve it locally.
+
+    Standalone Foolbook is unchanged. This only runs when --from is given.
+    """
     import urllib.request
-    import webbrowser
     book_url = url.rstrip("/") + "/api/book"
-    try:
-        with urllib.request.urlopen(book_url, timeout=5) as r:
-            data = json.loads(r.read().decode())
-    except Exception as e:
-        print(f"Could not fetch book from {book_url}: {e}")
+    data = None
+    for _ in range(10):
+        try:
+            with urllib.request.urlopen(book_url, timeout=2) as r:
+                data = json.loads(r.read().decode())
+            break
+        except Exception:
+            time.sleep(0.2)
+    if data is None:
+        print(f"Could not fetch book from {book_url}")
         return 1
-    # Write a tiny local page that loads from the course server
-    html = HTML.replace("fetch('/api/book')", f"fetch('{book_url}')")
-    html = html.replace("fetch('/api/visit", f"fetch('{url.rstrip('/')}/api/visit")
-    html = html.replace("fetch('/api/answer", f"fetch('{url.rstrip('/')}/api/answer")
-    html = html.replace("fetch('/api/finish')", f"fetch('{url.rstrip('/')}/api/finish')")
-    path = Path("/tmp/foolbook_from.html")
-    path.write_text(html, encoding="utf-8")
-    webbrowser.open(path.as_uri())
-    print(f"Opened {url}")
+    # Serve the fetched book on a local port so the browser stays same-origin
+    return _serve_json(data, port)
+
+
+def _serve_json(data: dict, port: int) -> int:
+    """Serve a pre-loaded book dict and open the browser."""
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+        def do_GET(self):
+            u = urlparse(self.path)
+            if u.path in ("/", "/index.html"):
+                body = HTML.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            elif u.path == "/api/book":
+                body = json.dumps(data).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(204)
+                self.end_headers()
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), H)
+    except OSError:
+        print(f"Port {port} in use")
+        return 1
+    url = f"http://127.0.0.1:{port}/"
+    print(f"Foolbook (from network) on {url}")
+    _open_browser(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        server.shutdown()
     return 0
 
 
 def serve(path: str | Path | None = None, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
-    """One viewer. /api/load swaps the book. Finish does not exit."""
+    """Standalone viewer. Loads a local book."""
     state = {"book": None, "progress": None, "course_id": "", "path": None}
 
     def load_book(book_path, st, loc, cid):
