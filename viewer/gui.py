@@ -311,24 +311,31 @@ def book_to_json(book, progress=None, course_id="") -> dict:
 
 
 def open_from(url: str, course: str = "", port: int = 1338) -> int:
-    """Network mode. Pull the book from a course server, then serve it locally.
+    """Network mode. Ask the course server for the book path, load it, serve it.
 
-    Standalone Foolbook is unchanged. This only runs when --from is given.
+    Standalone Foolbook is unchanged.
     """
     import urllib.request
-    book_url = url.rstrip("/") + "/api/book"
-    data = None
+    # Course server returns {"path": ..., "course": ...}
+    info_url = url.rstrip("/") + "/api/book"
+    info = None
     for _ in range(10):
         try:
-            with urllib.request.urlopen(book_url, timeout=2) as r:
-                data = json.loads(r.read().decode())
+            with urllib.request.urlopen(info_url, timeout=2) as r:
+                info = json.loads(r.read().decode())
             break
         except Exception:
             time.sleep(0.2)
-    if data is None:
-        print(f"Could not fetch book from {book_url}")
+    if not info or not info.get("path"):
+        print(f"Could not fetch book from {info_url}")
         return 1
-    # Serve the fetched book on a local port so the browser stays same-origin
+    book_path = Path(info["path"])
+    if not book_path.exists():
+        print(f"Book not found: {book_path}")
+        return 1
+    # Load with Foolbook's own loader and serve locally
+    book = load(book_path)
+    data = book_to_json(book, Progress(_progress_path()), info.get("course") or course or book_path.stem)
     return _serve_json(data, port)
 
 
