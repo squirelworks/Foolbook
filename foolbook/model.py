@@ -25,6 +25,7 @@ class Page:
     jumps: list[str] = field(default_factory=list)
     quiz: dict | None = None
     handlers: list[Handler] = field(default_factory=list)
+    shapes: list[dict] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
 
 

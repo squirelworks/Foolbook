@@ -92,6 +92,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
             jumps=list(raw.get("jumps") or []),
             quiz=raw.get("quiz"),
             handlers=handlers,
+            shapes=list(raw.get("shapes") or []),
             raw=raw,
         ))
     return Book(

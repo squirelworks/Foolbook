@@ -14,13 +14,13 @@ Done:
 - Authoring: slide editor with page list, preview, toolbar, text and lists; saves `.fbk` / `.fsk`
 - `--debug` keeps decoded `.tbk` source; a normal run writes nothing
 - `--bin` overrides the keyword table for `.tbk` / `.sbk`
+- Graphics on a page: rect, ellipse, line, polygon, text, and image, in the book's own pixels. Drawn for the page on screen.
 - A jump to another book opens it if found below the loaded file, beside it, or in `core/`
 
 ## v1.x
 
 Furthering v1.
 
-- Graphics: polygons, bounds, and pictures drawn in the viewer
 - Quizzes extracted from a raw `.tbk`
 - System books used as a runtime shell, not only as a jump target
 - Produce backwards-compatible `.tbk` and `.sbk` files

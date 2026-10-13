@@ -4,7 +4,7 @@
 
 - Browser author moved to FoolbookEditor. This repository is the reader.
 - `foolbook.core` is the door the editor calls. Loading, saving, office files, and OpenScript compile stay here.
-- Office scaffold. The loader opens `.pdf`, `.ppt`, `.pptx`, `.doc`, `.docx`, and `.odt` as text pages.
+- Page graphics. A page's `shapes` are drawn in the window for that page: rect, ellipse, line, polygon, text, and image. Coordinates are the book's own pixels.
 
 ## 1.0.1r1
 

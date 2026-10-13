@@ -13,6 +13,14 @@
       ],
       "items": [
         {"label": "Next", "page": "P100"}
+      ],
+      "shapes": [
+        {"kind": "rect", "x": 8, "y": 8, "w": 220, "h": 36, "fill": "#000080", "outline": "#000080"},
+        {"kind": "text", "x": 16, "y": 16, "text": "Foolbook", "fill": "#ffffff"},
+        {"kind": "ellipse", "x": 240, "y": 8, "w": 36, "h": 36, "fill": "#ffcc00", "outline": "#806000"},
+        {"kind": "polygon", "points": [[300, 44], [340, 8], [380, 44]], "fill": "#c0c0c0", "outline": "#000000"},
+        {"kind": "line", "points": [[8, 56], [380, 56]], "outline": "#808080"},
+        {"kind": "image", "x": 8, "y": 64, "w": 16, "h": 16, "data": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFUlEQVR4nGNgcFhAGhrVMKph+GoAAHca4AG0kSlPAAAAAElFTkSuQmCC"}
       ]
     },
     {

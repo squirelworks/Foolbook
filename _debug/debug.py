@@ -47,7 +47,7 @@ EXPECTED = [
 ]
 
 MODULES = {
-    "engine": ["engine.loader", "engine.engine", "engine.tbk", "engine.office", "engine.formats", "foolbook.core"],
+    "engine": ["engine.loader", "engine.engine", "engine.tbk", "engine.office", "engine.formats", "engine.graphics", "foolbook.core"],
     "viewer": ["viewer.cli"],
     "menu": ["menu.menu"],
     "progress": ["progress.progress"],

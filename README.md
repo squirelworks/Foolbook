@@ -51,6 +51,15 @@ Foolbook/
 
 The loader decodes OpenScript handlers from a `.tbk` using the clean keyword table in `engine/keywords.py`. The original ToolBook resource lives in `engine/compat/res_77.bin` and is only used if that table is missing. `.fbk` and `.fsk` already hold source and never use it.
 
+## Graphics
+
+A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels, not ToolBook units.
+
+- `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
+- `line` and `polygon`: `points` as `[[x, y], ...]`.
+- `text`: `x`, `y`, `text`.
+- `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
+
 ## Design notes
 
 - Foolbook is the viewer. A course module drives which book it opens.
