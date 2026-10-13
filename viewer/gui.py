@@ -310,6 +310,29 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
+def open_from(url: str, course: str = "") -> int:
+    """Fetch the book from a course server and open it in the browser."""
+    import urllib.request
+    import webbrowser
+    book_url = url.rstrip("/") + "/api/book"
+    try:
+        with urllib.request.urlopen(book_url, timeout=5) as r:
+            data = json.loads(r.read().decode())
+    except Exception as e:
+        print(f"Could not fetch book from {book_url}: {e}")
+        return 1
+    # Write a tiny local page that loads from the course server
+    html = HTML.replace("fetch('/api/book')", f"fetch('{book_url}')")
+    html = html.replace("fetch('/api/visit", f"fetch('{url.rstrip('/')}/api/visit")
+    html = html.replace("fetch('/api/answer", f"fetch('{url.rstrip('/')}/api/answer")
+    html = html.replace("fetch('/api/finish')", f"fetch('{url.rstrip('/')}/api/finish')")
+    path = Path("/tmp/foolbook_from.html")
+    path.write_text(html, encoding="utf-8")
+    webbrowser.open(path.as_uri())
+    print(f"Opened {url}")
+    return 0
+
+
 def serve(path: str | Path | None = None, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
     """One viewer. /api/load swaps the book. Finish does not exit."""
     state = {"book": None, "progress": None, "course_id": "", "path": None}

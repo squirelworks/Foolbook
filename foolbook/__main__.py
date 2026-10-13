@@ -42,6 +42,12 @@ def main() -> int:
     if debug_mode is not None:
         from engine.loader import set_keep_decoded
         set_keep_decoded(True)
+    if "--from" in args:
+        i = args.index("--from")
+        src = args[i + 1] if i + 1 < len(args) else ""
+        del args[i:i + 2]
+        from viewer.gui import open_from
+        return open_from(src, course=course)
     if "--server" in args:
         args.remove("--server")
         from viewer.gui import serve
