@@ -27,6 +27,8 @@ if str(_root) not in sys.path:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--freshstart" in args:
+        return _freshstart()
     port = _take_port(args)
     student = _take_student(args)
     locale = _take_locale(args)
@@ -84,6 +86,16 @@ def main() -> int:
 
 
 
+
+
+def _freshstart() -> int:
+    """Force-reinstall Foolbook and everything under it."""
+    import subprocess
+    cmd = [
+        sys.executable, "-m", "pip", "install", "--force-reinstall",
+        "git+https://github.com/squirelworks/Foolbook.git@v1.0.1r1",
+    ]
+    return subprocess.call(cmd)
 
 
 def _take_locale(args: list[str]) -> str:
