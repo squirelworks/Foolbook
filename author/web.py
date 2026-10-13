@@ -175,7 +175,7 @@ openBook();
 """
 
 
-def serve(path: Path | None, port: int = 1340) -> None:
+def serve(path: Path | None, port: int = 6767) -> None:
     state = {"book": blank_book(), "path": None}
     if path is not None:
         state["book"] = load_book(path)
@@ -269,7 +269,7 @@ def _open_browser(url: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(argv if argv is not None else sys.argv[1:])
-    port = 1340
+    port = 6767
     if "--port" in argv:
         i = argv.index("--port")
         if i + 1 >= len(argv):
