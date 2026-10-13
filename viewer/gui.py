@@ -213,17 +213,19 @@ function show(i) {
     };
     nav.appendChild(b);
   });
-  const finish = document.createElement('button');
-  finish.textContent = 'Finish';
-  finish.onclick = () => {
-    fetch('/api/finish').then(r => r.json()).then(s => {
-      const pct = (s.percent === null || s.percent === undefined) ? 'no quiz' : s.percent + '%';
-      document.getElementById('content').innerHTML =
-        '<h2>Course closed</h2><p>Score saved: ' + pct + '.</p><p>You can close this window.</p>';
-      document.getElementById('nav').innerHTML = '';
-    });
-  };
-  nav.appendChild(finish);
+  if (i > 0) {
+    const finish = document.createElement('button');
+    finish.textContent = 'Finish';
+    finish.onclick = () => {
+      fetch('/api/finish').then(r => r.json()).then(s => {
+        const pct = (s.percent === null || s.percent === undefined) ? 'no quiz' : s.percent + '%';
+        document.getElementById('content').innerHTML =
+          '<h2>Course closed</h2><p>Score saved: ' + pct + '.</p><p>You can close this window.</p>';
+        document.getElementById('nav').innerHTML = '';
+      });
+    };
+    nav.appendChild(finish);
+  }
   if (!items.length) {
     if (i > 0) {
       const back = document.createElement('button');
