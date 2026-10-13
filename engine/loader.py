@@ -67,6 +67,9 @@ def load(path: str | Path) -> Book:
     if path.suffix.lower() in {".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt"}:
         from engine.office import to_book
         return _book_from_dict(path, to_book(path))
+    if path.suffix.lower() in {".txt", ".text", ".md", ".markdown", ".rst", ".log", ".rtf"}:
+        from engine.notes import to_book
+        return _book_from_dict(path, to_book(path))
     if path.is_dir() and (path / "Book.xml").is_file():
         from engine.tbx import load as load_tbx
         return load_tbx(path / "Book.xml")
@@ -111,6 +114,14 @@ def _book_from_dict(path: Path, data: dict) -> Book:
     )
 
 
+def _words(value) -> str:
+    """Shared with the note reader. Rich text becomes the words, not the font table."""
+    if not value:
+        return ""
+    from engine.notes import plain
+    return plain(str(value))
+
+
 def _load_tbk(path: Path) -> Book:
     """Load a raw .tbk. The page stream is decoded to handler source and run as-is.
 
@@ -125,12 +136,13 @@ def _load_tbk(path: Path) -> Book:
         for p in raw.pages:
             text = []
             for f in getattr(p, "fields", []) or []:
-                t = getattr(f, "text", None)
+                t = _words(getattr(f, "text", None))
                 if t:
                     text.append(t)
             for para in getattr(p, "paragraphs", []) or []:
-                if para and para not in text:
-                    text.append(para)
+                t = _words(para)
+                if t and t not in text:
+                    text.append(t)
             handlers = _handlers_from_blob(p.blob, keywords, decode)
             items = _items_from_handlers(handlers)
             pages.append(Page(

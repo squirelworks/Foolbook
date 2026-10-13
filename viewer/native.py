@@ -83,7 +83,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             parent=root,
             title="Open a book",
             filetypes=[
-                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml"),
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.txt *.md *.rtf"),
+                ("Notes", "*.txt *.text *.md *.markdown *.rst *.log *.rtf"),
                 ("ToolBook", "*.tbk *.sbk"),
                 ("TBX", "*.xml"),
                 ("All files", "*.*"),

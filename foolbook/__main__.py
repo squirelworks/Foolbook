@@ -176,7 +176,7 @@ def _take_debug(args: list[str]) -> str | None:
     if i + 1 < len(args) and not args[i + 1].startswith("-"):
         nxt = args[i + 1]
         nxt_path = normalize_path(nxt)
-        if not nxt_path.exists() and not nxt.lower().endswith((".tbk", ".sbk", ".fbk", ".fsk", ".json", ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt")):
+        if not nxt_path.exists() and not nxt.lower().endswith((".tbk", ".sbk", ".fbk", ".fsk", ".json", ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt", ".txt", ".text", ".md", ".markdown", ".rst", ".log", ".rtf")):
             mode = nxt
             del args[i + 1]
     del args[i]
@@ -211,7 +211,8 @@ def _ask_for_book() -> str:
         path = filedialog.askopenfilename(
             title="Open a book",
             filetypes=[
-                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.pdf *.ppt *.pptx *.doc *.docx *.odt"),
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.pdf *.ppt *.pptx *.doc *.docx *.odt *.txt *.md *.rtf"),
+                ("Notes", "*.txt *.text *.md *.markdown *.rst *.log *.rtf"),
                 ("All files", "*.*"),
             ],
         )

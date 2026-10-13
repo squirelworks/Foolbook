@@ -10,7 +10,8 @@
 - The window is twice as wide and twice as tall. A Back button sits on the left, a Next button on the right, and any other button between them. The ToolBook page order is left as the decoder read it.
 - An XML file with the TBX namespace is read as a TBX folder, not as a `.tbk`. The reader for that folder is openscript-analysis, not Foolbook itself.
 - An .fsc is a book envelope, same as .fbk, with its own magic.
-- Known bugs: TBX support is spotty, at best. Page order is wrong, text is still garbled, and a font table can show through as Arial. `.txt`, `.rtf`, and `.md` are not opened as notes.
+- Known bugs: TBX support is spotty, at best. Page order is wrong. A rich-text field is reduced to the words, so a font table is not shown, but the font is not applied.
+- `.txt`, `.text`, `.md`, `.markdown`, `.rst`, `.log`, and `.rtf` open in the viewer.
 
 
 

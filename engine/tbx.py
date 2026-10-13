@@ -32,7 +32,7 @@ def load(path: str | Path) -> Book:
     for raw in data.get("pages") or []:
         pages.append(Page(
             id=raw.get("id") or "",
-            text=list(raw.get("text") or []),
+            text=[_words(t) for t in (raw.get("text") or []) if _words(t)],
             items=list(raw.get("items") or []),
             shapes=list(raw.get("shapes") or []),
             handlers=[
@@ -41,3 +41,8 @@ def load(path: str | Path) -> Book:
             ],
         ))
     return Book(path=str(path), title=data.get("title") or Path(path).stem, pages=pages)
+
+
+def _words(value: str) -> str:
+    from engine.notes import plain
+    return plain(value)
