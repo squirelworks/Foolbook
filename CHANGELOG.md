@@ -6,6 +6,7 @@
 - `foolbook.core` is the door the editor calls. Loading, saving, office files, and OpenScript compile stay here.
 - Page graphics. A page's `shapes` are drawn in the window for that page: rect, ellipse, line, polygon, text, and image. Coordinates are the book's own pixels.
 - A new install opens Using Foolbook, a picture book. First Light is the second example, opened from that book.
+- Open, in the window, loads another book. That includes a `.tbk`.
 
 ## 1.0.1r1
 

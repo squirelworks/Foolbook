@@ -7,7 +7,7 @@ No server. No browser.
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 
 from engine.loader import load
@@ -76,6 +76,32 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     sidebar = ttk.Frame(root, width=160)
     sidebar.pack(side="left", fill="y")
     sidebar.pack_propagate(False)
+    held = {"course": course_id}
+
+    def choose():
+        path = filedialog.askopenfilename(
+            parent=root,
+            title="Open a book",
+            filetypes=[
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk"),
+                ("ToolBook", "*.tbk *.sbk"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not path:
+            return
+        try:
+            opened = load(path)
+        except Exception as exc:
+            messagebox.showerror("Foolbook", str(exc), parent=root)
+            return
+        state.book = opened
+        state.index = 0
+        held["course"] = Path(path).stem
+        progress.touch(held["course"])
+        show(0)
+
+    ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
     lb = tk.Listbox(sidebar)
     lb.pack(fill="both", expand=True)
 
@@ -105,7 +131,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         p = state.page
         if p is None:
             return
-        progress.mark_page(course_id, p.id)
+        progress.mark_page(held["course"], p.id)
         ids = tuple(page.id for page in pages)
         if tuple(lb.get(0, "end")) != ids:
             lb.delete(0, "end")
@@ -164,7 +190,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         page = state.page
         if page is None:
             return
-        progress.record_answer(course_id, page.id, bool(choice.get("correct")))
+        progress.record_answer(held["course"], page.id, bool(choice.get("correct")))
         target = ""
         if choice.get("correct"):
             target = choice.get("next") or (page.quiz or {}).get("next") or ""
