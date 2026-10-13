@@ -43,6 +43,11 @@ def main() -> int:
         from engine.loader import set_keep_decoded
         set_keep_decoded(True)
     if not args:
+        # --server starts an empty long-lived viewer. Foolcourse loads courses into it.
+        if "--server" in sys.argv:
+            from viewer.gui import serve
+            serve(path=None, port=port, student=student, locale=locale, course=course)
+            return 0
         path = _ask_for_book()
         if not path:
             return 0
