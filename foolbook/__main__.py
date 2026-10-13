@@ -86,8 +86,8 @@ def main() -> int:
         return author_main(args[1:])
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
-    from viewer.gui import main as gui_main
-    return gui_main(args, port=port, student=student, locale=locale, course=course)
+    from viewer.native import open_book
+    return open_book(args[0], student=student, course=course)
 
 
 
