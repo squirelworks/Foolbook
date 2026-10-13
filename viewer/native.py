@@ -157,26 +157,31 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             gfx.config(height=0)
         for w in nav.winfo_children():
             w.destroy()
-        items = p.items or []
-        labels = {(it.get("label") or "").lower() for it in items}
-        if items:
-            for it in items:
-                label = it.get("label") or it.get("page") or "Go"
-                target = it.get("page") or ""
-                other = it.get("book") or ""
-                ttk.Button(
-                    nav, text=label,
-                    command=lambda l=label, t=target, b=other: on_button(l, t, b),
-                ).pack(side="left", padx=2)
-        # The book wins. Next and Back are added only when it did not name them.
-        if "back" not in labels and "previous" not in labels and state.index > 0:
-            ttk.Button(nav, text="Back", command=lambda: on_button("Back", "")).pack(side="left", padx=2)
-        if "next" not in labels and state.index + 1 < len(pages):
-            ttk.Button(nav, text="Next", command=lambda: on_button("Next", "")).pack(side="left", padx=2)
+        left = ttk.Frame(nav)
+        left.pack(side="left")
+        right = ttk.Frame(nav)
+        right.pack(side="right")
+        mid = ttk.Frame(nav)
+        mid.pack(side="left", fill="x", expand=True)
+        def place(label: str):
+            low = (label or "").lower()
+            if low in ("back", "previous"):
+                return left
+            if low == "next":
+                return right
+            return mid
+        for it in p.items or []:
+            label = it.get("label") or it.get("page") or "Go"
+            target = it.get("page") or ""
+            other = it.get("book") or ""
+            ttk.Button(
+                place(label), text=label,
+                command=lambda l=label, t=target, b=other: on_button(l, t, b),
+            ).pack(side="left", padx=2)
         if p.quiz:
             for ch in (p.quiz.get("choices") or []):
                 ttk.Button(
-                    nav, text=ch.get("label") or "?",
+                    mid, text=ch.get("label") or "?",
                     command=lambda c=ch: answer(c),
                 ).pack(side="left", padx=2)
 

@@ -368,16 +368,11 @@ def press(state: RuntimeState, label: str = "", target: str = "") -> bool:
 
     buttonClick runs first, so a ToolBook handler is what moves the page.
     The button's own page is used when that handler does not navigate.
-    Next and Back move one page only when neither did.
+    Nothing else is invented.
     """
     start = (id(state.book), state.index)
     if follow(state, run_page_handlers(state, "buttonclick")):
         return True
     if target and goto(state, target):
         return (id(state.book), state.index) != start
-    low = (label or "").lower()
-    if low in ("next", "n") and state.index + 1 < len(state.book.pages):
-        state.index += 1
-    elif low in ("back", "previous", "b") and state.index > 0:
-        state.index -= 1
-    return (id(state.book), state.index) != start
+    return False
