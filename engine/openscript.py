@@ -13,11 +13,18 @@ import struct
 import sys
 from pathlib import Path
 
+_osa_decode = None
+_osa_compile = None
 try:
-    from openscript_analysis.decode import decode as _osa_decode, compile as _osa_compile
-except ImportError:
-    _osa_decode = None
-    _osa_compile = None
+    from importlib.metadata import version as _ver
+    _osa_installed = _ver("openscript-analysis")
+except Exception:
+    _osa_installed = ""
+if _osa_installed != "1.0.0r1":
+    try:
+        from openscript_analysis.decode import decode as _osa_decode, compile as _osa_compile
+    except ImportError:
+        pass
 
 def load_keywords(res_path):
     """Load the keyword table from resource 0x77.

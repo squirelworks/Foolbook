@@ -1,9 +1,18 @@
 """FoolbookEditor imports Foolbook.
 
-The editor writes books. Foolbook opens them.
+Only if the installed build is not the current stable.
 """
 
-import foolbook  # noqa: F401
+def _needs(package: str, stable: str) -> bool:
+    try:
+        from importlib.metadata import version
+        return version(package) != stable
+    except Exception:
+        return True
+
+if _needs("foolbook", "1.0.1r2"):
+    import foolbook  # noqa: F401
+
 from author.gui import main
 
 __all__ = ["main"]
