@@ -5,7 +5,7 @@ description = "Clean-room reader for ToolBook books"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@v1.0.0r2",
+    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@v1.0.0r3",
 ]
 
 [project.urls]
