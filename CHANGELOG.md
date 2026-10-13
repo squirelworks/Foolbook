@@ -7,6 +7,7 @@
 - Page graphics. A page's `shapes` are drawn in the window for that page: rect, ellipse, line, polygon, text, and image. Coordinates are the book's own pixels.
 - A new install opens Using Foolbook, a picture book. First Light is the second example, opened from that book.
 - Open, in the window, loads another book. That includes a `.tbk`.
+- The window is twice as wide and twice as tall. Next and Back are shown unless the book already has that button.
 
 ## 1.0.1r1
 
