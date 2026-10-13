@@ -1,0 +1,19 @@
+[project]
+name = "foolbook"
+version = "1.0.1"
+description = "Clean-room reader for ToolBook books"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@v1.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com/squirelworks/Foolbook"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
