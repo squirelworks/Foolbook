@@ -28,14 +28,6 @@ def open_book(path: str | Path, student: str = "", course: str = "") -> int:
     pages = book.pages
     idx = tk.IntVar(value=0)
 
-    # Restore last page
-    last = progress.last_page(course_id)
-    if last:
-        for i, p in enumerate(pages):
-            if p.id == last:
-                idx.set(i)
-                break
-
     sidebar = ttk.Frame(root, width=160)
     sidebar.pack(side="left", fill="y")
     sidebar.pack_propagate(False)
