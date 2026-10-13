@@ -100,7 +100,7 @@ def _freshstart() -> int:
     import subprocess
     cmd = [
         sys.executable, "-m", "pip", "install", "--force-reinstall",
-        "git+https://github.com/squirelworks/Foolbook.git@v1.0.1r1",
+        "git+https://github.com/squirelworks/Foolbook.git@v1.0.1r2",
     ]
     return subprocess.call(cmd)
 

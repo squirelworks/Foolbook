@@ -27,3 +27,12 @@ Revision of 1.0.0. The viewer, the student file, and a first `.tbk` export.
 ## 1.0.0
 
 First release.
+
+## 1.0.1r2
+
+- Native window viewer; exits when closed
+- Splash on bare launch (2+2=5); course and direct open at last page
+- Default book using_foolbook.json
+- --freshstart and --doctor
+- _debug/ dumps diagnostics
+
