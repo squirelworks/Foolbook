@@ -14,8 +14,12 @@ from engine.loader import load
 from progress.progress import Progress
 
 
-def open_book(path: str | Path, student: str = "", course: str = "") -> int:
-    """Open a book in a native window. Returns when the window closes."""
+def open_book(path: str | Path, student: str = "", course: str = "", splash: bool = False) -> int:
+    """Open a book in a native window. Returns when the window closes.
+
+    splash=True only for the bare launch. Course and direct file skip it
+    and open at the last page.
+    """
     book = load(path)
     course_id = course or Path(path).stem
     progress = Progress(Path(student) if student else _progress_path())
@@ -29,30 +33,33 @@ def open_book(path: str | Path, student: str = "", course: str = "") -> int:
     last = progress.last_page(course_id)
     start_at = 0
 
-    # Splash
-    splash = tk.Toplevel(root)
-    splash.title("Foolbook")
-    splash.geometry("480x280")
-    splash.transient(root)
-    splash.grab_set()
-    tk.Label(splash, text="2+2=5", font=("TkDefaultFont", 18, "bold")).pack(pady=(16, 4))
-    tk.Label(splash, text="Open last page? Or start fresh?").pack(pady=8)
+    if splash:
+        win = tk.Toplevel(root)
+        win.title("Foolbook")
+        win.geometry("480x280")
+        win.transient(root)
+        win.grab_set()
+        tk.Label(win, text="2+2=5", font=("TkDefaultFont", 18, "bold")).pack(pady=(16, 4))
+        tk.Label(win, text="Open last page? Or start fresh?").pack(pady=8)
+        chosen = tk.IntVar(value=-1)
 
-    chosen = tk.IntVar(value=-1)
+        def pick(fresh: bool):
+            chosen.set(0 if fresh else 1)
+            win.destroy()
 
-    def pick(fresh: bool):
-        chosen.set(0 if fresh else 1)
-        splash.destroy()
-
-    btns = ttk.Frame(splash)
-    btns.pack(pady=8)
-    ttk.Button(btns, text="Start fresh", command=lambda: pick(True)).pack(side="left", padx=6)
-    if last:
-        ttk.Button(btns, text="Open last page", command=lambda: pick(False)).pack(side="left", padx=6)
-    tk.Label(splash, text="For greater values of 2.").pack(side="bottom", pady=8)
-    root.wait_window(splash)
-
-    if chosen.get() == 1 and last:
+        btns = ttk.Frame(win)
+        btns.pack(pady=8)
+        ttk.Button(btns, text="Start fresh", command=lambda: pick(True)).pack(side="left", padx=6)
+        if last:
+            ttk.Button(btns, text="Open last page", command=lambda: pick(False)).pack(side="left", padx=6)
+        tk.Label(win, text="For greater values of 2.").pack(side="bottom", pady=8)
+        root.wait_window(win)
+        if chosen.get() == 1 and last:
+            for i, p in enumerate(pages):
+                if p.id == last:
+                    start_at = i
+                    break
+    elif last:
         for i, p in enumerate(pages):
             if p.id == last:
                 start_at = i

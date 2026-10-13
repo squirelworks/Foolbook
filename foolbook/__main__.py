@@ -87,7 +87,9 @@ def main() -> int:
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.native import open_book
-    return open_book(args[0], student=student, course=course)
+    # Splash only when no path was given (default book)
+    show_splash = not sys.argv[1:] or (len(sys.argv) == 2 and "using_foolbook" in sys.argv[1])
+    return open_book(args[0], student=student, course=course, splash=show_splash)
 
 
 
