@@ -17,7 +17,8 @@ python3 -m foolbook                           # ask for a file, then open the GU
 python3 -m foolbook --cli path/to/book        # terminal viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
-python3 -m foolbook --author                  # slide editor
+python3 -m foolbook --author [book.fbk]         # browser editor, writes .fbk and .json
+python3 -m foolbook --author --desktop        # desktop slide editor
 python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 

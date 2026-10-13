@@ -82,8 +82,13 @@ def main() -> int:
         from _courses.catalog import main as catalog_main
         return catalog_main(args[1:])
     if args and args[0] == "--author":
-        from author.gui import main as author_main
-        return author_main(args[1:])
+        rest = args[1:]
+        if "--desktop" in rest:
+            rest = [a for a in rest if a != "--desktop"]
+            from author.gui import main as author_main
+            return author_main(rest)
+        from author.web import main as web_author
+        return web_author(rest)
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]
     from viewer.native import open_book

@@ -1,5 +1,5 @@
 """Authoring tools.
 
-  python3 -m author.gui
-  python3 -m author.gui book.fbk
+  python3 -m foolbook --author [book.fbk]   # browser
+  python3 -m author.gui                     # desktop window
 """

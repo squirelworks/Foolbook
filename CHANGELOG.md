@@ -1,4 +1,9 @@
 # Changelog
+
+## Next
+
+- Browser author. `python3 -m foolbook --author` edits a book in the browser and writes `.fbk` and `.json`. `--author --desktop` is the previous window.
+
 ## 1.0.1r1
 
 - Package is now `foolbook`. No more `main` collision.

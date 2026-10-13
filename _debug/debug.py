@@ -36,8 +36,10 @@ EXPECTED = [
     "viewer/cli.py",
     "viewer/gui.py",
     "author/__init__.py",
+    "author/document.py",
     "author/formats.py",
     "author/gui.py",
+    "author/web.py",
     "menu/__init__.py",
     "menu/menu.py",
     "progress/__init__.py",
@@ -50,7 +52,7 @@ EXPECTED = [
 MODULES = {
     "engine": ["engine.loader", "engine.engine", "engine.tbk"],
     "viewer": ["viewer.cli"],
-    "author": ["author.formats"],
+    "author": ["author.formats", "author.document", "author.web"],
     "menu": ["menu.menu"],
     "progress": ["progress.progress"],
 }
