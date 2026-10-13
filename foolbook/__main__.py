@@ -29,6 +29,9 @@ def main() -> int:
     args = sys.argv[1:]
     if "--freshstart" in args:
         return _freshstart()
+    if "--doctor" in args:
+        from foolbook._debug import run
+        return run()
     port = _take_port(args)
     student = _take_student(args)
     locale = _take_locale(args)
