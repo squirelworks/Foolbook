@@ -42,6 +42,11 @@ def main() -> int:
     if debug_mode is not None:
         from engine.loader import set_keep_decoded
         set_keep_decoded(True)
+    if "--server" in args:
+        args.remove("--server")
+        from viewer.gui import serve
+        serve(path=None, port=port, student=student, locale=locale, course=course)
+        return 0
     if not args:
         path = _ask_for_book()
         if not path:

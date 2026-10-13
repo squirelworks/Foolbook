@@ -310,12 +310,24 @@ def book_to_json(book, progress=None, course_id="") -> dict:
     }
 
 
-def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
-    book = load(path)
-    localized = _apply_locale(book, Path(path), locale) if locale else False
-    course_id = course or Path(path).stem
-    progress = Progress(Path(student) if student else _progress_path())
-    progress.touch(course_id)
+def serve(path: str | Path | None = None, port: int = 1337, student: str = "", locale: str = "", course: str = "") -> None:
+    """One viewer. /api/load swaps the book. Finish does not exit."""
+    state = {"book": None, "progress": None, "course_id": "", "path": None}
+
+    def load_book(book_path, st, loc, cid):
+        book = load(book_path)
+        if loc:
+            _apply_locale(book, Path(book_path), loc)
+        cid = cid or Path(book_path).stem
+        prog = Progress(Path(st) if st else _progress_path())
+        prog.touch(cid)
+        state["book"] = book
+        state["progress"] = prog
+        state["course_id"] = cid
+        state["path"] = Path(book_path)
+
+    if path:
+        load_book(path, student, locale, course)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
@@ -323,6 +335,22 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
 
         def do_GET(self):
             u = urlparse(self.path)
+            if u.path == "/api/load":
+                from urllib.parse import parse_qs
+                q = parse_qs(u.query)
+                bp = (q.get("path") or [""])[0]
+                if not bp or not Path(bp).exists():
+                    self.send_response(400)
+                    self.end_headers()
+                    return
+                load_book(bp, (q.get("student") or [""])[0], (q.get("locale") or [""])[0], (q.get("course") or [""])[0])
+                body = b'{"ok":true}'
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if u.path in ("/", "/index.html"):
                 body = HTML.encode("utf-8")
                 self.send_response(200)
@@ -330,8 +358,16 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
-            elif u.path == "/api/book":
-                payload = json.dumps(book_to_json(book, progress, course_id)).encode("utf-8")
+                return
+            book = state["book"]
+            progress = state["progress"]
+            course_id = state["course_id"]
+            if not book:
+                self.send_response(404)
+                self.end_headers()
+                return
+            if u.path == "/api/book":
+                payload = json.dumps(book_to_json(book, progress, course_id)).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
@@ -350,7 +386,7 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
                 page = (q.get("page") or [""])[0]
                 correct = (q.get("correct") or ["0"])[0] == "1"
                 score = progress.record_answer(course_id, page, correct) if page else {}
-                body = json.dumps(score).encode("utf-8")
+                body = json.dumps(score).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
@@ -359,13 +395,13 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
             elif u.path == "/api/finish":
                 progress.complete(course_id)
                 score = progress.course_score(course_id)
-                body = json.dumps(score).encode("utf-8")
+                body = json.dumps(score).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
-                threading.Thread(target=lambda: (time.sleep(0.4), server.shutdown()), daemon=True).start()
+                state["book"] = None
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -373,23 +409,14 @@ def serve(path: str | Path, port: int = 1337, student: str = "", locale: str = "
     try:
         server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     except OSError as exc:
-        if exc.errno in (98, 48):  # EADDRINUSE on Linux, macOS
-            print("Server already running, cannot start a new instance")
+        if exc.errno in (98, 48):
+            print("Server already running")
             raise SystemExit(1)
         raise
-    url = f"http://127.0.0.1:{port}/"
-    print(f"Foolbook GUI  {book.title or Path(path).name}  ({len(book.pages)} pages)")
-    print(f"Open {url}")
-    if locale:
-        note = "course localized" if localized else "no course localization, text left as written"
-        print(f"Locale {locale}  ({note})")
-    opened = _open_browser(url)
-    if not opened:
-        print(f"Browser did not open. Go to {url}")
+    print(f"Foolbook on http://127.0.0.1:{port}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print()
         server.shutdown()
 
 
