@@ -11,6 +11,7 @@ from tkinter import ttk
 from pathlib import Path
 
 from engine.loader import load
+from engine.graphics import extract, draw
 from progress.progress import Progress
 
 
@@ -79,6 +80,13 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     main.pack(side="left", fill="both", expand=True)
     content = tk.Text(main, wrap="word", state="disabled")
     content.pack(fill="both", expand=True, padx=8, pady=8)
+    # Graphics scaffold. Hidden until a book has shapes.
+    gfx = tk.Canvas(main, height=0, highlightthickness=0)
+    gfx.pack(fill="x", padx=8)
+    shapes = extract(book)
+    if shapes:
+        gfx.config(height=200)
+        draw(gfx, shapes)
     nav = ttk.Frame(main)
     nav.pack(fill="x", padx=8, pady=4)
 
