@@ -114,6 +114,38 @@ def _book_from_dict(path: Path, data: dict) -> Book:
     )
 
 
+def _tbk_shapes(blob: bytes) -> list[dict]:
+    """Page-blob shapes, placed by their twip bounds, in the viewer's pixel form."""
+    try:
+        from .place import place_page
+        from .shapes import extract_shapes
+    except Exception:
+        return []
+    laid = place_page(extract_shapes(blob))
+    out = []
+    for shape in laid["shapes"]:
+        fill = shape.get("fill") or ""
+        if shape.get("type") == "polygon":
+            out.append({
+                "kind": "polygon",
+                "points": shape.get("pixels") or [],
+                "fill": fill,
+                "outline": "#000000",
+            })
+            continue
+        at = shape.get("at") or [0, 0, 1, 1]
+        out.append({
+            "kind": "rect",
+            "x": at[0],
+            "y": at[1],
+            "w": at[2],
+            "h": at[3],
+            "fill": fill,
+            "outline": "#000000",
+        })
+    return out
+
+
 def _words(value) -> str:
     """Shared with the note reader. Rich text becomes the words, not the font table."""
     if not value:
@@ -123,10 +155,7 @@ def _words(value) -> str:
 
 
 def _load_tbk(path: Path) -> Book:
-    """Load a raw .tbk. The page stream is decoded to handler source and run as-is.
-
-    Shapes are not read from the stream. That waits until the stream is understood.
-    """
+    """Load a raw .tbk. Handlers come from the page stream. Shapes come from the bounds."""
     try:
         from . import tbk as rtbk
         from .openscript import load_keywords, decode
@@ -145,12 +174,14 @@ def _load_tbk(path: Path) -> Book:
                     text.append(t)
             handlers = _handlers_from_blob(p.blob, keywords, decode)
             items = _items_from_handlers(handlers)
+            shapes = _tbk_shapes(p.blob)
             pages.append(Page(
                 id=p.name,
                 text=text,
                 items=items,
                 jumps=list(getattr(p, "quoted_jumps", None) or []),
                 handlers=handlers,
+                shapes=shapes,
                 raw={"offset": p.offset},
             ))
         if _KEEP_DECODED:

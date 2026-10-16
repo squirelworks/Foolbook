@@ -1,9 +1,17 @@
 # Changelog
 
-## 1.0.2 (unreleased)
+## 1.0.2
 
-- Content rectangle extraction added to shapes.py. Pattern is bounds at -16, fill at -4, marker 01 00 00 04. 961 rectangles found in 9e954d01.tbk.
-- Research notes in `documentation/research-notes.md`: object struct layout, palette requirement, field text path.
+- A polygon record becomes the point array `Polygon` is given. Each twip is `(coord * dpi + 720) / 1440`.
+- Rectangle, ellipse, round rect, polyline, and arc use the same conversion. `Pie` is not called. A bracket does not invent its points.
+- Each object is placed from its twip bounds. Twip `0, 0` is the window origin.
+- A `.tbk` page now carries those shapes into the viewer.
+- NearScript heap, value stack, resource session, book API, and object layer.
+- One module file each for `bas`, `rtm`, `utl`, `rcr`, `w16`, `w32`, and `w64`.
+
+## 1.0.1r2
+
+- Content rectangle extraction. Bounds at -16, fill at -4, marker `01 00 00 04`.
 
 ## 1.0.1
 

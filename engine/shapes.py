@@ -25,24 +25,18 @@ def extract_shapes(blob: bytes) -> list[dict]:
         if i < 0 or i + 0x30 > len(blob):
             break
         if blob[i + 0x0C:i + 0x0E] == b"\x04\x00":
-            count = int.from_bytes(blob[i + 0x1A:i + 0x1C], "little")
-            if 3 <= count <= 32:
-                pts = []
-                base = i + 0x22
-                ok = True
-                for j in range(count):
-                    if base + j * 4 + 4 > len(blob):
-                        ok = False
-                        break
-                    x = int.from_bytes(blob[base + j * 4:base + j * 4 + 2], "little")
-                    y = int.from_bytes(blob[base + j * 4 + 2:base + j * 4 + 4], "little")
-                    if x > 20000 or y > 20000:
-                        ok = False
-                        break
-                    pts.append([x, y])
-                if ok and len(pts) >= 3:
-                    fill = _color(blob, i + 4)
-                    shapes.append({"type": "polygon", "points": pts, "fill": fill})
+            from .polygon import read_polygon
+            found = read_polygon(blob[i:])
+            if found and found["count"] >= 3 and all(
+                abs(p[0]) <= 20000 and abs(p[1]) <= 20000 for p in found["points"]
+            ):
+                shapes.append({
+                    "type": "polygon",
+                    "points": found["points"],
+                    "pixels": found["pixels"],
+                    "fill": found["fill"],
+                    "pen": found["pen"],
+                })
         idx = i + 1
 
     # Content rectangles: bounds at -16, fill at -4, marker 01 00 00 04
@@ -58,11 +52,18 @@ def extract_shapes(blob: bytes) -> list[dict]:
                 for k in range(0, 8, 2)
             ]
             if all(0 < v < 15000 for v in vals) and vals[2] > vals[0] and vals[3] > vals[1]:
+                from .gdi_shape import rectangle
                 fill = _color(blob, i - 4)
+                call = rectangle(vals[0], vals[1], vals[2], vals[3], fill=fill)
                 shapes.append({
                     "type": "rect",
                     "points": [[vals[0], vals[1]], [vals[2], vals[3]]],
+                    "pixels": [
+                        [call["box"]["left"], call["box"]["top"]],
+                        [call["box"]["right"], call["box"]["bottom"]],
+                    ],
                     "fill": fill,
+                    "pen": None,
                 })
         idx = i + 1
 
