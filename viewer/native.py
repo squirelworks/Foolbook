@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.engine import enter_page, goto, open_book as open_other, press
+from engine.engine import enter_page, follow, goto, open_book as open_other, press, run_handler
 from foolbook.model import RuntimeState
 from progress.progress import Progress
 
@@ -109,12 +109,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)
-    gfx = tk.Canvas(main, height=0, highlightthickness=0, bg="white")
-    gfx.pack(fill="x", padx=8, pady=(8, 0))
-    content = tk.Text(main, wrap="word", state="disabled")
-    content.pack(fill="both", expand=True, padx=8, pady=8)
-    nav = ttk.Frame(main)
-    nav.pack(fill="x", padx=8, pady=4)
+    gfx = tk.Canvas(main, highlightthickness=0, bg="white")
+    gfx.pack(fill="both", expand=True)
+    view = {"scale": 1.0, "ox": 0.0, "oy": 0.0, "x0": 0.0, "y0": 0.0}
     painting = {"on": False}
 
     def show(i: int):
@@ -127,6 +124,22 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             _paint()
         finally:
             painting["on"] = False
+
+    def _objects(page):
+        stored = list((page.raw or {}).get("objects") or [])
+        if stored:
+            return stored
+        objects = [dict(shape) for shape in extract(page)]
+        y = bottom(objects) + 16
+        for item in page.items or []:
+            label = item.get("label") or item.get("page") or "Go"
+            objects.append({
+                "kind": "button", "name": label, "text": label,
+                "x": 24, "y": y, "w": max(72, 10 * len(label)), "h": 28,
+                "fill": "", "outline": "black", "item": item, "visible": True,
+            })
+            y += 36
+        return objects
 
     def _paint():
         pages = state.book.pages
@@ -144,48 +157,63 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         lb.selection_set(state.index)
         lb.see(state.index)
         root.title(state.book.title or Path(state.book.path).name)
-        content.config(state="normal")
-        content.delete("1.0", "end")
-        content.insert("end", p.id + "\n\n")
-        for t in (p.text or []):
-            content.insert("end", t + "\n\n")
-        content.config(state="disabled")
-        shapes = extract(p)
         gfx.delete("all")
-        if shapes:
-            gfx.config(height=min(320, max(48, bottom(shapes) + 8)))
-            draw(gfx, shapes, base=Path(state.book.path).parent)
-        else:
-            gfx.config(height=0)
-        for w in nav.winfo_children():
-            w.destroy()
-        left = ttk.Frame(nav)
-        left.pack(side="left")
-        right = ttk.Frame(nav)
-        right.pack(side="right")
-        mid = ttk.Frame(nav)
-        mid.pack(side="left", fill="x", expand=True)
-        def place(label: str):
-            low = (label or "").lower()
-            if low in ("back", "previous"):
-                return left
-            if low == "next":
-                return right
-            return mid
-        for it in p.items or []:
-            label = it.get("label") or it.get("page") or "Go"
-            target = it.get("page") or ""
-            other = it.get("book") or ""
-            ttk.Button(
-                place(label), text=label,
-                command=lambda l=label, t=target, b=other: on_button(l, t, b),
-            ).pack(side="left", padx=2)
-        if p.quiz:
-            for ch in (p.quiz.get("choices") or []):
-                ttk.Button(
-                    mid, text=ch.get("label") or "?",
-                    command=lambda c=ch: answer(c),
-                ).pack(side="left", padx=2)
+        objects = _objects(p)
+        p.raw["objects"] = objects
+        draw(gfx, objects, base=Path(state.book.path).parent)
+        box = gfx.bbox("all") or (0, 0, 624, 442)
+        x0, y0, x1, y1 = box
+        pw = max(1, x1 - x0)
+        ph = max(1, y1 - y0)
+        gfx.update_idletasks()
+        cw = max(gfx.winfo_width(), 640)
+        ch = max(gfx.winfo_height(), 480)
+        scale = min(cw / pw, ch / ph) * 0.96
+        gfx.scale("all", x0, y0, scale, scale)
+        ox = 12 - x0 * scale
+        oy = 12 - y0 * scale
+        gfx.move("all", ox, oy)
+        view.update(scale=scale, ox=ox, oy=oy, x0=x0, y0=y0)
+        gfx.configure(scrollregion=gfx.bbox("all"))
+
+    def _hit(event):
+        page = state.page
+        if page is None or view["scale"] == 0:
+            return None
+        x = (event.x - view["ox"]) / view["scale"] + view["x0"]
+        y = (event.y - view["oy"]) / view["scale"] + view["y0"]
+        for obj in reversed(page.raw.get("objects") or []):
+            if obj.get("kind") != "button" or obj.get("visible") is False:
+                continue
+            left, top = obj.get("x") or 0, obj.get("y") or 0
+            if left <= x <= left + (obj.get("w") or 0) and top <= y <= top + (obj.get("h") or 0):
+                return obj
+        return None
+
+    def on_canvas(event):
+        page = state.page
+        obj = _hit(event)
+        if page is None or obj is None:
+            return
+        script = obj.get("script") or ""
+        if script and follow(state, run_handler(state, script)):
+            show(state.index)
+            return
+        quiz = page.quiz or {}
+        answer = quiz.get("answer") or ""
+        item = obj.get("item") or {}
+        name = (obj.get("name") or "").lower()
+        if answer and not item.get("page") and name not in ("next", "back", "previous", "ok", "help", "skip", "menu"):
+            from openscript_analysis.core.quiz import grade
+            right = grade(answer, obj.get("name") or obj.get("text") or "")
+            progress.record_answer(held["course"], page.id, right)
+            for thing in page.raw.get("objects") or []:
+                if (thing.get("name") or "").lower() == "correct":
+                    thing["visible"] = right
+            _paint()
+            return
+        if item.get("page") or item.get("book") or item.get("label"):
+            on_button(item.get("label") or obj.get("text") or "", item.get("page") or "", item.get("book") or "")
 
     def on_button(label: str, target: str, book_name: str = ""):
         if book_name and open_other(state, book_name, target or ""):
@@ -194,20 +222,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         press(state, label, target)
         show(state.index)
 
-    def answer(choice: dict):
-        page = state.page
-        if page is None:
-            return
-        progress.record_answer(held["course"], page.id, bool(choice.get("correct")))
-        target = ""
-        if choice.get("correct"):
-            target = choice.get("next") or (page.quiz or {}).get("next") or ""
-        else:
-            target = choice.get("again") or (page.quiz or {}).get("again") or ""
-        if target:
-            goto(state, target)
-            show(state.index)
-
+    gfx.bind("<Button-1>", on_canvas)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() else None)
     show(idx.get())
     root.mainloop()

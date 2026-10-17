@@ -2,30 +2,25 @@
 
 Things that are wrong in the current release.
 
-## ToolBook implementation is still broken
+## ToolBook is settled, and it is still not ToolBook
 
-Opening a `.tbk` or `.sbk` does not yet show the book ToolBook would show.
+The file is read to the end before a page is shown. A later copy of a page replaces the earlier one. A later copy of an object does the same. A TBX is then ordered by `Book.Pages`. One page is one surface: the bounds the book stored, then the text or the bitmap that belongs there.
 
-- The page stream is only partly read. Field text and a best-effort handler decode come out. Graphics, object bounds, and most of the property tree do not.
-- Pages stay in the order the stream gave them. Do not sort that order.
-- Handlers that do decode are run with the small OpenScript subset already implemented. Most of the language is not.
-- A `.tbk` written by FoolbookEditor is a shell. ToolBook has not been shown to open one.
+That is still not ToolBook.
 
-## TBX support is spotty, at best
+- A `.tbk` button's bitmap id is still not in the part of the record we can read. The button is drawn at the book's bounds with its name, not the bitmap.
+- Some field text is the neighboring property, not the field. The copyright line on the first page of Logic Families is one of those.
+- Most OpenScript still does not run. A quiz is graded by comparing the clicked button's name with the page's Answer property. `handleQuizClick` itself is not run. Help, Skip, and OK do nothing.
+- Next and Back move along the settled page list. A button that has its own `send next` or `send previous` uses that.
+- Bitmaps are drawn only when a TBX export left the file beside `Book.xml`.
+- Groups are still skipped. A `.tbk` stores P440's drawing inside the P430 record, so both show on P430.
 
-`Book.xml` opens. That is not the same as showing the book.
+## TBX
 
-- Page navigation is bonkers. The order of the pages, and the buttons that follow it, is not the reading order of the book.
-- Text is still garbled when it is not rich text. A field that is rich text is reduced to the words, so the font table is no longer shown. The font itself, such as Arial, is not applied.
-- Field text comes through only as that raw string. Rectangles, ellipses, lines, and polygons are drawn from bounds and vertices, scaled from twips. Groups, buttons, bitmaps, and the other object kinds are not.
-- Scripts run through the same small OpenScript subset as a `.tbk`. Most of the language is not.
-- A `.tbx` written by the editor is the folder Foolbook itself writes. It is not a SumTotal export.
+`Book.xml` opens through `Book.Pages`. Text keeps the font face the file named. A button keeps its caption or its bitmap path. The rich-text face table is not drawn as words.
 
-What is learned from a `.tbk` has to be applied to a `.tbx`, and the other way around. The two readers do not share that work yet.
+What a `.tbk` and a `.tbx` share is the settled page: bounds, then the thing that goes in them. The two files are still not the same reader.
 
 ## Notes
 
-`.txt`, `.text`, `.md`, `.markdown`, `.rst`, `.log`, and `.rtf` open in the viewer. An `.rtf` shows the words, not the font table. The font is not applied.
-
-
-
+`.txt`, `.text`, `.md`, `.markdown`, `.rst`, `.log`, and `.rtf` open in the viewer. An `.rtf` shows the words. The font is not applied.

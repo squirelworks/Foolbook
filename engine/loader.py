@@ -173,17 +173,30 @@ def _load_tbk(path: Path) -> Book:
                 if t and t not in text:
                     text.append(t)
             handlers = _handlers_from_blob(p.blob, keywords, decode)
-            items = _items_from_handlers(handlers)
+            surface = _surface(p.blob, keywords)
             shapes = _tbk_shapes(p.blob)
+            objects = _compose_tbk(surface, shapes)
+            if any(obj.get("script") for obj in objects):
+                handlers = [h for h in handlers if h.name.lower() != "buttonclick"]
+            if objects and any(obj.get("name") or obj.get("text") or obj.get("script") for obj in objects):
+                text = [obj["text"] for obj in objects if obj.get("kind") == "text" and obj.get("text")]
+            else:
+                objects = []
+            items = [obj["item"] for obj in objects if obj.get("item")]
+            if not objects:
+                items = _items_from_handlers(handlers)
+            quiz = {"answer": surface["answer"]} if surface.get("answer") else None
             pages.append(Page(
                 id=p.name,
                 text=text,
                 items=items,
                 jumps=list(getattr(p, "quoted_jumps", None) or []),
                 handlers=handlers,
-                shapes=shapes,
-                raw={"offset": p.offset},
+                shapes=objects or shapes,
+                quiz=quiz,
+                raw={"offset": p.offset, "objects": objects or None},
             ))
+        pages = _settle_tbk(pages)
         if _KEEP_DECODED:
             _write_decoded(path, pages)
         return Book(path=str(path), title=path.stem, pages=pages)
@@ -194,6 +207,107 @@ def _load_tbk(path: Path) -> Book:
             text=[f"Could not parse {path.name}: {exc}"],
         ))
         return book
+
+
+def _settle_tbk(pages: list) -> list:
+    """The file is a log. A later copy of a page replaces the earlier one.
+
+    Object bounds are already on the page. This does not move them.
+    """
+    try:
+        from openscript_analysis.formats.tbk import settle_pages
+    except ImportError:
+        return pages
+    rows = settle_pages([
+        {"id": page.id, "page": page, "deleted": False} for page in pages
+    ])
+    return [row["page"] for row in rows]
+
+
+def _surface(blob: bytes, keywords) -> dict:
+    try:
+        from openscript_analysis.formats.tbk import read_surface
+    except ImportError:
+        return {"objects": [], "answer": ""}
+
+    def decode_script(raw: bytes) -> str:
+        from .openscript import decode
+        return decode(raw, keywords)
+
+    try:
+        return read_surface(blob, decode_script if keywords else None)
+    except Exception:
+        return {"objects": [], "answer": ""}
+
+
+def _compose_tbk(surface: dict, shapes: list) -> list:
+    """One page. Plates first, then the drawing, then text and buttons."""
+    widgets = _place_widgets(surface.get("objects") or [])
+    if not widgets:
+        return []
+    plates = []
+    rest = []
+    for obj in widgets:
+        if obj["kind"] == "rect" and (obj["w"] > 400 or obj["h"] > 300):
+            plates.append(obj)
+        else:
+            rest.append(obj)
+    return plates + list(shapes) + rest
+
+
+def _place_widgets(records: list) -> list:
+    from .polygon import to_pixel
+    placed = []
+    for src in records:
+        bounds = src.get("bounds") or [0, 0, 0, 0]
+        if len(bounds) < 4:
+            continue
+        x = to_pixel(bounds[0]) + 8
+        y = to_pixel(bounds[1]) + 8
+        w = max(1, to_pixel(bounds[2]) - to_pixel(bounds[0]))
+        h = max(1, to_pixel(bounds[3]) - to_pixel(bounds[1]))
+        kind = src.get("kind") or "rect"
+        name = src.get("name") or ""
+        script = src.get("script") or ""
+        caption = src.get("text") or ""
+        if kind == "button" and not caption and w < 160 and h < 80:
+            caption = name
+        obj = {
+            "kind": kind,
+            "name": name,
+            "x": x,
+            "y": y,
+            "w": w,
+            "h": h,
+            "text": caption,
+            "font": "Arial",
+            "size": 12,
+            "bold": kind == "text",
+            "fill": "" if kind == "button" else (src.get("fill") or ""),
+            "outline": "black" if kind == "button" else (src.get("outline") or ""),
+            "visible": name.lower() != "correct",
+            "script": script,
+        }
+        item = _item_from_script(name, script)
+        if item:
+            obj["item"] = item
+        placed.append(obj)
+    return placed
+
+
+def _item_from_script(name: str, script: str):
+    import re
+    if not script:
+        return None
+    low = script.lower()
+    match = re.search(r'go\s+to\s+page\s+"([^"]+)"', script, re.IGNORECASE)
+    if match:
+        return {"label": name or match.group(1), "page": match.group(1)}
+    if "send next" in low:
+        return {"label": name or "Next", "page": ""}
+    if "send previous" in low or "send back" in low:
+        return {"label": name or "Back", "page": ""}
+    return None
 
 
 def _write_decoded(path: Path, pages: list) -> None:

@@ -15,6 +15,7 @@ bounds, when present, is [x, y, w, h] and stands in for x, y, w, h.
 from __future__ import annotations
 
 import base64
+import tkinter as tk
 from pathlib import Path
 
 
@@ -53,6 +54,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     photos = []
     for shape in shapes:
         kind = (shape.get("kind") or "rect").lower()
+        if shape.get("visible") is False:
+            continue
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"
         if kind == "polygon":
@@ -68,15 +71,36 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
             size = int(shape.get("size") or 12)
-            font = ("TkDefaultFont", size, "bold") if shape.get("bold") else ("TkDefaultFont", size)
+            face = shape.get("font") or "TkDefaultFont"
+            style = "bold" if shape.get("bold") else "normal"
+            text_kwargs = {}
+            if int(shape.get("w") or 0) > 0:
+                text_kwargs["width"] = int(shape["w"])
             canvas.create_text(
                 int(shape.get("x") or 0),
                 int(shape.get("y") or 0),
                 text=str(shape.get("text") or ""),
                 anchor="nw",
-                font=font,
+                font=(face, size, style) if style == "bold" else (face, size),
                 fill=fill or "black",
+                **text_kwargs,
             )
+        elif kind == "button":
+            x, y, w, h = _box(shape)
+            src = shape.get("src") or ""
+            drawn = False
+            if src and Path(src).is_file():
+                try:
+                    image = tk.PhotoImage(file=src, master=canvas)
+                    photos.append(image)
+                    canvas.create_image(x, y, image=image, anchor="nw")
+                    drawn = True
+                except tk.TclError:
+                    drawn = False
+            if not drawn:
+                canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "", outline=outline or "black")
+                if shape.get("text"):
+                    canvas.create_text(x + 4, y + 2, text=str(shape.get("text")), anchor="nw", fill=fill or "black")
         elif kind == "image":
             photo = _photo(canvas, shape, base)
             if photo is not None:

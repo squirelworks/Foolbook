@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from foolbook.model import Book, Handler, Page
+from foolbook.model import Book, Page
 
 
 def _tbx():
@@ -27,18 +27,21 @@ def is_tbx(path: str | Path) -> bool:
 
 
 def load(path: str | Path) -> Book:
-    data = _tbx().to_book_dict(_tbx().load_tbx(path))
+    data = _tbx().settle(path)
     pages = []
     for raw in data.get("pages") or []:
+        objects = list(raw.get("objects") or raw.get("shapes") or [])
         pages.append(Page(
             id=raw.get("id") or "",
             text=[_words(t) for t in (raw.get("text") or []) if _words(t)],
             items=list(raw.get("items") or []),
-            shapes=list(raw.get("shapes") or []),
-            handlers=[
-                Handler(name=h.get("name") or "", source=h.get("source") or "")
-                for h in raw.get("handlers") or []
-            ],
+            shapes=objects,
+            quiz=raw.get("quiz"),
+            raw={
+                "objects": objects,
+                "settled": True,
+                "size": raw.get("size") or data.get("size"),
+            },
         ))
     return Book(path=str(path), title=data.get("title") or Path(path).stem, pages=pages)
 
