@@ -25,15 +25,14 @@ def extract_shapes(blob: bytes) -> list[dict]:
         if i < 0 or i + 0x30 > len(blob):
             break
         if blob[i + 0x0C:i + 0x0E] == b"\x04\x00":
-            from .polygon import read_polygon
+            from .polygon import gdi_points, read_polygon
             found = read_polygon(blob[i:])
-            if found and found["count"] >= 3 and all(
-                abs(p[0]) <= 20000 and abs(p[1]) <= 20000 for p in found["points"]
-            ):
+            points = _on_page(blob, i, found)
+            if points:
                 shapes.append({
                     "type": "polygon",
-                    "points": found["points"],
-                    "pixels": found["pixels"],
+                    "points": points,
+                    "pixels": gdi_points(points),
                     "fill": found["fill"],
                     "pen": found["pen"],
                 })
@@ -68,6 +67,39 @@ def extract_shapes(blob: bytes) -> list[dict]:
         idx = i + 1
 
     return shapes
+
+
+def _on_page(blob: bytes, at: int, found: dict | None) -> list[list[int]] | None:
+    """Move a local outline onto the page, or reject it.
+
+    The count word is followed by the page position of the outline's
+    top-left, a zero, and then the outline in its own coordinates.
+    Every pin of one kind shares that outline, so reading the outline
+    as page coordinates stacks them all on one spot. A point list that
+    still falls outside a lesson page (9600 by 7200, with a little
+    room) is another copy in the same record, or not an outline.
+    """
+    if not found or found["count"] < 3 or at + 0x22 > len(blob):
+        return None
+    gap = int.from_bytes(blob[at + 0x20:at + 0x22], "little", signed=True)
+    if gap != 0:
+        return None
+    points = found["points"]
+    anchor_x = int.from_bytes(blob[at + 0x1C:at + 0x1E], "little", signed=True)
+    anchor_y = int.from_bytes(blob[at + 0x1E:at + 0x20], "little", signed=True)
+    origin_x = min(point[0] for point in points)
+    origin_y = min(point[1] for point in points)
+    moved = [
+        [point[0] - origin_x + anchor_x, point[1] - origin_y + anchor_y]
+        for point in points
+    ]
+    xs = [point[0] for point in moved]
+    ys = [point[1] for point in moved]
+    if min(xs) < -200 or min(ys) < -200 or max(xs) > 11000 or max(ys) > 8000:
+        return None
+    if max(xs) - min(xs) > 8000 or max(ys) - min(ys) > 8000:
+        return None
+    return moved
 
 
 def _color(blob: bytes, off: int) -> str:

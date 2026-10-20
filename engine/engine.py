@@ -375,4 +375,11 @@ def press(state: RuntimeState, label: str = "", target: str = "") -> bool:
         return True
     if target and goto(state, target):
         return (id(state.book), state.index) != start
+    low = (label or "").lower()
+    if low == "next" and state.index + 1 < len(state.book.pages):
+        state.index += 1
+        return True
+    if low in ("back", "previous") and state.index > 0:
+        state.index -= 1
+        return True
     return False

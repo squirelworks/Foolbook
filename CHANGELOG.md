@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5
+
+- A polygon outline is drawn at its page position, not at the outline's own coordinates. Point lists that fall outside the lesson page are not drawn. P430 no longer fills the window with stacked yellow shapes.
+- A Next or Back button moves along the page list when its script does not.
+
 ## 1.0.4
 
 - Script expansion depends on `openscript_analysis` `v1.0.0r9`. That release reads the keyword count from byte 0, indexes keywords by id, copies a back-reference from the input, and treats `0xFF` as a new character plus a count.
