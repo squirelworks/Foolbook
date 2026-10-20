@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- Script expansion depends on `openscript_analysis` `v1.0.0r9`. That release reads the keyword count from byte 0, indexes keywords by id, copies a back-reference from the input, and treats `0xFF` as a new character plus a count.
+- The viewer's own `.tbk` decoder stops on a `0x00` literal, matching that release. It still does not follow a back-reference that lands on another back-reference.
+
 ## 1.0.3
 
 - A book is read to the end, and the edits in it are applied, before the window opens. A later copy of a page replaces the earlier one.

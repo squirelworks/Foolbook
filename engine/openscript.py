@@ -58,6 +58,8 @@ def decode(bytecode, keywords):
     while pos < len(bytecode):
         b = bytecode[pos]
         if b < 0x80:
+            if b == 0:
+                break
             output.append(b)
             pos += 1
         elif (b & 0xF0) == 0xF0:
