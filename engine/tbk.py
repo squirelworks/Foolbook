@@ -2,7 +2,8 @@
 
 Self-contained so Foolbook does not depend on an external runtime package.
 A lesson is a Click2learn shell: 0xC00-byte stub, then the book at
-ZZZTBKBOOKLOC (file 0xC00, magic 0x22222222). Pages are the 80 65 records.
+ZZZTBKBOOKLOC (file 0xC00, magic 0x22222222). A page mark is 80 65 or
+81 65, then 00 05 00 02 02. 81 65 is a nested page.
 """
 
 from __future__ import annotations
@@ -11,7 +12,9 @@ import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 
-MARK = bytes.fromhex("80650005000202")
+MARK_TAIL = bytes.fromhex("650005000202")
+MARK_FLAGS = (0x80, 0x81)
+MARK = bytes((MARK_FLAGS[0],)) + MARK_TAIL
 BOOK_MAGIC = 0x22222222
 STUB = 0xC00
 
@@ -103,7 +106,7 @@ def quoted_jumps(blob: bytes) -> list[str]:
     jumps = []
     start = 0
     while True:
-        i = blob.find(b'("P', start)
+        i = blob.find(b'(\"P', start)
         if i < 0:
             i = blob.find(b"(P", start)
         if i < 0:
@@ -128,10 +131,11 @@ def load(path: str | Path) -> Book:
     hits = []
     start = 0
     while True:
-        i = data.find(MARK, start)
+        i = data.find(MARK_TAIL, start)
         if i < 0:
             break
-        hits.append(i)
+        if i > 0 and data[i - 1] in MARK_FLAGS:
+            hits.append(i - 1)
         start = i + 1
     pages = []
     for n, off in enumerate(hits):

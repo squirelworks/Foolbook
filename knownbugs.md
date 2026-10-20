@@ -13,7 +13,7 @@ That is still not ToolBook.
 - Most OpenScript still does not run. A quiz is graded by comparing the clicked button's name with the page's Answer property. `handleQuizClick` itself is not run. Help, Skip, and OK do nothing.
 - Next and Back move along the settled page list. A button that has its own `send next` or `send previous` uses that.
 - Bitmaps are drawn only when a TBX export left the file beside `Book.xml`.
-- Groups are still skipped. A `.tbk` stores P440's drawing inside the P430 record, so both show on P430.
+- Groups inside one page are still skipped. A nested page (`81 65`) is its own page.
 
 ## TBX
 
