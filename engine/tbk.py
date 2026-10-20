@@ -106,7 +106,7 @@ def quoted_jumps(blob: bytes) -> list[str]:
     jumps = []
     start = 0
     while True:
-        i = blob.find(b'(\"P', start)
+        i = blob.find(b'("P', start)
         if i < 0:
             i = blob.find(b"(P", start)
         if i < 0:
