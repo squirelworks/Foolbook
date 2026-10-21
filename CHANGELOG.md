@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r7
+
+- `python3 -m foolbook --fbk book.tbk` writes `book.fbk` beside the source. An `.sbk` writes an `.fsk`. A folder of books is converted in one run. A TBKX is written the same way.
+- The file is what the reader loaded. A button bitmap is still not in a `.tbk` record, so that picture is not in the `.fbk`.
+
 ## 1.0.5r6
 
 - A script's `to get` and `to set` blocks are handlers, not just `to handle`. The NIDA system books are written that way.

@@ -78,6 +78,46 @@ def load(path: str | Path) -> Book:
     return _load_tbk(path)
 
 
+def write_foolbook(src: str | Path) -> Path:
+    """Write the loaded book as an .fbk, or an .fsk when the source is an .sbk.
+
+    The file is the book after it has been read. It is not a copy of the
+    .tbk. A bitmap id the reader cannot see is not in the file.
+    """
+    from engine.formats import FBK, FSK, pack
+
+    src = Path(src)
+    book = load(src)
+    if len(book.pages) == 1 and book.pages[0].id == "(unloadable)":
+        raise ValueError(book.pages[0].text[0] if book.pages[0].text else f"could not read {src.name}")
+    kind = FSK if src.suffix.lower() == ".sbk" else FBK
+    dest = src.with_suffix(".fsk" if kind == FSK else ".fbk")
+
+    def handlers(items):
+        return [{"name": h.name, "source": h.source} for h in items if h.name or h.source]
+
+    payload = {
+        "title": book.title or src.stem,
+        "id": src.stem,
+        "handlers": handlers(book.handlers),
+        "pages": [
+            {
+                "id": page.id,
+                "text": list(page.text),
+                "items": list(page.items),
+                "jumps": list(page.jumps),
+                "quiz": page.quiz,
+                "handlers": handlers(page.handlers),
+                "shapes": list(page.shapes),
+                "settled": True,
+            }
+            for page in book.pages
+        ],
+    }
+    dest.write_bytes(pack(payload, kind, compress=True))
+    return dest
+
+
 def _load_json(path: Path) -> Book:
     return _book_from_dict(path, json.loads(path.read_text(encoding="utf-8")))
 
