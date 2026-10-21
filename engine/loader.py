@@ -174,14 +174,17 @@ def _words(value) -> str:
 
 
 def _load_tbk(path: Path) -> Book:
-    """Load a raw .tbk. Handlers come from the page stream. Shapes come from the bounds."""
+    """Load a raw .tbk. Handlers come from the whole file, including the book script."""
     try:
         from . import tbk as rtbk
         from .openscript import load_keywords, decode
         keywords = _keywords()
         raw = rtbk.load(path)
+        file_bytes = path.read_bytes()
+        scanned = _scan_handlers(file_bytes, keywords)
+        page_handlers, book_handlers = _place_handlers(scanned, raw.pages)
         pages = []
-        for p in raw.pages:
+        for n, p in enumerate(raw.pages):
             text = []
             for f in getattr(p, "fields", []) or []:
                 t = _words(getattr(f, "text", None))
@@ -191,7 +194,9 @@ def _load_tbk(path: Path) -> Book:
                 t = _words(para)
                 if t and t not in text:
                     text.append(t)
-            handlers = _handlers_from_blob(p.blob, keywords, decode)
+            handlers = page_handlers[n]
+            if not handlers:
+                handlers = _handlers_from_blob(p.blob, keywords, decode)
             surface = _surface(p.blob, keywords)
             shapes = _tbk_shapes(p.blob)
             objects = _compose_tbk(surface, shapes)
@@ -218,7 +223,7 @@ def _load_tbk(path: Path) -> Book:
         pages = _settle_tbk(pages)
         if _KEEP_DECODED:
             _write_decoded(path, pages)
-        return Book(path=str(path), title=path.stem, pages=pages)
+        return Book(path=str(path), title=path.stem, pages=pages, handlers=book_handlers)
     except Exception as exc:
         book = Book(path=str(path), title=path.stem)
         book.pages.append(Page(
@@ -387,6 +392,38 @@ def _keywords():
         except Exception:
             return []
     return []
+
+
+def _scan_handlers(data: bytes, keywords) -> list[dict] | None:
+    """Whole-file handler scan. None means the expander is not installed."""
+    try:
+        from openscript_analysis.formats.tbk.expand import read_handlers
+    except ImportError:
+        return None
+    return read_handlers(data, keywords)
+
+
+def _place_handlers(found, pages) -> tuple[list[list], list]:
+    """A stream inside a page belongs to that page. The rest is the book script."""
+    if not found:
+        return [[] for _ in pages], []
+    ranges = []
+    for i, page in enumerate(pages):
+        blob = getattr(page, "blob", b"") or b""
+        ranges.append((page.offset, page.offset + len(blob), i))
+    by_page = [[] for _ in pages]
+    book = []
+    for item in found:
+        handler = Handler(name=item["name"], source=item["source"], offset=item["offset"])
+        placed = False
+        for lo, hi, i in ranges:
+            if lo <= item["offset"] < hi:
+                by_page[i].append(handler)
+                placed = True
+                break
+        if not placed:
+            book.append(handler)
+    return by_page, book
 
 
 def _handlers_from_blob(blob: bytes, keywords, decode) -> list:

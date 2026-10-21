@@ -1,6 +1,6 @@
 [project]
 name = "foolbook"
-version = "1.0.5r8"
+version = "1.0.5r9"
 description = "Clean-room reader for ToolBook books"
 readme = "README.md"
 requires-python = ">=3.10"

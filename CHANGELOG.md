@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r9
+
+- A `.tbk` or `.sbk` is scanned for compressed handlers, not only the plain words `to handle`. Handlers outside a page are the book script.
+
 ## 1.0.5r8
 
 - `--fbk` is not a reader command. FoolbookEditor writes the `.fbk` and the `.fsk`.
