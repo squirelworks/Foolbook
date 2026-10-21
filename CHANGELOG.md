@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r5
+
+- `cryptography` is installed with Foolbook. Opening a book reads the student file, and that import was missing from the package.
+
 ## 1.0.5r4
 
 - A system-book page is kept when its name is not `P…`. `tb80hyp` keeps `URL Stuff` and `ChooseFromTextLinesDlg`. An unnamed page is `Page0`.
