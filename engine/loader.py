@@ -232,6 +232,7 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "fill": obj.get("fill") or "",
         "outline": obj.get("outline") or "",
         "script": obj.get("script") or "",
+        "align": int(obj.get("align") or 0),
     }
     points = obj.get("points") or []
     if points:

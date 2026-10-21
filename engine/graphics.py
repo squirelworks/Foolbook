@@ -70,19 +70,22 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
-            size = int(shape.get("size") or 12)
+            x, y, w, h = _box(shape)
+            text, size, wrap, anchor, tx, ty = _fit_text(shape, x, y, w, h)
+            ink = fill or "black"
+            if w > 280 and _pale(ink):
+                ink = "#202020"
             face = shape.get("font") or "TkDefaultFont"
-            style = "bold" if shape.get("bold") else "normal"
             text_kwargs = {}
-            if int(shape.get("w") or 0) > 0:
-                text_kwargs["width"] = int(shape["w"])
+            if wrap:
+                text_kwargs["width"] = wrap
             canvas.create_text(
-                int(shape.get("x") or 0),
-                int(shape.get("y") or 0),
-                text=str(shape.get("text") or ""),
-                anchor="nw",
-                font=(face, size, style) if style == "bold" else (face, size),
-                fill=fill or "black",
+                tx,
+                ty,
+                text=text,
+                anchor=anchor,
+                font=(face, size),
+                fill=ink,
                 **text_kwargs,
             )
         elif kind == "button":
@@ -119,6 +122,42 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _pale(color: str) -> bool:
+    if not (isinstance(color, str) and len(color) == 7 and color.startswith("#")):
+        return False
+    red = int(color[1:3], 16)
+    green = int(color[3:5], 16)
+    blue = int(color[5:7], 16)
+    return (red + green + blue) / 3 >= 220
+
+
+def _fit_text(shape, x, y, w, h):
+    """Keep a line inside its box. A tall field wraps. A label does not.
+
+    The wrap width used to be the box, at a fixed 12-point bold. A label
+    such as 7400 or INTRODUCTION then broke in the middle of the word.
+    """
+    raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n")
+    lines = raw.split("\n")
+    words = [line for line in lines if line.strip()]
+    longest = max((len(line.strip()) for line in words), default=1)
+    amount = sum(len(line.strip()) for line in words)
+    wrap = w if w > 80 and h > 48 and amount > 40 else 0
+    if wrap:
+        size = max(9, min(15, int(h / 7) if h else 12))
+        return raw, size, wrap, "nw", x, y
+    count = max(1, len(words))
+    by_height = ((h - 2) / count / 1.3) if h else 12
+    by_width = ((w - 4) / longest / 0.62) if w else 12
+    size = int(max(7, min(20, by_height, by_width)))
+    align = int(shape.get("align") or 0)
+    if align == 2:
+        return raw, size, 0, "center", x + w / 2, y + h / 2
+    if align == 1:
+        return raw, size, 0, "e", x + w, y + h / 2
+    return raw, size, 0, "w", x + 2, y + h / 2
 
 
 def _box(shape: dict) -> tuple[int, int, int, int]:

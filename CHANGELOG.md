@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r14
+
+- A label stays on one line. The box no longer breaks 7400, INTRODUCTION, or Digital Circuit in the middle of a word. A wide field of near-white text is drawn dark so it shows on the white panel.
+
 ## 1.0.5r13
 
 - A `.tbk` with an object store is read from that store. Pages follow the book's page list. A field's text is word 1 of the block at `+0x24`. A class `0x10` outline is mapped onto its bounds. The background fill is the colour at `+0x5B`. A button picture is the bitmap one less than the stored id.
