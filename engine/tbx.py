@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from foolbook.model import Book, Page
+from foolbook.model import Book, Handler, Page
 
 
 def _tbx():
@@ -36,6 +36,7 @@ def load(path: str | Path) -> Book:
             text=[_words(t) for t in (raw.get("text") or []) if _words(t)],
             items=list(raw.get("items") or []),
             shapes=objects,
+            handlers=_handlers(raw.get("script") or ""),
             quiz=raw.get("quiz"),
             raw={
                 "objects": objects,
@@ -43,9 +44,19 @@ def load(path: str | Path) -> Book:
                 "size": raw.get("size") or data.get("size"),
             },
         ))
-    return Book(path=str(path), title=data.get("title") or Path(path).stem, pages=pages)
+    return Book(
+        path=str(path),
+        title=data.get("title") or Path(path).stem,
+        pages=pages,
+        handlers=_handlers(data.get("script") or ""),
+    )
 
 
 def _words(value: str) -> str:
     from engine.notes import plain
     return plain(value)
+
+
+def _handlers(source: str) -> list[Handler]:
+    from engine.engine import split_handlers
+    return split_handlers(source)

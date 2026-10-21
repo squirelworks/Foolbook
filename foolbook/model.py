@@ -35,6 +35,7 @@ class Book:
     title: str = ""
     pages: list[Page] = field(default_factory=list)
     shells: list[str] = field(default_factory=list)
+    handlers: list[Handler] = field(default_factory=list)
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:

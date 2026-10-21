@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from engine.loader import load
-from engine.engine import run_handler, goto, follow, run_page_handlers
+from engine.engine import enter_book, run_handler, goto, follow, run_page_handlers
 from foolbook.model import RuntimeState
 from progress.progress import Progress
 
@@ -37,6 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     # reader defaults so EnterPage does not bounce to another book
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
+    enter_book(state)
 
     progress = Progress(_progress_path())
     course_id = path.stem

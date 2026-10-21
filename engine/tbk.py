@@ -141,8 +141,10 @@ def load(path: str | Path) -> Book:
     for n, off in enumerate(hits):
         nxt = hits[n + 1] if n + 1 < len(hits) else len(data)
         name = cstr(data, off + 11, 32)
-        if not name.startswith("P"):
-            continue
+        # A course page is P430. A system book page is Initialization,
+        # URL Stuff, or blank. The blank ones are still pages.
+        if not name:
+            name = f"Page{n}"
         blob = data[off:nxt]
         pages.append(Page(
             name, off, blob,

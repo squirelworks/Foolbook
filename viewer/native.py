@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.engine import enter_page, follow, goto, open_book as open_other, press, run_handler
+from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
 from foolbook.model import RuntimeState
 from progress.progress import Progress
 
@@ -72,6 +72,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     idx = tk.IntVar(value=start_at)
     state = RuntimeState(book=book, index=start_at)
+    enter_book(state)
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
 
@@ -85,10 +86,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             parent=root,
             title="Open a book",
             filetypes=[
-                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.txt *.md *.rtf"),
+                ("Books", "*.fbk *.tbk *.json *.fsk *.sbk *.xml *.zip *.tbkx *.txt *.md *.rtf"),
                 ("Notes", "*.txt *.text *.md *.markdown *.rst *.log *.rtf"),
                 ("ToolBook", "*.tbk *.sbk"),
-                ("TBX", "*.xml"),
+                ("TBX", "*.xml *.zip *.tbkx"),
                 ("All files", "*.*"),
             ],
         )

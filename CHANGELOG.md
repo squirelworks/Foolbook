@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5r4
+
+- A system-book page is kept when its name is not `P…`. `tb80hyp` keeps `URL Stuff` and `ChooseFromTextLinesDlg`. An unnamed page is `Page0`.
+- `enterBook` runs once when a book opens. A handler closed with `end`, including an `if` that uses the same word, runs through.
+- A request for `tb80r.sbk`, `tb80anm.sbk`, or `tb80hyp.sbk` opens the `.fsk` in `core/` first. Those three files were built from the TBKX exports. The raw `.sbk` is the fallback.
+- Depends on `openscript_analysis` `v1.0.0r10`.
+
 ## 1.0.5r3
 
 - The page is fitted inside the window. A drawing that did not start at the corner was shifted off the top and the left. The window itself opens within the screen.

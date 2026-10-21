@@ -41,6 +41,51 @@ _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _NAME_OF = re.compile(r'name\s+of\s+this\s+(book|page)', re.IGNORECASE)
 
 
+_TO_HANDLE = re.compile(
+    r"(?im)^[ \t]*to[ \t]+handle[ \t]+([A-Za-z_][A-Za-z0-9_]*)"
+)
+
+
+def split_handlers(source: str) -> list[Handler]:
+    """Split a ToolBook script into one handler per `to handle` block.
+
+    A system book closes an `if` with `end`, the same word that closes the
+    handler. The handler's own `end` is removed here so the runner can keep
+    the inner ones.
+    """
+    from foolbook.model import Handler
+    if not source:
+        return []
+    matches = list(_TO_HANDLE.finditer(source))
+    out = []
+    for i, match in enumerate(matches):
+        stop = matches[i + 1].start() if i + 1 < len(matches) else len(source)
+        body = _strip_handler_end(source[match.end():stop])
+        out.append(Handler(name=match.group(1), source=body))
+    return out
+
+
+def _strip_handler_end(body: str) -> str:
+    lines = body.replace("\r", "").split("\n")
+    depth = 0
+    cut = None
+    for i, raw in enumerate(lines):
+        low = raw.strip().lower()
+        if not low or low.startswith("--"):
+            continue
+        if low.startswith("if ") or low.startswith("step ") or low.startswith("conditions"):
+            depth += 1
+            continue
+        if low in ("end", "end if", "end step", "end handler"):
+            if depth == 0:
+                cut = i
+                break
+            depth -= 1
+    if cut is None:
+        return body
+    return "\n".join(lines[:cut])
+
+
 def run_handler(state: RuntimeState, source: str) -> list[dict]:
     """Execute a handler source against the current state."""
     actions: list[dict] = []
@@ -61,7 +106,7 @@ def _lines(source: str) -> list[str]:
         low = line.lower()
         if low.startswith("to handle"):
             continue
-        if low == "end" or low == "end handler":
+        if low in ("end handler",):
             break
         out.append(line)
     return out
@@ -74,8 +119,10 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         line = lines[i]
         low = line.lower()
 
-        if low.startswith("if ") and low.endswith(" then"):
-            cond = line[3:low.rfind(" then")].strip()
+        if low.startswith("if "):
+            cond = line[3:].strip()
+            if cond.lower().endswith(" then"):
+                cond = cond[:-5].strip()
             body_start = i + 1
             else_at, end_at = _split_if(lines, body_start, end)
             if _truth(_eval(cond, state)):
@@ -161,11 +208,11 @@ def _split_if(lines: list[str], start: int, end: int) -> tuple[int, int]:
     else_at = end
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("if ") and low.endswith(" then"):
+        if low.startswith("if "):
             depth += 1
         elif low.startswith("else") and depth == 1 and else_at == end:
             else_at = i
-        elif low.startswith("end if"):
+        elif low in ("end", "end if"):
             depth -= 1
             if depth == 0:
                 return (else_at if else_at < i else i), i
@@ -178,7 +225,7 @@ def _find_end_step(lines: list[str], start: int, end: int) -> int:
         low = lines[i].lower()
         if low.startswith("step "):
             depth += 1
-        elif low.startswith("end step"):
+        elif low in ("end", "end step"):
             depth -= 1
             if depth == 0:
                 return i
@@ -299,6 +346,7 @@ def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
     state.book = load(found)
     state.index = 0
     state.note(f"open {found.name}")
+    enter_book(state)
     if page_id:
         return goto(state, page_id)
     return True
@@ -339,6 +387,16 @@ def _follow_label(state: RuntimeState, label: str) -> bool:
         if (item.get("label") or "").lower() == label and item.get("page"):
             return goto(state, item["page"])
     return False
+
+
+def enter_book(state: RuntimeState) -> bool:
+    """Run the book's enterBook handler once. ToolBook does this on open."""
+    actions: list[dict] = []
+    for handler in state.book.handlers or []:
+        if handler.name.lower() != "enterbook":
+            continue
+        actions.extend(run_handler(state, handler.source))
+    return follow(state, actions)
 
 
 def run_page_handlers(state: RuntimeState, kind: str = "enterpage") -> list[dict]:

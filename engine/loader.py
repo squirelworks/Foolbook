@@ -36,18 +36,19 @@ def set_keep_decoded(keep: bool) -> None:
 def find_book(name: str, near: str | Path) -> Path | None:
     """Find a book named by a jump.
 
-    Looks in the directory below the loaded file, then beside it, then core/.
-    Accepts .fsk, .sbk, .fbk, .tbk, and .json.
+    Looks beside the loaded file, then one directory up, then core/.
+    A .fsk is the working copy of a system book, so it is tried in every
+    directory before any .sbk. The raw .sbk is the fallback.
     """
     stem = Path(name).stem
     near = Path(near)
     here = near.parent if near.is_file() else near
     below = here.parent
     root = Path(__file__).resolve().parents[1]
-    dirs = [below, here, root / "core"]
+    dirs = [here, below, root / "core"]
     suffixes = (".fsk", ".sbk", ".fbk", ".tbk", ".json")
-    for d in dirs:
-        for suf in suffixes:
+    for suf in suffixes:
+        for d in dirs:
             candidate = d / f"{stem}{suf}"
             if candidate.exists():
                 return candidate
@@ -70,10 +71,7 @@ def load(path: str | Path) -> Book:
     if path.suffix.lower() in {".txt", ".text", ".md", ".markdown", ".rst", ".log", ".rtf"}:
         from engine.notes import to_book
         return _book_from_dict(path, to_book(path))
-    if path.is_dir() and (path / "Book.xml").is_file():
-        from engine.tbx import load as load_tbx
-        return load_tbx(path / "Book.xml")
-    if path.suffix.lower() == ".xml":
+    if path.is_dir() or path.suffix.lower() in {".xml", ".zip", ".tbkx"} or path.name.lower().endswith(".tbkx.zip"):
         from engine.tbx import is_tbx, load as load_tbx
         if is_tbx(path):
             return load_tbx(path)
@@ -90,19 +88,39 @@ def _load_foolbook(path: Path) -> Book:
     return _book_from_dict(path, unpack(path.read_bytes()))
 
 
+def _handlers_of(raw: dict) -> list:
+    """Handlers stored as a list, or one ToolBook script to split.
+
+    An older .fbk page stores a single script with no `to handle` line.
+    That stays one handler. A system book from a TBKX has many.
+    """
+    import re
+    listed = raw.get("handlers")
+    if listed:
+        return [
+            Handler(name=h.get("name") or "", source=h.get("source") or "")
+            for h in listed
+            if isinstance(h, dict)
+        ]
+    script = raw.get("script") or ""
+    if not str(script).strip():
+        return []
+    if re.search(r"(?im)^\s*to\s+handle\s+", str(script)):
+        from engine.engine import split_handlers
+        return split_handlers(str(script))
+    return [Handler(name="script", source=str(script))]
+
+
 def _book_from_dict(path: Path, data: dict) -> Book:
     pages = []
     for raw in data.get("pages") or []:
-        handlers = []
-        if raw.get("script"):
-            handlers.append(Handler(name="script", source=raw["script"]))
         pages.append(Page(
             id=raw.get("id") or raw.get("name") or "",
             text=list(raw.get("text") or []),
             items=list(raw.get("items") or []),
             jumps=list(raw.get("jumps") or []),
             quiz=raw.get("quiz"),
-            handlers=handlers,
+            handlers=_handlers_of(raw),
             shapes=list(raw.get("shapes") or []),
             raw=raw,
         ))
@@ -111,6 +129,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         title=data.get("title") or path.stem,
         pages=pages,
         shells=list(data.get("shells") or []),
+        handlers=_handlers_of(data),
     )
 
 
