@@ -25,6 +25,42 @@ def load(path: str | Path) -> dict:
     return _formats().load(Path(path))
 
 
+def read(path: str | Path) -> dict:
+    """The book Foolbook loaded, as the dict an .fbk stores.
+
+    This reads. It does not write. FoolbookEditor is what saves the file.
+    """
+    from engine.loader import load as load_book
+
+    src = Path(path)
+    book = load_book(src)
+    if len(book.pages) == 1 and book.pages[0].id == "(unloadable)":
+        detail = book.pages[0].text[0] if book.pages[0].text else src.name
+        raise ValueError(detail)
+
+    def handlers(items):
+        return [{"name": h.name, "source": h.source} for h in items if h.name or h.source]
+
+    return {
+        "title": book.title or src.stem,
+        "id": src.stem,
+        "handlers": handlers(book.handlers),
+        "pages": [
+            {
+                "id": page.id,
+                "text": list(page.text),
+                "items": list(page.items),
+                "jumps": list(page.jumps),
+                "quiz": page.quiz,
+                "handlers": handlers(page.handlers),
+                "shapes": list(page.shapes),
+                "settled": True,
+            }
+            for page in book.pages
+        ],
+    }
+
+
 def save_book(path: str | Path, book: dict, compress: bool = True) -> Path:
     """Write the .json working copy and the sibling .fbk."""
     return _formats().save_book(Path(path), book, compress=compress)

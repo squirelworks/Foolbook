@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r8
+
+- `--fbk` is not a reader command. FoolbookEditor writes the `.fbk` and the `.fsk`.
+- `--freshstart` works again. The converter had taken its place.
+
 ## 1.0.5r7
 
 - `python3 -m foolbook --fbk book.tbk` writes `book.fbk` beside the source. An `.sbk` writes an `.fsk`. A folder of books is converted in one run. A TBKX is written the same way.

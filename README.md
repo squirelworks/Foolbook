@@ -17,7 +17,6 @@ python3 -m foolbook                           # open Using Foolbook, the picture
 python3 -m foolbook --cli path/to/book        # terminal viewer
 python3 -m foolbook --menu _courses/catalog.json
 python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
-python3 -m foolbook --fbk path/to/book.tbk          # write book.fbk beside it; an .sbk writes an .fsk
 python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 

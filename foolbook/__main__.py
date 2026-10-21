@@ -10,7 +10,6 @@ can launch it with a path; if none is given, Foolbook asks for one.
   python3 -m foolbook --cli path/to/book   # terminal viewer
   python3 -m foolbook --catalog            # rebuild _courses/catalog.json
   python3 -m foolbook --debug              # files and checksums
-  python3 -m foolbook --fbk path/to/book.tbk   # write book.fbk beside it; an .sbk writes an .fsk
 """
 
 
@@ -28,8 +27,7 @@ if str(_root) not in sys.path:
 
 def main() -> int:
     args = sys.argv[1:]
-    if "--fbk" in args:
-        return _convert(args)
+    if "--freshstart" in args:
         return _freshstart()
     if "--doctor" in args:
         from foolbook._debug.dump import dump
@@ -92,41 +90,6 @@ def main() -> int:
 
 
 
-
-
-def _convert(args: list[str]) -> int:
-    """Read each .tbk, .sbk, or TBKX and write an .fbk or .fsk beside it."""
-    from engine.loader import load, write_foolbook
-
-    args = [a for a in args if a != "--fbk"]
-    if not args:
-        print("python3 -m foolbook --fbk book.tbk")
-        return 2
-    sources: list[Path] = []
-    for raw in args:
-        path = Path(raw)
-        if path.is_dir():
-            sources.extend(
-                p for p in sorted(path.rglob("*"))
-                if p.suffix.lower() in {".tbk", ".sbk", ".xml", ".zip", ".tbkx"}
-                or p.name.lower().endswith(".tbkx.zip")
-            )
-        else:
-            sources.append(path)
-    failed = 0
-    for src in sources:
-        try:
-            dest = write_foolbook(src)
-            book = load(dest)
-            handlers = len(book.handlers) + sum(len(p.handlers) for p in book.pages)
-            shapes = sum(len(p.shapes) for p in book.pages)
-            print(f"{dest.name}  pages={len(book.pages)}  handlers={handlers}  shapes={shapes}")
-            if src.suffix.lower() in {".tbk", ".sbk"}:
-                print("  bitmaps are not in the file. A script this reader did not decode is not either.")
-        except Exception as exc:
-            failed += 1
-            print(f"{src.name}: {exc}")
-    return 1 if failed else 0
 
 
 def _freshstart() -> int:
