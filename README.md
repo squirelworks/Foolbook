@@ -3,7 +3,7 @@
 The main tool that opens a book.
 
 Foolbook is not affiliated with Asymetrix, Click2learn, or SumTotal.  
-It is a clean-room reader. It opens `.fbk` and `.tbk` books, and processes `.fsk` and `.sbk` system books.
+It is a clean-room reader. It opens `.fbk` and `.tbk` books, and processes `.fsk` and `.sbk` system books. A `.tbk` object store is read as pages, field text, polygons, and button bitmaps.
 
 ## How it starts
 

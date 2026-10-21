@@ -173,14 +173,102 @@ def _words(value) -> str:
     return plain(str(value))
 
 
-def _load_tbk(path: Path) -> Book:
-    """Load a raw .tbk. Handlers come from the whole file, including the book script."""
+def _load_store(path: Path, file_bytes: bytes) -> Book:
+    """A ToolBook 8 object store. Pages come from the book's page list."""
+    from openscript_analysis.formats.tbk import read_store
+    from .openscript import load_keywords
+    from .polygon import to_pixel
+
+    keywords = _keywords()
+
+    def decode(source: bytes) -> str:
+        from openscript_analysis.formats.tbk.expand import decompress
+        return decompress(source, keywords or load_keywords())
+
+    stored = read_store(file_bytes, decode if keywords else None)
+    pages = []
+    for raw in stored["pages"]:
+        shapes = []
+        handlers = []
+        text = []
+        items = []
+        for obj in raw["objects"]:
+            shape = _store_shape(obj, to_pixel)
+            if shape is None:
+                continue
+            shapes.append(shape)
+            if shape.get("kind") == "text" and shape.get("text"):
+                text.append(shape["text"])
+            script = obj.get("script") or ""
+            if script:
+                handlers.append(Handler(name=obj.get("name") or "handler", source=script))
+                item = _item_from_script(obj.get("name") or "", script)
+                if item:
+                    items.append(item)
+                    shape["item"] = item
+        pages.append(Page(
+            id=raw["id"],
+            text=text,
+            items=items,
+            handlers=handlers,
+            shapes=shapes,
+            raw={"store": True},
+        ))
+    return Book(path=str(path), title=path.stem, pages=pages)
+
+
+def _store_shape(obj: dict, to_pixel) -> dict | None:
+    bounds = obj.get("bounds") or (0, 0, 0, 0)
+    x0, y0 = to_pixel(bounds[0]), to_pixel(bounds[1])
+    x1, y1 = to_pixel(bounds[2]), to_pixel(bounds[3])
+    shape = {
+        "kind": obj["kind"],
+        "name": obj.get("name") or "",
+        "x": x0,
+        "y": y0,
+        "w": max(1, x1 - x0),
+        "h": max(1, y1 - y0),
+        "text": (obj.get("text") or "").replace("\r\n", "\n").replace("\r", "\n"),
+        "fill": obj.get("fill") or "",
+        "outline": obj.get("outline") or "",
+        "script": obj.get("script") or "",
+    }
+    points = obj.get("points") or []
+    if points:
+        shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
+        shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"
+    picture = _png(obj.get("bmp"))
+    if picture:
+        shape["kind"] = "image"
+        shape["data"] = picture
+    return shape
+
+
+def _png(blob: bytes | None) -> str:
+    if not blob or blob[:2] != b"BM":
+        return ""
     try:
+        import base64
+        import io
+        from PIL import Image
+        image = Image.open(io.BytesIO(blob))
+        out = io.BytesIO()
+        image.save(out, "PNG")
+        return base64.b64encode(out.getvalue()).decode("ascii")
+    except Exception:
+        return ""
+
+
+def _load_tbk(path: Path) -> Book:
+    """Load a raw .tbk. An object store is read by its segment index."""
+    try:
+        file_bytes = path.read_bytes()
+        if b"\x03JBO" in file_bytes[:0x1000]:
+            return _load_store(path, file_bytes)
         from . import tbk as rtbk
         from .openscript import load_keywords, decode
         keywords = _keywords()
         raw = rtbk.load(path)
-        file_bytes = path.read_bytes()
         scanned = _scan_handlers(file_bytes, keywords)
         page_handlers, book_handlers = _place_handlers(scanned, raw.pages)
         pages = []

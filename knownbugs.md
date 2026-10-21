@@ -8,8 +8,8 @@ The file is read to the end before a page is shown. A later copy of a page repla
 
 That is still not ToolBook.
 
-- A `.tbk` button's bitmap id is still not in the part of the record we can read. The button is drawn at the book's bounds with its name, not the bitmap.
-- Some field text is the neighboring property, not the field. The copyright line on the first page of Logic Families is one of those.
+- A button picture is the bitmap whose directory id is one less than the word stored in the graphics block. The 8x8 pattern tiles are not drawn.
+- Field text is the handle in word 1 of the block at `+0x24`. A script that lives in another book is not run.
 - Most OpenScript still does not run. A quiz is graded by comparing the clicked button's name with the page's Answer property. `handleQuizClick` itself is not run. Help, Skip, and OK do nothing.
 - Next and Back move along the settled page list. A button that has its own `send next` or `send previous` uses that.
 - Bitmaps are drawn only when a TBX export left the file beside `Book.xml`.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r13
+
+- A `.tbk` with an object store is read from that store. Pages follow the book's page list. A field's text is word 1 of the block at `+0x24`. A class `0x10` outline is mapped onto its bounds. The background fill is the colour at `+0x5B`. A button picture is the bitmap one less than the stored id.
+
 ## 1.0.5r12
 
 - The page is scaled to the window after the canvas has a size, and centered. A resize during the first paint is not dropped, so a page no longer stays at its raw size in the corner.
