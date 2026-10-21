@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r6
+
+- A script's `to get` and `to set` blocks are handlers, not just `to handle`. The NIDA system books are written that way.
+- A button picture is loaded from beside the book when the path is not already a file.
+
 ## 1.0.5r5
 
 - `cryptography` is installed with Foolbook. Opening a book reads the student file, and that import was missing from the package.

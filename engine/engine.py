@@ -42,12 +42,12 @@ _NAME_OF = re.compile(r'name\s+of\s+this\s+(book|page)', re.IGNORECASE)
 
 
 _TO_HANDLE = re.compile(
-    r"(?im)^[ \t]*to[ \t]+handle[ \t]+([A-Za-z_][A-Za-z0-9_]*)"
+    r"(?im)^[ \t]*to[ \t]+(?:handle|get|set)[ \t]+([A-Za-z_][A-Za-z0-9_]*)"
 )
 
 
 def split_handlers(source: str) -> list[Handler]:
-    """Split a ToolBook script into one handler per `to handle` block.
+    """Split a ToolBook script into one block per `to handle`, `to get`, or `to set`.
 
     A system book closes an `if` with `end`, the same word that closes the
     handler. The handler's own `end` is removed here so the runner can keep

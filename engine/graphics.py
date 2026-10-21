@@ -88,10 +88,13 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind == "button":
             x, y, w, h = _box(shape)
             src = shape.get("src") or ""
+            path = Path(src)
+            if not path.is_file() and base and src:
+                path = Path(base) / src
             drawn = False
-            if src and Path(src).is_file():
+            if path.is_file():
                 try:
-                    image = tk.PhotoImage(file=src, master=canvas)
+                    image = tk.PhotoImage(file=str(path), master=canvas)
                     photos.append(image)
                     canvas.create_image(x, y, image=image, anchor="nw")
                     drawn = True

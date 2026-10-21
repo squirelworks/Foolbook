@@ -105,7 +105,7 @@ def _handlers_of(raw: dict) -> list:
     script = raw.get("script") or ""
     if not str(script).strip():
         return []
-    if re.search(r"(?im)^\s*to\s+handle\s+", str(script)):
+    if re.search(r"(?im)^\s*to\s+(?:handle|get|set)\s+", str(script)):
         from engine.engine import split_handlers
         return split_handlers(str(script))
     return [Handler(name="script", source=str(script))]
