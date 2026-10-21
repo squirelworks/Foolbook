@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import place_page
+from engine.place import fit_view, place_page
 
 
 class PlaceTests(unittest.TestCase):
@@ -30,6 +30,23 @@ class PlaceTests(unittest.TestCase):
         ])
         self.assertEqual(page["shapes"][0]["at"][0], 8)
         self.assertEqual(page["shapes"][0]["at"][1], 8)
+
+
+class FitTests(unittest.TestCase):
+    def test_a_wide_drawing_uses_the_width_and_stays_inside(self):
+        scale, dx, dy, ox, oy = fit_view((0, 0, 1000, 200), 500, 400)
+        self.assertAlmostEqual(scale, 476 / 1000)
+        self.assertAlmostEqual(ox, 12)
+        self.assertGreater(oy, 12)
+        self.assertAlmostEqual(dx, ox)
+        self.assertAlmostEqual(dy, oy)
+
+    def test_a_corner_drawing_is_moved_onto_the_window(self):
+        scale, dx, dy, ox, oy = fit_view((800, 600, 900, 700), 400, 300)
+        self.assertAlmostEqual(scale, 276 / 100)
+        self.assertAlmostEqual(ox, (400 - 100 * scale) / 2)
+        self.assertAlmostEqual(dx, ox - 800)
+        self.assertAlmostEqual(dy, oy - 600)
 
 
 if __name__ == "__main__":

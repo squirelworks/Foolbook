@@ -17,6 +17,25 @@ from engine.polygon import to_pixel
 MARGIN = 8
 
 
+def fit_view(box, width: int, height: int, margin: int = 12):
+    """Scale a drawing so it sits inside the window, and center it.
+
+    ``box`` is ``(x0, y0, x1, y1)`` in the coordinates the shapes were drawn
+    in. The scale is applied about ``(x0, y0)``. ``dx`` and ``dy`` then move
+    that corner. ``ox`` and ``oy`` are where it lands, which is what a click
+    turns back into a page coordinate.
+    """
+    x0, y0, x1, y1 = box
+    pw = max(1, x1 - x0)
+    ph = max(1, y1 - y0)
+    avail_w = max(1, width - 2 * margin)
+    avail_h = max(1, height - 2 * margin)
+    scale = min(avail_w / pw, avail_h / ph)
+    ox = (width - pw * scale) / 2
+    oy = (height - ph * scale) / 2
+    return scale, ox - x0, oy - y0, ox, oy
+
+
 def bounds_twips(shape: dict) -> tuple[int, int, int, int]:
     if shape.get("bounds"):
         left, top, right, bottom = shape["bounds"]

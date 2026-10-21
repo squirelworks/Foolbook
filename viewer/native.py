@@ -12,6 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
+from engine.place import fit_view
 from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -140,11 +141,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         try:
             state.index = max(0, min(i, len(state.book.pages) - 1))
             enter_page(state)
-            _paint()
+            _redraw()
         finally:
             painting["on"] = False
-        if pending["fit"]:
-            gfx.after_idle(_refit)
+        _schedule_fit()
 
     def _objects(page):
         stored = list((page.raw or {}).get("objects") or [])
@@ -171,7 +171,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             y += 36
         return objects
 
-    def _paint():
+    def _redraw():
         pages = state.book.pages
         p = state.page
         if p is None:
@@ -191,60 +191,65 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         objects = _objects(p)
         p.raw["objects"] = objects
         draw(gfx, objects, base=Path(state.book.path).parent)
-        _fit_drawn()
 
-    def _fit_drawn():
-        box = gfx.bbox("all")
-        if not box:
+    def _paint():
+        _redraw()
+        _schedule_fit()
+
+    def _schedule_fit():
+        pending["fit"] = True
+        if pending["job"] is None:
+            pending["job"] = gfx.after_idle(_apply_fit)
+
+    def _apply_fit():
+        # Drawn once the canvas has a real size, and again when that size
+        # changes. A configure that arrives during the draw is remembered
+        # and run once more, so the first paint cannot lock the page at
+        # its raw size.
+        pending["job"] = None
+        if painting["on"]:
+            _schedule_fit()
             return
-        x0, y0, x1, y1 = box
-        pw = max(1, x1 - x0)
-        ph = max(1, y1 - y0)
-        gfx.update_idletasks()
-        cw = gfx.winfo_width()
-        ch = gfx.winfo_height()
+        cw, ch = fitted["size"]
+        if cw < 2 or ch < 2:
+            cw, ch = gfx.winfo_width(), gfx.winfo_height()
         if cw < 2 or ch < 2:
             pending["fit"] = True
-            return
-        pending["fit"] = False
-        scale = min(cw / pw, ch / ph) * 0.96
-        # Scale about the drawing's corner, then move that corner to the margin.
-        # Moving by x0*scale instead of x0 shifts the page off the window.
-        gfx.scale("all", x0, y0, scale, scale)
-        gfx.move("all", 12 - x0, 12 - y0)
-        view.update(scale=scale, ox=12, oy=12, x0=x0, y0=y0)
-        gfx.configure(scrollregion=gfx.bbox("all"))
-
-    pending = {"fit": False}
-    fitted = {"size": (0, 0)}
-
-    def _refit():
-        if painting["on"] or not pending["fit"]:
+            pending["job"] = gfx.after(50, _apply_fit)
             return
         pending["fit"] = False
         painting["on"] = True
         try:
-            _paint()
+            _redraw()
+            box = gfx.bbox("all")
+            if not box:
+                return
+            scale, dx, dy, ox, oy = fit_view(box, cw, ch)
+            x0, y0 = box[0], box[1]
+            gfx.scale("all", x0, y0, scale, scale)
+            gfx.move("all", dx, dy)
+            view.update(scale=scale, ox=ox, oy=oy, x0=x0, y0=y0)
+            gfx.configure(scrollregion=(0, 0, cw, ch))
         finally:
             painting["on"] = False
+        if pending["fit"]:
+            _schedule_fit()
+
+    pending = {"fit": False, "job": None}
+    fitted = {"size": (0, 0)}
 
     def _on_configure(event):
         if event.widget is not gfx:
             return
         if event.width < 2 or event.height < 2:
             return
+        if fitted["size"] == (event.width, event.height):
+            return
+        fitted["size"] = (event.width, event.height)
         if painting["on"]:
             pending["fit"] = True
             return
-        if fitted["size"] == (event.width, event.height) and not pending["fit"]:
-            return
-        fitted["size"] = (event.width, event.height)
-        pending["fit"] = False
-        painting["on"] = True
-        try:
-            _paint()
-        finally:
-            painting["on"] = False
+        _schedule_fit()
 
     def _hit(event):
         page = state.page

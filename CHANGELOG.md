@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r12
+
+- The page is scaled to the window after the canvas has a size, and centered. A resize during the first paint is not dropped, so a page no longer stays at its raw size in the corner.
+
 ## 1.0.5r11
 
 - A page that already has Back or Next is not given a second copy. The corner stub that repeats one is not drawn. The page is fitted again once the window has a size.
