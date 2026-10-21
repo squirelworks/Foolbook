@@ -62,6 +62,15 @@ class PolygonTests(unittest.TestCase):
         self.assertEqual(len(shapes), 1)
         self.assertEqual(shapes[0]["points"], [[100, 200], [115, 200], [115, 230]])
 
+    def test_the_polygon_header_is_not_also_a_rectangle(self):
+        from engine.shapes import extract_shapes
+        record = bytearray(_record((100, 200, 130, 260), ((0, 0), (20, 0), (10, 40))))
+        record[0x21:0x24] = b"\x01\x00\x00"
+        shapes = extract_shapes(bytes(record))
+        self.assertEqual([shape["type"] for shape in shapes], ["polygon"])
+        xs = [point[0] for point in shapes[0]["points"]]
+        self.assertGreater(max(xs) - min(xs), 0)
+
     def test_a_record_without_area_is_not_drawn(self):
         from engine.shapes import extract_shapes
         shapes = extract_shapes(_record((0, 0, 0, 10), ((0, 0), (2, 0), (2, 2))))

@@ -21,16 +21,18 @@ def extract_shapes(blob: bytes) -> list[dict]:
     from .polygon import POINTS_AT, read_polygon
 
     idx = 0
-    taken = 0
+    spans = []
     while True:
         i = blob.find(b"\x10\x00", idx)
         if i < 0:
             break
-        if i < taken:
+        if spans and i < spans[-1][1]:
             idx = i + 1
             continue
         found = read_polygon(blob[i:])
         if found:
+            end = i + POINTS_AT + found["count"] * 4
+            spans.append((i, end))
             shapes.append({
                 "type": "polygon",
                 "points": found["points"],
@@ -40,18 +42,22 @@ def extract_shapes(blob: bytes) -> list[dict]:
                 "pen": found["pen"],
                 "pattern": found["pattern"],
             })
-            taken = i + POINTS_AT + found["count"] * 4
-            idx = taken
+            idx = end
             continue
         idx = i + 1
 
-    # Content rectangles: bounds at -16, fill at -4, marker 01 00 00 04
+    # Content rectangles: bounds at -16, fill at -4, marker 01 00 00 04.
+    # That marker also sits inside a class 0x10 record, at body+0x1F. Those
+    # are the polygon's own bounds, not a second shape.
     rect_marker = b"\x01\x00\x00\x04"
     idx = 0
     while True:
         i = blob.find(rect_marker, idx)
         if i < 0 or i + 4 > len(blob):
             break
+        if any(start <= i < end for start, end in spans):
+            idx = i + 1
+            continue
         if i >= 20:
             vals = [
                 int.from_bytes(blob[i - 16 + k:i - 14 + k], "little")

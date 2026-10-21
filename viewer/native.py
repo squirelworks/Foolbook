@@ -30,7 +30,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     root = tk.Tk()
     root.title(book.title or Path(path).name)
-    root.geometry("1920x1200")
+    screen_w = root.winfo_screenwidth()
+    screen_h = root.winfo_screenheight()
+    root.geometry(f"{max(800, screen_w - 24)}x{max(600, screen_h - 80)}")
 
     pages = book.pages
     last = progress.last_page(course_id)
@@ -161,20 +163,43 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         objects = _objects(p)
         p.raw["objects"] = objects
         draw(gfx, objects, base=Path(state.book.path).parent)
-        box = gfx.bbox("all") or (0, 0, 624, 442)
+        _fit_drawn()
+
+    def _fit_drawn():
+        box = gfx.bbox("all")
+        if not box:
+            return
         x0, y0, x1, y1 = box
         pw = max(1, x1 - x0)
         ph = max(1, y1 - y0)
         gfx.update_idletasks()
-        cw = max(gfx.winfo_width(), 640)
-        ch = max(gfx.winfo_height(), 480)
+        cw = gfx.winfo_width()
+        ch = gfx.winfo_height()
+        if cw < 2 or ch < 2:
+            return
         scale = min(cw / pw, ch / ph) * 0.96
+        # Scale about the drawing's corner, then move that corner to the margin.
+        # Moving by x0*scale instead of x0 shifts the page off the window.
         gfx.scale("all", x0, y0, scale, scale)
-        ox = 12 - x0 * scale
-        oy = 12 - y0 * scale
-        gfx.move("all", ox, oy)
-        view.update(scale=scale, ox=ox, oy=oy, x0=x0, y0=y0)
+        gfx.move("all", 12 - x0, 12 - y0)
+        view.update(scale=scale, ox=12, oy=12, x0=x0, y0=y0)
         gfx.configure(scrollregion=gfx.bbox("all"))
+
+    fitted = {"size": (0, 0)}
+
+    def _on_configure(event):
+        if event.widget is not gfx or painting["on"]:
+            return
+        if event.width < 2 or event.height < 2:
+            return
+        if fitted["size"] == (event.width, event.height):
+            return
+        fitted["size"] = (event.width, event.height)
+        painting["on"] = True
+        try:
+            _paint()
+        finally:
+            painting["on"] = False
 
     def _hit(event):
         page = state.page
@@ -222,6 +247,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         press(state, label, target)
         show(state.index)
 
+    gfx.bind("<Configure>", _on_configure)
     gfx.bind("<Button-1>", on_canvas)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() else None)
     show(idx.get())
