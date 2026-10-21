@@ -14,6 +14,7 @@ That is still not ToolBook.
 - Next and Back move along the settled page list. A button that has its own `send next` or `send previous` uses that.
 - Bitmaps are drawn only when a TBX export left the file beside `Book.xml`.
 - Groups inside one page are still skipped. A nested page (`81 65`) is its own page.
+- A class `0x10` pattern other than solid fill (`0xFE`) is drawn as a solid of the record's RGB. The 8×8 tile is not applied.
 
 ## TBX
 

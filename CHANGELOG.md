@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r2
+
+- A class `0x10` irregular polygon is read from its own record. The count is at body `+0x30` and the vertices are at body `+0x38`. The outline is mapped onto the bounds at body `+0x0F`, which moves a shared pin outline and scales a house outline. The fill is the RGB at body `+0x1B`. The `14 00 00` scan is no longer how a polygon is found. A pattern other than `0xFE` is still drawn as that solid color.
+
 ## 1.0.5r1
 
 - A page mark is `80 65` or `81 65`, then `00 05 00 02 02`. `81 65` is a nested page. In `9e954d01.tbk`, P440 and P2920 are their own pages instead of staying inside the page before them.
