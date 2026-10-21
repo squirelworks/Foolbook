@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r11
+
+- A page that already has Back or Next is not given a second copy. The corner stub that repeats one is not drawn. The page is fitted again once the window has a size.
+- The analysis package is v1.0.0r12.
+
 ## 1.0.5r10
 
 - The analysis package is v1.0.0r11, the one that finds the book script.

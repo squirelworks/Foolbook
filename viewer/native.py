@@ -17,6 +17,22 @@ from foolbook.model import RuntimeState
 from progress.progress import Progress
 
 
+def _corner_stub(shape: dict, others: list[dict]) -> bool:
+    """The 85 by 20 box at the corner. It repeats a button that is already on the page."""
+    if (shape.get("kind") or "") != "button":
+        return False
+    x, y = int(shape.get("x") or 0), int(shape.get("y") or 0)
+    w, h = int(shape.get("w") or 0), int(shape.get("h") or 0)
+    if not (x <= 16 and y <= 16 and w <= 90 and h <= 24):
+        return False
+    label = (shape.get("text") or shape.get("name") or "").lower()
+    return any(
+        other is not shape and (other.get("kind") or "") == "button"
+        and (other.get("text") or other.get("name") or "").lower() == label
+        for other in others
+    )
+
+
 def open_book(path: str | Path, student: str = "", course: str = "", splash: bool = False) -> int:
     """Open a book in a native window. Returns when the window closes.
 
@@ -127,15 +143,26 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             _paint()
         finally:
             painting["on"] = False
+        if pending["fit"]:
+            gfx.after_idle(_refit)
 
     def _objects(page):
         stored = list((page.raw or {}).get("objects") or [])
         if stored:
             return stored
         objects = [dict(shape) for shape in extract(page)]
+        objects = [shape for shape in objects if not _corner_stub(shape, objects)]
         y = bottom(objects) + 16
+        have = {
+            (shape.get("text") or shape.get("name") or "").lower()
+            for shape in objects
+            if (shape.get("kind") or "") == "button"
+        }
         for item in page.items or []:
             label = item.get("label") or item.get("page") or "Go"
+            if label.lower() in have:
+                continue
+            have.add(label.lower())
             objects.append({
                 "kind": "button", "name": label, "text": label,
                 "x": 24, "y": y, "w": max(72, 10 * len(label)), "h": 28,
@@ -177,7 +204,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         cw = gfx.winfo_width()
         ch = gfx.winfo_height()
         if cw < 2 or ch < 2:
+            pending["fit"] = True
             return
+        pending["fit"] = False
         scale = min(cw / pw, ch / ph) * 0.96
         # Scale about the drawing's corner, then move that corner to the margin.
         # Moving by x0*scale instead of x0 shifts the page off the window.
@@ -186,16 +215,31 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         view.update(scale=scale, ox=12, oy=12, x0=x0, y0=y0)
         gfx.configure(scrollregion=gfx.bbox("all"))
 
+    pending = {"fit": False}
     fitted = {"size": (0, 0)}
 
+    def _refit():
+        if painting["on"] or not pending["fit"]:
+            return
+        pending["fit"] = False
+        painting["on"] = True
+        try:
+            _paint()
+        finally:
+            painting["on"] = False
+
     def _on_configure(event):
-        if event.widget is not gfx or painting["on"]:
+        if event.widget is not gfx:
             return
         if event.width < 2 or event.height < 2:
             return
-        if fitted["size"] == (event.width, event.height):
+        if painting["on"]:
+            pending["fit"] = True
+            return
+        if fitted["size"] == (event.width, event.height) and not pending["fit"]:
             return
         fitted["size"] = (event.width, event.height)
+        pending["fit"] = False
         painting["on"] = True
         try:
             _paint()
