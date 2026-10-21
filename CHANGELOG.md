@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r10
+
+- The analysis package is v1.0.0r11, the one that finds the book script.
+
 ## 1.0.5r9
 
 - A `.tbk` or `.sbk` is scanned for compressed handlers, not only the plain words `to handle`. Handlers outside a page are the book script.
