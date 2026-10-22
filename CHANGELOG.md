@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r23
+
+- A transparent button's grey matte stays clear. Tk was painting those pixels black, which covered the title, the copyright, and the menu frame.
+
 ## 1.0.5r22
 
 - Button pictures need Pillow. Without it the menu frame, the cyan buttons, and the text-panel picture were drawn as white rectangles. The bytes were already in the book.

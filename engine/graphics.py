@@ -328,18 +328,24 @@ def _fit_image(raw: bytes, width: int, height: int) -> bytes:
 
 
 def _photo(canvas, shape: dict, base: str | Path | None):
+    """A button picture. The grey matte is transparent, so it must not paint black."""
     try:
-        import tkinter as tk
+        import io
+        from PIL import Image, ImageTk
     except Exception:
         return None
     try:
         if shape.get("src") and base:
-            return tk.PhotoImage(file=str(Path(base) / shape["src"]), master=canvas)
-        data = shape.get("data")
-        if not data:
-            return None
-        raw = _fit_image(base64.b64decode(data), int(shape.get("w") or 0), int(shape.get("h") or 0))
-        # PNG and GIF. PhotoImage wants the encoded bytes, not the raw file.
-        return tk.PhotoImage(data=base64.b64encode(raw).decode("ascii"), master=canvas)
+            image = Image.open(Path(base) / shape["src"])
+        else:
+            data = shape.get("data")
+            if not data:
+                return None
+            image = Image.open(io.BytesIO(base64.b64decode(data)))
+        image = image.convert("RGBA")
+        width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
+        if width > 1 and height > 1 and image.size != (width, height):
+            image = image.resize((width, height), Image.Resampling.NEAREST)
+        return ImageTk.PhotoImage(image, master=canvas)
     except Exception:
         return None
