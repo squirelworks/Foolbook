@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r22
+
+- Button pictures need Pillow. Without it the menu frame, the cyan buttons, and the text-panel picture were drawn as white rectangles. The bytes were already in the book.
+
 ## 1.0.5r21
 
 - The corner field named Page# shows the page that is open. The saved text was the last page that wrote it: P1270 on the Text background, P1291 on the Overlay background, P100 on the menu background.
