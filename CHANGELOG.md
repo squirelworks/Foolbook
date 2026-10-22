@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r15
+
+- A button picture is drawn at the button's size. The up face is used unless the button is disabled, pressed, or a checked check box or radio button.
+- The four bitmaps that lived in the file table are included. The analysis package is v1.0.0r15.
+
 ## 1.0.5r14
 
 - A label stays on one line. The box no longer breaks 7400, INTRODUCTION, or Digital Circuit in the middle of a word. A wide field of near-white text is drawn dark so it shows on the white panel.

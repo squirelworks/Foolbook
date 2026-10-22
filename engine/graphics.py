@@ -111,12 +111,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             photo = _photo(canvas, shape, base)
             if photo is not None:
                 photos.append(photo)
-                canvas.create_image(
-                    int(shape.get("x") or 0),
-                    int(shape.get("y") or 0),
-                    image=photo,
-                    anchor="nw",
-                )
+                x, y, _w, _h = _box(shape)
+                canvas.create_image(x, y, image=photo, anchor="nw")
         else:
             x, y, w, h = _box(shape)
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
@@ -180,6 +176,24 @@ def _points(shape: dict) -> list[int]:
     return flat
 
 
+def _fit_image(raw: bytes, width: int, height: int) -> bytes:
+    """Stretch a picture to the button. The page scale is applied later, to everything."""
+    if width < 2 or height < 2:
+        return raw
+    try:
+        import io
+        from PIL import Image
+        image = Image.open(io.BytesIO(raw))
+        if image.size == (width, height):
+            return raw
+        image = image.resize((width, height), Image.Resampling.NEAREST)
+        out = io.BytesIO()
+        image.save(out, "PNG")
+        return out.getvalue()
+    except Exception:
+        return raw
+
+
 def _photo(canvas, shape: dict, base: str | Path | None):
     try:
         import tkinter as tk
@@ -191,7 +205,7 @@ def _photo(canvas, shape: dict, base: str | Path | None):
         data = shape.get("data")
         if not data:
             return None
-        raw = base64.b64decode(data)
+        raw = _fit_image(base64.b64decode(data), int(shape.get("w") or 0), int(shape.get("h") or 0))
         # PNG and GIF. PhotoImage wants the encoded bytes, not the raw file.
         return tk.PhotoImage(data=base64.b64encode(raw).decode("ascii"), master=canvas)
     except Exception:
