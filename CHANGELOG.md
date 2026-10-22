@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r27
+
+- The field font is read. A Wingdings `w` is drawn as a bullet. The words stay in Arial.
+
 ## 1.0.5r26
 
 - A jump to another book leaves the first one open. The shell's return, `go to page (nextpage) of book(lastbook)`, comes back to it.

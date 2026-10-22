@@ -81,5 +81,14 @@ class ButtonScripts(unittest.TestCase):
         self.assertEqual(state.page.id, "P100")
 
 
+class FaceTests(unittest.TestCase):
+    def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):
+        from openscript_analysis.formats.tbk.store import apply_faces
+        text, face = apply_faces("w Describe", [(0, "Wingdings"), (1, "Arial")])
+        self.assertEqual(text, "\u2022 Describe")
+        self.assertEqual(face, "Arial")
+        self.assertEqual(apply_faces("write", [(0, "Arial")])[0], "write")
+
+
 if __name__ == "__main__":
     unittest.main()

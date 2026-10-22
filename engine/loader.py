@@ -231,6 +231,7 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "w": max(1, x1 - x0),
         "h": max(1, y1 - y0),
         "text": (obj.get("text") or "").replace("\r\n", "\n").replace("\r", "\n"),
+        "font": obj.get("font") or "",
         "fill": obj.get("fill") or "",
         "outline": obj.get("outline") or "",
         "script": obj.get("script") or "",
