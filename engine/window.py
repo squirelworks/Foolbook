@@ -32,6 +32,18 @@ def arrive(window: list, index: int, shapes: list[dict]) -> list:
     return window
 
 
+def show_page_number(shapes: list[dict], page_id: str) -> None:
+    """A background field named Page# shows the page now open.
+
+    The characters saved in the record are whatever page last wrote them.
+    On this book the Text background still says P1270 and the Overlay
+    background still says P1291. The reader shows the current page.
+    """
+    for shape in shapes:
+        if shape.get("name") == "Page#":
+            shape["text"] = page_id
+
+
 def visible(window: list) -> list[dict]:
     """Every retained object, plus the direct objects of the page now showing."""
     if not window:

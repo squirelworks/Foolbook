@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.window import arrive, visible
+from engine.window import arrive, show_page_number, visible
 
 
 def _paper():
@@ -40,3 +40,9 @@ class WindowTests(unittest.TestCase):
         window = arrive([], 2, _overlay("10V", "flames"))
         text = [item["text"] for item in visible(window) if item.get("text")]
         self.assertEqual(text, ["10V", "flames"])
+
+    def test_page_number_is_the_page_now_open(self):
+        shapes = [{"name": "Page#", "text": "P1270"}, {"name": "title", "text": "INTRODUCTION"}]
+        show_page_number(shapes, "P400")
+        self.assertEqual(shapes[0]["text"], "P400")
+        self.assertEqual(shapes[1]["text"], "INTRODUCTION")

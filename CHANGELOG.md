@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r21
+
+- The corner field named Page# shows the page that is open. The saved text was the last page that wrote it: P1270 on the Text background, P1291 on the Overlay background, P100 on the menu background.
+
 ## 1.0.5r20
 
 - `go to page` keeps the window that is already up. A background with a fill replaces it. A background without one leaves it, and direct objects stay only on the page now showing. Opening P420 by itself does not invent the chips from P400. An arc is the unfilled curve between its endpoints. The analysis package is v1.0.0r19.

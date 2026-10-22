@@ -178,6 +178,7 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
     from openscript_analysis.formats.tbk import read_store
     from .openscript import load_keywords
     from .polygon import to_pixel
+    from .window import show_page_number
 
     keywords = _keywords()
 
@@ -196,6 +197,7 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
             shape = _store_shape(obj, to_pixel)
             if shape is None:
                 continue
+            show_page_number([shape], raw["id"])
             shapes.append(shape)
             if shape.get("kind") == "text" and shape.get("text"):
                 text.append(shape["text"])
