@@ -2,9 +2,9 @@
 
 import unittest
 
-from engine.engine import RuntimeState, run_handler, split_handlers
+from engine.engine import RuntimeState, follow, open_book, run_handler, split_handlers
 from engine.tbk import load
-from foolbook.model import Book
+from foolbook.model import Book, Page
 from pathlib import Path
 import tempfile
 
@@ -65,6 +65,20 @@ class ButtonScripts(unittest.TestCase):
     def test_send_next_is_a_step(self):
         actions = run_handler(RuntimeState(book=Book(path="x", title="t")), "send next")
         self.assertEqual(actions[0], {"kind": "send", "name": "next"})
+
+    def test_the_shell_returns_to_the_book_still_open(self):
+        lesson = Book(path="/courses/9e954d01.tbk", title="9e954d01", pages=[
+            Page(id="P10"), Page(id="P100"),
+        ])
+        state = RuntimeState(book=lesson, index=1)
+        state.variables["lastbook"] = "9e954d01"
+        state.variables["nextpage"] = "P100"
+        self.assertTrue(open_book(state, "nida81.tbk", "P20001"))
+        self.assertEqual(state.page.id, "P20001")
+        actions = run_handler(state, "go to page (nextpage) of book(lastbook)")
+        self.assertTrue(follow(state, actions))
+        self.assertIs(state.book, lesson)
+        self.assertEqual(state.page.id, "P100")
 
 
 if __name__ == "__main__":

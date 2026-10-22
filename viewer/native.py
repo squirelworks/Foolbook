@@ -122,6 +122,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         state.index = 0
         held["course"] = Path(path).stem
         held["pile"] = []
+        held["piles"] = {}
         progress.touch(held["course"])
         show(0)
 
@@ -192,7 +193,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         gfx.delete("all")
         objects = _objects(p)
         p.raw["objects"] = objects
-        pile = held.setdefault("pile", [])
+        pile = held.setdefault("piles", {}).setdefault(state.book.path, [])
         arrive(pile, state.index, objects)
         shown = visible(pile)
         if window is not None:
@@ -233,7 +234,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             if page is None:
                 return
             objects = _objects(page)
-            pile = held.setdefault("pile", [])
+            pile = held.setdefault("piles", {}).setdefault(state.book.path, [])
             arrive(pile, state.index, objects)
             box = content_box(visible(pile))
             scale, dx, dy, ox, oy = fit_view(box, cw, ch)

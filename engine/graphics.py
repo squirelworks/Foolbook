@@ -196,7 +196,7 @@ def _fit_text(shape, x, y, w, h):
     The wrap width used to be the box, at a fixed 12-point bold. A label
     such as 7400 or INTRODUCTION then broke in the middle of the word.
     """
-    raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n")
+    raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
     lines = raw.split("\n")
     words = [line for line in lines if line.strip()]
     longest = max((len(line.strip()) for line in words), default=1)

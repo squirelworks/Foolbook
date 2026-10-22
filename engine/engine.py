@@ -21,11 +21,16 @@ Handled:
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from foolbook.model import RuntimeState, Page
 
 
 _GOTO = re.compile(
-    r'go\s+to\s+page\s*(?:\(\s*"([^"]+)"\s*\)|"([^"]+)")(?:\s+of\s+book\s+"([^"]+)")?',
+    r'go\s+to\s+page\s*'
+    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
+    r'(?:\s+of\s+book\s*'
+    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
+    r')?',
     re.IGNORECASE,
 )
 _SEND = re.compile(r'send\s+(\w+)', re.IGNORECASE)
@@ -150,8 +155,8 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             actions.append({
                 "kind": "goto",
-                "page": m.group(1) or m.group(2),
-                "book": m.group(3),
+                "page": _token(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
+                "book": _token(state, m.group(5) or m.group(6), m.group(7) or m.group(8)),
             })
             i += 1
             continue
@@ -340,19 +345,74 @@ def goto(state: RuntimeState, page_id: str) -> bool:
     return True
 
 
+def _token(state: RuntimeState, quoted: str | None, bare: str | None):
+    """A quoted name, or a variable such as nextpage and lastbook."""
+    if quoted:
+        return quoted
+    if not bare:
+        return None
+    if bare in state.variables:
+        value = state.variables[bare]
+        return "" if value is None else str(value)
+    return bare
+
+
+def _book_keys(book) -> set[str]:
+    path = Path(book.path) if book.path else None
+    keys = set()
+    if path is not None:
+        keys.add(path.stem.lower())
+        keys.add(path.name.lower())
+    if book.title:
+        keys.add(str(book.title).lower())
+    return {key for key in keys if key}
+
+
+def _remember(state: RuntimeState) -> None:
+    book = state.book
+    if book is None:
+        return
+    state.where[id(book)] = state.index
+    for key in _book_keys(book):
+        state.shelf[key] = book
+
+
+def _shelved(state: RuntimeState, name: str):
+    if not name:
+        return None
+    found = state.shelf.get(name.lower())
+    if found is not None:
+        return found
+    return state.shelf.get(Path(name).stem.lower())
+
+
 def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
-    """Open another book found near the current one and go to page_id."""
+    """Show a book that is already open, or open it and keep the previous one.
+
+    ToolBook leaves the caller's pages in memory. The return is
+    ``go to page (nextpage) of book(lastbook)``, and lastbook is the
+    book still on the shelf, not a file searched for again.
+    """
     from engine.loader import load, find_book
-    found = find_book(book_name, state.book.path)
-    if not found:
-        state.note(f"missing book {book_name}")
-        return False
-    state.book = load(found)
-    state.index = 0
-    state.note(f"open {found.name}")
-    enter_book(state)
+    _remember(state)
+    book = _shelved(state, book_name)
+    fresh = book is None
+    if fresh:
+        found = find_book(book_name, state.book.path)
+        if not found:
+            state.note(f"missing book {book_name}")
+            return False
+        book = load(found)
+    state.book = book
+    state.index = state.where.get(id(book), 0)
+    state.note(f"open {Path(book.path).name}")
+    if fresh:
+        enter_book(state)
     if page_id:
-        return goto(state, page_id)
+        ok = goto(state, page_id)
+        _remember(state)
+        return ok
+    _remember(state)
     return True
 
 

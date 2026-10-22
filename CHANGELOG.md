@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r26
+
+- A jump to another book leaves the first one open. The shell's return, `go to page (nextpage) of book(lastbook)`, comes back to it.
+- A blank line at the end of a label no longer pushes the words out of the button.
+
 ## 1.0.5r25
 
 - Next, Back, and the other picture buttons take a click. Their script runs. `go to page("P1150")` is the same jump as `go to page "P1150"`.

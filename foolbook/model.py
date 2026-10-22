@@ -57,6 +57,9 @@ class RuntimeState:
     index: int = 0
     variables: dict[str, Any] = field(default_factory=dict)
     log: list[str] = field(default_factory=list)
+    # Books already open. ToolBook does not close one to show another.
+    shelf: dict = field(default_factory=dict)
+    where: dict = field(default_factory=dict)
 
     @property
     def page(self) -> Page | None:
