@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r20
+
+- `go to page` keeps the window that is already up. A background with a fill replaces it. A background without one leaves it, and direct objects stay only on the page now showing. Opening P420 by itself does not invent the chips from P400. An arc is the unfilled curve between its endpoints. The analysis package is v1.0.0r19.
+
 ## 1.0.5r19
 
 - An arc is the long sweep of its two rays, filled with the record colour. The fan-out marks on P1150 are no longer boxes. The analysis package is v1.0.0r18.

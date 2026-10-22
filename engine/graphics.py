@@ -72,11 +72,21 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "arc":
             x, y, w, h = _box(shape)
-            flat = _arc_pie(x, y, w, h, shape.get("rays") or [])
-            if len(flat) >= 6:
-                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+            ends = shape.get("ends") or []
+            if len(ends) >= 2:
+                flat = _arc_between(x, y, w, h, ends)
+                if len(flat) >= 4:
+                    canvas.create_line(*flat, fill=outline or "#ffffff", width=2)
+            elif int(shape.get("pattern") or 0) == 0x39:
+                flat = _arc_curve(x, y, w, h, shape.get("rays") or [])
+                if len(flat) >= 4:
+                    canvas.create_line(*flat, fill=outline or "#808080")
             else:
-                canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+                flat = _arc_pie(x, y, w, h, shape.get("rays") or [])
+                if len(flat) >= 6:
+                    canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+                else:
+                    canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
             x, y, w, h = _box(shape)
             _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
@@ -207,6 +217,46 @@ def _fit_text(shape, x, y, w, h):
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
     return raw, size, 0, "w", x + 2, y + h / 2
+
+
+def _arc_between(x, y, w, h, ends) -> list[int]:
+    """The stroke between two endpoints. The nose is the sweep through the right.
+
+    ToolBook calls Arc, not Pie, so the interior stays empty. Checked on P1140:
+    the inside is the page colour and the outline is white.
+    """
+    if w < 1 or h < 1 or len(ends) < 2:
+        return []
+    try:
+        sx, sy = float(ends[0][0]), float(ends[0][1])
+        ex, ey = float(ends[1][0]), float(ends[1][1])
+    except (TypeError, IndexError, ValueError):
+        return []
+    cx, cy = x + w / 2, y + h / 2
+    rx, ry = w / 2, h / 2
+    start = math.atan2(-(sy - cy), sx - cx)
+    stop = math.atan2(-(ey - cy), ex - cx)
+    ccw = (stop - start) % (2 * math.pi)
+    cw = ccw - 2 * math.pi
+
+    def toward_east(delta):
+        mid = math.atan2(math.sin(start + delta / 2), math.cos(start + delta / 2))
+        return abs(mid)
+
+    delta = ccw if toward_east(ccw) <= toward_east(cw) else cw
+    flat = []
+    steps = 40
+    for step in range(steps + 1):
+        angle = start + delta * step / steps
+        flat.append(int(round(cx + rx * math.cos(angle))))
+        flat.append(int(round(cy - ry * math.sin(angle))))
+    return flat
+
+
+def _arc_curve(x, y, w, h, rays) -> list[int]:
+    """The elliptical curve between two rays, with no return to the centre."""
+    pie = _arc_pie(x, y, w, h, rays)
+    return pie[2:]
 
 
 def _arc_pie(x, y, w, h, rays) -> list[int]:

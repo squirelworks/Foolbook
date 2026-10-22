@@ -234,10 +234,11 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "script": obj.get("script") or "",
         "align": int(obj.get("align") or 0),
         "border": int(obj["border"]) if obj.get("border") is not None else 1,
+        "direct": bool(obj.get("direct")),
     }
     points = obj.get("points") or []
-    if obj.get("kind") == "arc":
-        shape["rays"] = [list(pair) for pair in (obj.get("rays") or [])]
+    if obj.get("kind") == "arc" and obj.get("ends"):
+        shape["ends"] = [[to_pixel(x), to_pixel(y)] for x, y in obj["ends"]]
     elif points:
         shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
         shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"

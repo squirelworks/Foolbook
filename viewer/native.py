@@ -14,23 +14,9 @@ from engine.loader import load
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view
 from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
+from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
-
-
-def _covers(objects: list[dict]) -> bool:
-    """A filled rectangle the size of the page paints over whatever was there.
-
-    A background whose pattern is ``none`` does not, so the previous page
-    stays until something covers it.
-    """
-    for shape in objects:
-        if (shape.get("kind") or "rect") != "rect" or not shape.get("fill"):
-            continue
-        if int(shape.get("x") or 0) <= 4 and int(shape.get("y") or 0) <= 4:
-            if int(shape.get("w") or 0) >= 400 and int(shape.get("h") or 0) >= 280:
-                return True
-    return False
 
 
 def _corner_stub(shape: dict, others: list[dict]) -> bool:
@@ -207,14 +193,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         objects = _objects(p)
         p.raw["objects"] = objects
         pile = held.setdefault("pile", [])
-        if not pile or pile[-1][0] != state.index:
-            if _covers(objects):
-                pile[:] = [(state.index, objects)]
-            else:
-                pile.append((state.index, objects))
+        arrive(pile, state.index, objects)
         base = Path(state.book.path).parent
-        for _index, layer in pile:
-            draw(gfx, layer, base=base)
+        draw(gfx, visible(pile), base=base)
 
     def _paint():
         _redraw()
