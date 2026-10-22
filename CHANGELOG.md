@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r18
+
+- A page with no background fill leaves the previous page where it does not paint. P420 keeps the chips from P410.
+
 ## 1.0.5r17
 
 - A page header keeps the coloured bar and drops the grey matte around it. The analysis package is v1.0.0r17.
