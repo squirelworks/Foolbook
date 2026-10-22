@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r25
+
+- Next, Back, and the other picture buttons take a click. Their script runs. `go to page("P1150")` is the same jump as `go to page "P1150"`.
+
 ## 1.0.5r24
 
 - The window has one scale and one offset, and both are applied to every bound before anything is drawn. A picture now grows and shrinks with the text. Tk's canvas scale was moving the picture and leaving its pixels behind.

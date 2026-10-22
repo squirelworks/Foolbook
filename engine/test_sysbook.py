@@ -57,5 +57,15 @@ class Lookup(unittest.TestCase):
         self.assertTrue(str(found).endswith("tb80r.fsk"))
 
 
+class ButtonScripts(unittest.TestCase):
+    def test_a_parenthesised_page_is_a_jump(self):
+        actions = run_handler(RuntimeState(book=Book(path="x", title="t")), 'go to page("P1150")')
+        self.assertEqual(actions[0]["page"], "P1150")
+
+    def test_send_next_is_a_step(self):
+        actions = run_handler(RuntimeState(book=Book(path="x", title="t")), "send next")
+        self.assertEqual(actions[0], {"kind": "send", "name": "next"})
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -269,7 +269,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         x = (event.x - view["ox"]) / view["scale"] + view["x0"]
         y = (event.y - view["oy"]) / view["scale"] + view["y0"]
         for obj in reversed(page.raw.get("objects") or []):
-            if obj.get("kind") != "button" or obj.get("visible") is False:
+            kind = obj.get("kind")
+            clickable = kind == "button" or (
+                kind == "image" and (obj.get("script") or obj.get("item"))
+            )
+            if not clickable or obj.get("visible") is False:
                 continue
             left, top = obj.get("x") or 0, obj.get("y") or 0
             if left <= x <= left + (obj.get("w") or 0) and top <= y <= top + (obj.get("h") or 0):

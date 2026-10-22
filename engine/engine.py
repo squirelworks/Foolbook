@@ -25,7 +25,7 @@ from foolbook.model import RuntimeState, Page
 
 
 _GOTO = re.compile(
-    r'go\s+to\s+page\s+"([^"]+)"(?:\s+of\s+book\s+"([^"]+)")?',
+    r'go\s+to\s+page\s*(?:\(\s*"([^"]+)"\s*\)|"([^"]+)")(?:\s+of\s+book\s+"([^"]+)")?',
     re.IGNORECASE,
 )
 _SEND = re.compile(r'send\s+(\w+)', re.IGNORECASE)
@@ -148,7 +148,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         m = _GOTO.search(line)
         if m:
-            actions.append({"kind": "goto", "page": m.group(1), "book": m.group(2)})
+            actions.append({
+                "kind": "goto",
+                "page": m.group(1) or m.group(2),
+                "book": m.group(3),
+            })
             i += 1
             continue
         m = _SEND.search(line)
