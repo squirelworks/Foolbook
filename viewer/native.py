@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.place import fit_view
+from engine.place import content_box, fit_view, place_window
 from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
@@ -158,7 +158,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         have = {
             (shape.get("text") or shape.get("name") or "").lower()
             for shape in objects
-            if (shape.get("kind") or "") == "button"
+            if (shape.get("kind") or "") in ("button", "image")
         }
         for item in page.items or []:
             label = item.get("label") or item.get("page") or "Go"
@@ -173,7 +173,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             y += 36
         return objects
 
-    def _redraw():
+    def _redraw(window=None):
         pages = state.book.pages
         p = state.page
         if p is None:
@@ -194,8 +194,12 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         p.raw["objects"] = objects
         pile = held.setdefault("pile", [])
         arrive(pile, state.index, objects)
+        shown = visible(pile)
+        if window is not None:
+            scale, x0, y0, dx, dy = window
+            shown = place_window(shown, scale, x0, y0, dx, dy)
         base = Path(state.book.path).parent
-        draw(gfx, visible(pile), base=base)
+        draw(gfx, shown, base=base)
 
     def _paint():
         _redraw()
@@ -225,14 +229,16 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         pending["fit"] = False
         painting["on"] = True
         try:
-            _redraw()
-            box = gfx.bbox("all")
-            if not box:
+            page = state.page
+            if page is None:
                 return
+            objects = _objects(page)
+            pile = held.setdefault("pile", [])
+            arrive(pile, state.index, objects)
+            box = content_box(visible(pile))
             scale, dx, dy, ox, oy = fit_view(box, cw, ch)
             x0, y0 = box[0], box[1]
-            gfx.scale("all", x0, y0, scale, scale)
-            gfx.move("all", dx, dy)
+            _redraw((scale, x0, y0, dx, dy))
             view.update(scale=scale, ox=ox, oy=oy, x0=x0, y0=y0)
             gfx.configure(scrollregion=(0, 0, cw, ch))
         finally:

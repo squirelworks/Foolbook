@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import fit_view, place_page
+from engine.place import content_box, fit_view, place_page, place_window
 
 
 class PlaceTests(unittest.TestCase):
@@ -47,6 +47,21 @@ class FitTests(unittest.TestCase):
         self.assertAlmostEqual(ox, (400 - 100 * scale) / 2)
         self.assertAlmostEqual(dx, ox - 800)
         self.assertAlmostEqual(dy, oy - 600)
+
+
+class WindowTests(unittest.TestCase):
+    def test_the_same_scale_and_offset_move_a_picture_and_a_label(self):
+        shapes = [
+            {"kind": "image", "x": 10, "y": 20, "w": 100, "h": 40},
+            {"kind": "text", "x": 10, "y": 20, "w": 100, "h": 40, "text": "Hello"},
+        ]
+        placed = place_window(shapes, 2, 0, 0, 5, 6)
+        self.assertEqual(placed[0]["x"], 25)
+        self.assertEqual(placed[0]["y"], 46)
+        self.assertEqual(placed[0]["w"], 200)
+        self.assertEqual(placed[1]["w"], 200)
+        self.assertEqual(content_box(shapes), (10, 20, 110, 60))
+
 
 
 if __name__ == "__main__":

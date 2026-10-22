@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r24
+
+- The window has one scale and one offset, and both are applied to every bound before anything is drawn. A picture now grows and shrinks with the text. Tk's canvas scale was moving the picture and leaving its pixels behind.
+
 ## 1.0.5r23
 
 - A transparent button's grey matte stays clear. Tk was painting those pixels black, which covered the title, the copyright, and the menu frame.

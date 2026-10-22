@@ -36,6 +36,70 @@ def fit_view(box, width: int, height: int, margin: int = 12):
     return scale, ox - x0, oy - y0, ox, oy
 
 
+def content_box(shapes) -> tuple[float, float, float, float]:
+    """The bounds the window scales. Glyphs that spill a field do not count."""
+    left = top = right = bottom = None
+    for shape in shapes:
+        xs: list[float] = []
+        ys: list[float] = []
+        if shape.get("w"):
+            x = float(shape.get("x") or 0)
+            y = float(shape.get("y") or 0)
+            xs += [x, x + float(shape["w"])]
+            ys += [y, y + float(shape.get("h") or 0)]
+        for pt in list(shape.get("points") or []) + list(shape.get("ends") or []):
+            if len(pt) >= 2:
+                xs.append(float(pt[0]))
+                ys.append(float(pt[1]))
+        if not xs:
+            continue
+        lo_x, hi_x = min(xs), max(xs)
+        lo_y, hi_y = min(ys), max(ys)
+        left = lo_x if left is None else min(left, lo_x)
+        top = lo_y if top is None else min(top, lo_y)
+        right = hi_x if right is None else max(right, hi_x)
+        bottom = hi_y if bottom is None else max(bottom, hi_y)
+    if left is None:
+        return (0.0, 0.0, 1.0, 1.0)
+    return (left, top, right, bottom)
+
+
+def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: float):
+    """Page pixels to window pixels.
+
+    ``scale`` multiplies every bound. ``(x0, y0)`` is the point the scale
+    is about, and ``(dx, dy)`` is the offset that then centres the page.
+    Pictures and text go through the same numbers, which a canvas scale
+    does not: Tk moves an image and leaves its pixels, and it leaves the
+    font alone.
+    """
+
+    def mx(value):
+        return (float(value) - x0) * scale + x0 + dx
+
+    def my(value):
+        return (float(value) - y0) * scale + y0 + dy
+
+    placed = []
+    for shape in shapes:
+        item = dict(shape)
+        if "x" in shape or shape.get("w"):
+            item["x"] = mx(shape.get("x") or 0)
+            item["y"] = my(shape.get("y") or 0)
+            item["w"] = float(shape.get("w") or 0) * scale
+            item["h"] = float(shape.get("h") or 0) * scale
+        if shape.get("points"):
+            item["points"] = [
+                [mx(pt[0]), my(pt[1])] for pt in shape["points"] if len(pt) >= 2
+            ]
+        if shape.get("ends"):
+            item["ends"] = [
+                [mx(pt[0]), my(pt[1])] for pt in shape["ends"] if len(pt) >= 2
+            ]
+        placed.append(item)
+    return placed
+
+
 def bounds_twips(shape: dict) -> tuple[int, int, int, int]:
     if shape.get("bounds"):
         left, top, right, bottom = shape["bounds"]
