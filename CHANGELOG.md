@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r28
+
+- The equipment bar on P300 is drawn on the frame, not under it. A run of spaces in the copyright is one space.
+
 ## 1.0.5r27
 
 - The field font is read. A Wingdings `w` is drawn as a bullet. The words stay in Arial.

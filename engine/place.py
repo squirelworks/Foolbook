@@ -17,6 +17,43 @@ from engine.polygon import to_pixel
 MARGIN = 8
 
 
+def in_front(shapes: list[dict]) -> list[dict]:
+    """A frame is painted under the button and the words that sit on it.
+
+    The file lists P300's equipment bar before the frame, so the frame
+    covered it. Anything a picture contains is drawn after that picture.
+    """
+    def box(shape):
+        return (
+            float(shape.get("x") or 0),
+            float(shape.get("y") or 0),
+            float(shape.get("w") or 0),
+            float(shape.get("h") or 0),
+        )
+
+    def holds(outer, inner) -> bool:
+        ox, oy, ow, oh = box(outer)
+        ix, iy, iw, ih = box(inner)
+        return ow * oh > iw * ih and ox <= ix and oy <= iy and ox + ow >= ix + iw and oy + oh >= iy + ih
+
+    pictures = [shape for shape in shapes if shape.get("kind") == "image"]
+
+    def rank(item):
+        index, shape = item
+        if shape.get("kind") == "text":
+            return (2, 0, index)
+        cover = sum(1 for picture in pictures if picture is not shape and holds(picture, shape))
+        return (1 if cover else 0, cover, index)
+
+    return [shape for _index, shape in sorted(enumerate(shapes), key=rank)]
+
+
+def tighten(text: str) -> str:
+    """Drop the padding a justified line stored as a run of spaces."""
+    import re
+    return re.sub(r" {3,}", " ", text)
+
+
 def fit_view(box, width: int, height: int, margin: int = 12):
     """Scale a drawing so it sits inside the window, and center it.
 

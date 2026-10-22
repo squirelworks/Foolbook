@@ -19,6 +19,8 @@ import math
 import tkinter as tk
 from pathlib import Path
 
+from engine.place import in_front, tighten
+
 
 def extract(page) -> list[dict]:
     """Shapes for one page. A book returns every page's shapes, in order."""
@@ -52,6 +54,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     """Draw shapes on a tkinter Canvas. No-op when there are none."""
     if not shapes or canvas is None:
         return
+    shapes = in_front(shapes)
     photos = []
     for shape in shapes:
         kind = (shape.get("kind") or "rect").lower()
@@ -196,7 +199,7 @@ def _fit_text(shape, x, y, w, h):
     The wrap width used to be the box, at a fixed 12-point bold. A label
     such as 7400 or INTRODUCTION then broke in the middle of the word.
     """
-    raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
+    raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
     lines = raw.split("\n")
     words = [line for line in lines if line.strip()]
     longest = max((len(line.strip()) for line in words), default=1)
