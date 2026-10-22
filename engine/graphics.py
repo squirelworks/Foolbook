@@ -15,6 +15,7 @@ bounds, when present, is [x, y, w, h] and stands in for x, y, w, h.
 from __future__ import annotations
 
 import base64
+import math
 import tkinter as tk
 from pathlib import Path
 
@@ -69,6 +70,13 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+        elif kind == "arc":
+            x, y, w, h = _box(shape)
+            flat = _arc_pie(x, y, w, h, shape.get("rays") or [])
+            if len(flat) >= 6:
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+            else:
+                canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
             x, y, w, h = _box(shape)
             _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
@@ -199,6 +207,36 @@ def _fit_text(shape, x, y, w, h):
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
     return raw, size, 0, "w", x + 2, y + h / 2
+
+
+def _arc_pie(x, y, w, h, rays) -> list[int]:
+    """The long elliptical sweep of two rays, filled back to the centre.
+
+    The rays are directions, the same pair on every arc of one style.
+    Angle zero is east and increases counterclockwise on the page.
+    The short turn between the rays is the one that is not drawn.
+    """
+    if w < 1 or h < 1 or len(rays) < 2:
+        return []
+    try:
+        sx, sy = float(rays[0][0]), float(rays[0][1])
+        ex, ey = float(rays[1][0]), float(rays[1][1])
+    except (TypeError, IndexError, ValueError):
+        return []
+    start = math.degrees(math.atan2(-sy, sx))
+    end = math.degrees(math.atan2(-ey, ex))
+    delta = (end - start) % 360
+    if delta < 180:
+        delta -= 360
+    cx, cy = x + w / 2, y + h / 2
+    rx, ry = w / 2, h / 2
+    steps = 48
+    flat = [int(round(cx)), int(round(cy))]
+    for step in range(steps + 1):
+        angle = math.radians(start + delta * step / steps)
+        flat.append(int(round(cx + rx * math.cos(angle))))
+        flat.append(int(round(cy - ry * math.sin(angle))))
+    return flat
 
 
 def _box(shape: dict) -> tuple[int, int, int, int]:

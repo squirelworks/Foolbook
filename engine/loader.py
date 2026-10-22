@@ -236,7 +236,9 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "border": int(obj["border"]) if obj.get("border") is not None else 1,
     }
     points = obj.get("points") or []
-    if points:
+    if obj.get("kind") == "arc":
+        shape["rays"] = [list(pair) for pair in (obj.get("rays") or [])]
+    elif points:
         shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
         shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"
     picture = _png(obj.get("bmp"), bool(obj.get("transparent")))
