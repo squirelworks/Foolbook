@@ -71,9 +71,13 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
             x, y, w, h = _box(shape)
-            text, size, wrap, anchor, tx, ty = _fit_text(shape, x, y, w, h)
-            ink = fill or "black"
-            if w > 280 and _pale(ink):
+            _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
+            pad = 4 if int(shape.get("border") or 1) != 1 else 2
+            text, size, wrap, anchor, tx, ty = _fit_text(
+                shape, x + pad, y + pad, max(1, w - 2 * pad), max(1, h - 2 * pad)
+            )
+            ink = outline or "black"
+            if fill and _pale(ink) and _pale(fill):
                 ink = "#202020"
             face = shape.get("font") or "TkDefaultFont"
             text_kwargs = {}
@@ -120,6 +124,45 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     canvas._foolbook_photos = photos
 
 
+def _field_frame(canvas, x, y, w, h, paper, style):
+    """A field's box. 1 is no border. The others are the ToolBook frame styles."""
+    if style == 3:
+        canvas.create_rectangle(x + 3, y + 3, x + w + 3, y + h + 3, fill="#404040", outline="")
+    if paper or style != 1:
+        canvas.create_rectangle(x, y, x + w, y + h, fill=paper or "", outline="")
+    if style in (0, 2, 3):
+        canvas.create_rectangle(x, y, x + w, y + h, outline="#000000")
+    elif style == 4:
+        _bevel(canvas, x, y, w, h, "#ffffff", "#404040")
+    elif style == 5:
+        _bevel(canvas, x, y, w, h, "#404040", "#ffffff")
+
+
+def _bevel(canvas, x, y, w, h, light, dark):
+    canvas.create_line(x, y + h, x, y, x + w, y, fill=light)
+    canvas.create_line(x + w, y, x + w, y + h, x, y + h, fill=dark)
+
+
+def _wrapped_rows(text, width, size):
+    chars = max(1, int(width / max(1, size * 0.55)))
+    rows = 0
+    for line in text.split("\n"):
+        if not line:
+            rows += 1
+            continue
+        length = 0
+        line_rows = 1
+        for word in line.split(" "):
+            extra = len(word) if length == 0 else len(word) + 1
+            if length and length + extra > chars:
+                line_rows += 1
+                length = len(word)
+            else:
+                length += extra
+        rows += line_rows
+    return max(1, rows)
+
+
 def _pale(color: str) -> bool:
     if not (isinstance(color, str) and len(color) == 7 and color.startswith("#")):
         return False
@@ -142,8 +185,10 @@ def _fit_text(shape, x, y, w, h):
     amount = sum(len(line.strip()) for line in words)
     wrap = w if w > 80 and h > 48 and amount > 40 else 0
     if wrap:
-        size = max(9, min(15, int(h / 7) if h else 12))
-        return raw, size, wrap, "nw", x, y
+        size = 15
+        while size > 8 and _wrapped_rows(raw, w, size) * size * 1.25 > h:
+            size -= 1
+        return raw, size, w, "nw", x, y
     count = max(1, len(words))
     by_height = ((h - 2) / count / 1.3) if h else 12
     by_width = ((w - 4) / longest / 0.62) if w else 12

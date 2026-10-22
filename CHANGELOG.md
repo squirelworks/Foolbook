@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r16
+
+- A field with a border is drawn as that frame, and the words are kept inside it. A transparent field still has no box. The analysis package is v1.0.0r16.
+
 ## 1.0.5r15
 
 - A button picture is drawn at the button's size. The up face is used unless the button is disabled, pressed, or a checked check box or radio button.
