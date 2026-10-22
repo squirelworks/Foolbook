@@ -239,21 +239,28 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
     if points:
         shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
         shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"
-    picture = _png(obj.get("bmp"))
+    picture = _png(obj.get("bmp"), bool(obj.get("transparent")))
     if picture:
         shape["kind"] = "image"
         shape["data"] = picture
     return shape
 
 
-def _png(blob: bytes | None) -> str:
+def _png(blob: bytes | None, transparent: bool = False) -> str:
     if not blob or blob[:2] != b"BM":
         return ""
     try:
         import base64
         import io
         from PIL import Image
-        image = Image.open(io.BytesIO(blob))
+        image = Image.open(io.BytesIO(blob)).convert("RGBA")
+        # A transparent button's top-left pixel is the matte, not the header.
+        if transparent:
+            key = image.getpixel((0, 0))[:3]
+            image.putdata([
+                (red, green, blue, 0 if (red, green, blue) == key else 255)
+                for red, green, blue, _alpha in image.getdata()
+            ])
         out = io.BytesIO()
         image.save(out, "PNG")
         return base64.b64encode(out.getvalue()).decode("ascii")
