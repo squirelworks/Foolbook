@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r29
+
+- README starts with the from-scratch terminal block: clone or pull `main`, activate `.venv`, install, and open.
+
 ## 1.0.5r28
 
 - The equipment bar on P300 is drawn on the frame, not under it. A run of spaces in the copyright is one space.

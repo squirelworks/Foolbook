@@ -5,6 +5,42 @@ The main tool that opens a book.
 Foolbook is not affiliated with Asymetrix, Click2learn, or SumTotal.  
 It is a clean-room reader. It opens `.fbk` and `.tbk` books, and processes `.fsk` and `.sbk` system books. A `.tbk` object store is read as pages, field text, polygons, and button bitmaps.
 
+## From scratch
+
+Paste this into a terminal. It clones the repo if `~/FU/Foolbook` is not already a checkout, checks out `main` (a detached tag will not take a plain `git pull`), updates, makes the virtualenv, installs, and opens the book that ships with Foolbook.
+
+```bash
+mkdir -p ~/FU
+cd ~/FU
+if [ ! -d Foolbook/.git ]; then
+  git clone https://github.com/squirelworks/Foolbook.git
+fi
+cd Foolbook
+git fetch origin
+git checkout -B main origin/main
+git pull --ff-only origin main
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -U pip
+python3 -m pip install -e .
+python3 -m foolbook
+```
+
+`python3 -m pip` is the virtualenv pip. Do not run `pip install` outside the virtualenv. On Debian and Ubuntu that is rejected as an externally managed environment, and it will not see `cryptography` or Pillow.
+
+If `python3 -m venv` says `No module named venv`, install the package and run the block again:
+
+```bash
+sudo apt install python3-venv python3-pip
+```
+
+Open a book you already have by putting its path last. A folder of a TBX export is opened from its `Book.xml`.
+
+```bash
+python3 -m foolbook ~/FU/NIDA_ATT/courses/9e954d01.tbk
+python3 -m foolbook "/path/to/Book.xml"
+```
+
 ## How it starts
 
 - Passed a path: opens that book.
