@@ -144,10 +144,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         try:
             state.index = max(0, min(i, len(state.book.pages) - 1))
             enter_page(state)
-            _redraw()
         finally:
             painting["on"] = False
-        _schedule_fit()
+        root.update_idletasks()
+        fitted["size"] = (gfx.winfo_width(), gfx.winfo_height())
+        _apply_fit()
 
     def _objects(page):
         stored = list((page.raw or {}).get("objects") or [])
@@ -156,6 +157,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         objects = [dict(shape) for shape in extract(page)]
         objects = [shape for shape in objects if not _corner_stub(shape, objects)]
         y = bottom(objects) + 16
+        named = {(shape.get("name") or "").lower() for shape in objects}
         have = {
             (shape.get("text") or shape.get("name") or "").lower()
             for shape in objects
@@ -163,7 +165,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         }
         for item in page.items or []:
             label = item.get("label") or item.get("page") or "Go"
-            if label.lower() in have:
+            if label.lower() in have or label.lower() in named:
                 continue
             have.add(label.lower())
             objects.append({
@@ -271,9 +273,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         y = (event.y - view["oy"]) / view["scale"] + view["y0"]
         for obj in reversed(page.raw.get("objects") or []):
             kind = obj.get("kind")
-            clickable = kind == "button" or (
+            clickable = kind in ("button", "text", "field", "group") or (
                 kind == "image" and (obj.get("script") or obj.get("item"))
             )
+            if kind in ("text", "field", "group") and not (obj.get("script") or obj.get("item")):
+                clickable = False
             if not clickable or obj.get("visible") is False:
                 continue
             left, top = obj.get("x") or 0, obj.get("y") or 0
@@ -283,26 +287,18 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     def on_canvas(event):
         page = state.page
+        if page is None:
+            return
         obj = _hit(event)
-        if page is None or obj is None:
+        if obj is None:
+            if follow(state, run_page_handlers(state, "buttonclick")):
+                show(state.index)
             return
         script = obj.get("script") or ""
         if script and follow(state, run_handler(state, script)):
             show(state.index)
             return
-        quiz = page.quiz or {}
-        answer = quiz.get("answer") or ""
         item = obj.get("item") or {}
-        name = (obj.get("name") or "").lower()
-        if answer and not item.get("page") and name not in ("next", "back", "previous", "ok", "help", "skip", "menu"):
-            from openscript_analysis.core.quiz import grade
-            right = grade(answer, obj.get("name") or obj.get("text") or "")
-            progress.record_answer(held["course"], page.id, right)
-            for thing in page.raw.get("objects") or []:
-                if (thing.get("name") or "").lower() == "correct":
-                    thing["visible"] = right
-            _paint()
-            return
         if item.get("page") or item.get("book") or item.get("label"):
             on_button(item.get("label") or obj.get("text") or "", item.get("page") or "", item.get("book") or "")
 

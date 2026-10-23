@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5r30
+
+- The page is not drawn until it fits the window. The raw-size flash on load is gone.
+- A click on P0 or P1 runs the background script, which sends next.
+- The menu pictures on P900 use the group's jump: P1001, p2001, and the quiz call.
+- A quiz choice is the field the book stored. It is not labeled correct or incorrect, and the window does not say which it was.
+- A jump to nida81 uses the book beside the course, or one folder up, before the stub in core/.
+
 ## 1.0.5r29
 
 - README starts with the from-scratch terminal block: clone or pull `main`, activate `.venv`, install, and open.

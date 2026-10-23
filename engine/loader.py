@@ -47,8 +47,10 @@ def find_book(name: str, near: str | Path) -> Path | None:
     root = Path(__file__).resolve().parents[1]
     dirs = [here, below, root / "core"]
     suffixes = (".fsk", ".sbk", ".fbk", ".tbk", ".json")
-    for suf in suffixes:
-        for d in dirs:
+    # Beside the book, then the folder above it, then Foolbook's own core.
+    # A stub in core/ must not hide the .tbk sitting next to the course.
+    for d in dirs:
+        for suf in suffixes:
             candidate = d / f"{stem}{suf}"
             if candidate.exists():
                 return candidate
@@ -208,6 +210,9 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 if item:
                     items.append(item)
                     shape["item"] = item
+        from engine.engine import split_handlers
+        for source in (raw.get("script") or "", raw.get("background_script") or ""):
+            handlers.extend(split_handlers(source))
         pages.append(Page(
             id=raw["id"],
             text=text,
