@@ -51,9 +51,23 @@ def find_book(name: str, near: str | Path) -> Path | None:
     # A stub in core/ must not hide the .tbk sitting next to the course.
     for d in dirs:
         for suf in suffixes:
-            candidate = d / f"{stem}{suf}"
-            if candidate.exists():
-                return candidate
+            found = _named(d, stem, suf)
+            if found is not None:
+                return found
+    return None
+
+
+def _named(directory: Path, stem: str, suf: str) -> Path | None:
+    """A book file, ignoring the case Linux would otherwise keep."""
+    direct = directory / f"{stem}{suf}"
+    if direct.exists():
+        return direct
+    if not directory.is_dir():
+        return None
+    want = f"{stem}{suf}".lower()
+    for child in directory.iterdir():
+        if child.is_file() and child.name.lower() == want:
+            return child
     return None
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5r31
+
+- P450 draws the background bitmap that is stored in the book.
+- Menu runs gotoMenuPage. With the default lesson mode, that is P900.
+- Final Quiz runs gotoQuizPage. That is P10004 in this book, or P10003 when the lesson mode is the pretest. It does not open another file.
+- A book name matches even when the file on disk is a different case, such as NC81BANK.SBK.
+
 ## 1.0.5r30
 
 - The page is not drawn until it fits the window. The raw-size flash on load is gone.

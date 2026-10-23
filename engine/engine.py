@@ -180,8 +180,14 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
         m = _GET.match(line)
         if m:
-            value = _eval(m.group(1), state)
-            actions.append({"kind": "get", "expr": m.group(1).strip(), "value": value})
+            call = m.group(1).strip()
+            page = _builtin_page(state, call)
+            if page:
+                actions.append({"kind": "goto", "page": page, "book": None})
+                i += 1
+                continue
+            value = _eval(call, state)
+            actions.append({"kind": "get", "expr": call, "value": value})
             i += 1
             continue
         m = _INC.match(line)
@@ -327,6 +333,45 @@ def _truth(value) -> bool:
     if isinstance(value, str):
         return value.lower() not in ("", "false", "0")
     return bool(value)
+
+
+def _lesson_mode(state: RuntimeState) -> int:
+    """The INI default is 2. Mode 0 and 1 are the assessment and the pretest."""
+    value = state.variables.get("__lessonMode", 2)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 2
+
+
+def _has_page(state: RuntimeState, page_id: str) -> bool:
+    book = state.book
+    if book is None:
+        return False
+    return any(page.id.lower() == page_id.lower() for page in book.pages)
+
+
+def _builtin_page(state: RuntimeState, call: str) -> str | None:
+    """Pages named by nc81base, which the book calls and does not inline.
+
+    Lesson mode defaults to 2, so the menu is P900 and the final quiz is
+    P10004. Mode 1 is the pretest, and that quiz is P10003.
+    """
+    name = call.strip().rstrip("()").split("(")[0].strip().lower()
+    if name == "gotomenupage":
+        mode = _lesson_mode(state)
+        assess = state.variables.get("__quizAssessment", 0) or 0
+        pretest = state.variables.get("__quizPreTest", 0) or 0
+        page = "P900"
+        if mode == 0 and int(assess) == 0:
+            page = "P10001"
+        elif mode == 1 and int(pretest) == 0:
+            page = "P10002"
+        return page if _has_page(state, page) else "P900"
+    if name == "gotoquizpage":
+        page = "P10003" if _lesson_mode(state) == 1 else "P10004"
+        return page if _has_page(state, page) else "P900"
+    return None
 
 
 def goto(state: RuntimeState, page_id: str) -> bool:

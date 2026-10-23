@@ -80,6 +80,29 @@ class ButtonScripts(unittest.TestCase):
         self.assertIs(state.book, lesson)
         self.assertEqual(state.page.id, "P100")
 
+    def test_the_menu_goes_to_p900_and_the_final_quiz_to_p10004(self):
+        lesson = Book(path="x", title="t", pages=[
+            Page(id="P450"), Page(id="P900"), Page(id="P10003"), Page(id="P10004"),
+        ])
+        state = RuntimeState(book=lesson, index=0)
+        actions = run_handler(state, "get gotoMenuPage()")
+        self.assertEqual(actions[0]["page"], "P900")
+        actions = run_handler(state, "get gotoQuizPage()")
+        self.assertEqual(actions[0]["page"], "P10004")
+        state.variables["__lessonMode"] = 1
+        actions = run_handler(state, "get gotoQuizPage()")
+        self.assertEqual(actions[0]["page"], "P10003")
+
+    def test_a_uppercase_book_name_still_matches(self):
+        from engine.loader import find_book
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "NIDA81.TBK").write_bytes(b"x")
+            found = find_book("nida81.tbk", folder / "lesson.tbk")
+        self.assertIsNotNone(found)
+        self.assertEqual(found.name, "NIDA81.TBK")
+
 
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):
