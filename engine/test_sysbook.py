@@ -103,6 +103,37 @@ class ButtonScripts(unittest.TestCase):
         self.assertIsNotNone(found)
         self.assertEqual(found.name, "NIDA81.TBK")
 
+    def test_a_quiz_opens_on_a_question_and_the_choice_is_not_the_marker(self):
+        pages = [Page(id="P10004"), Page(id="P10303")]
+        for number in range(110, 130):
+            pages.append(Page(
+                id=f"Q{number}",
+                raw={"props": {"QuestionNo": str(number), "Answer": "C"}},
+                shapes=[
+                    {"name": "A", "kind": "image"},
+                    {"name": "C", "kind": "image"},
+                    {"name": "Correct", "kind": "rect", "visible": False},
+                    {"name": "Index", "kind": "text", "text": "Question 10."},
+                ],
+            ))
+        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=pages))
+        state.variables["__pools"] = [(110, 119, 6), (120, 129, 4)]
+        from engine.quiz import call
+        self.assertEqual(call(state, "setupPool", ""), 0)
+        landed = call(state, "gotoNextQuestionEx", "")
+        self.assertEqual(landed[0], "goto")
+        self.assertNotEqual(landed[1], "P10303")
+        page = next(item for item in pages if item.id == landed[1])
+        self.assertTrue(page.shapes[-2]["visible"] is False)
+        self.assertIn("Question 1", page.shapes[-1]["text"])
+        state.index = pages.index(page)
+        state.variables["target"] = "A"
+        self.assertEqual(call(state, "handleQuizClick", "target"), 0)
+        self.assertEqual(state.variables["__choice"], "A")
+        moved = call(state, "handleQuizClick", "OK")
+        self.assertEqual(moved[0], "goto")
+        self.assertNotEqual(moved[1], landed[1])
+
 
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):

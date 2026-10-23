@@ -45,7 +45,25 @@ def find_book(name: str, near: str | Path) -> Path | None:
     here = near.parent if near.is_file() else near
     below = here.parent
     root = Path(__file__).resolve().parents[1]
-    dirs = [here, below, root / "core"]
+    dirs = []
+
+    def add(directory: Path) -> None:
+        if directory not in dirs and directory.is_dir():
+            dirs.append(directory)
+
+    add(here)
+    add(below)
+    # A course folder often sits next to the system books, not inside them.
+    for base in (here, below):
+        if not base.is_dir():
+            continue
+        try:
+            children = [child for child in base.iterdir() if child.is_dir() and not child.name.startswith(".")]
+        except OSError:
+            children = []
+        for child in children[:40]:
+            add(child)
+    add(root / "core")
     suffixes = (".fsk", ".sbk", ".fbk", ".tbk", ".json")
     # Beside the book, then the folder above it, then Foolbook's own core.
     # A stub in core/ must not hide the .tbk sitting next to the course.
@@ -233,7 +251,11 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
             items=items,
             handlers=handlers,
             shapes=shapes,
-            raw={"store": True},
+            raw={
+                "store": True,
+                "props": raw.get("props") or {},
+                "size": (to_pixel(raw["size"][0]), to_pixel(raw["size"][1])) if raw.get("size") else None,
+            },
         ))
     return Book(path=str(path), title=path.stem, pages=pages)
 
@@ -257,6 +279,8 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "align": int(obj.get("align") or 0),
         "border": int(obj["border"]) if obj.get("border") is not None else 1,
         "direct": bool(obj.get("direct")),
+        # The Correct rectangle is the answer key. Reader level hides it.
+        "visible": (obj.get("name") or "").lower() != "correct",
     }
     points = obj.get("points") or []
     if obj.get("kind") == "arc" and obj.get("ends"):

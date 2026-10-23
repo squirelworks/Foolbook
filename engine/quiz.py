@@ -1,0 +1,251 @@
+"""The part of nc81test the lesson actually calls.
+
+Begin builds a pool and opens the first question. A question page does not
+carry that script itself: its background calls handleQuizClick with the
+object that was clicked. The Correct rectangle is not part of this. Reader
+level leaves it hidden, which is why the page must not draw it.
+"""
+
+from __future__ import annotations
+
+import random
+
+_UNKNOWN = object()
+_CHOICES = ("A", "B", "C", "D", "E")
+
+
+def call(state, name: str, args: str):
+    """Run one quiz call. Unknown names return a sentinel, not a guess."""
+    key = name.lower()
+    fn = _CALLS.get(key)
+    if fn is None:
+        return _UNKNOWN
+    return fn(state, _args(args))
+
+
+def known(name: str) -> bool:
+    return name.lower() in _CALLS
+
+
+def _args(text: str) -> list[str]:
+    found = []
+    cur = []
+    quote = ""
+    for ch in text:
+        if quote:
+            if ch == quote:
+                quote = ""
+            else:
+                cur.append(ch)
+            continue
+        if ch in "\"'":
+            quote = ch
+            continue
+        if ch == ",":
+            found.append("".join(cur).strip())
+            cur = []
+            continue
+        cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail or found:
+        found.append(tail)
+    return found
+
+
+def _num(text: str, default: int = 0) -> int:
+    try:
+        return int(str(text).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _numbers(state) -> list:
+    numbers = state.variables.get("__quizNumbers")
+    if not isinstance(numbers, list) or not numbers:
+        numbers = [None]
+        state.variables["__quizNumbers"] = numbers
+    return numbers
+
+
+def _setup(state, args):
+    # setupQuizEx("Quiz", objectives, passed, review, end)
+    pages = {}
+    if len(args) >= 5:
+        pages = {1: args[2], 2: args[3], 3: args[4]}
+    state.variables["__quizPages"] = pages
+    state.variables["__quizPass"] = 1
+    state.variables["__quizMode"] = 0
+    state.variables["__quizIndex"] = 0
+    state.variables["__quizCount"] = 0
+    state.variables["__quizNumbers"] = [None]
+    state.variables["__choice"] = ""
+    state.variables["__pools"] = []
+    return 0
+
+
+def _clear(state, _args):
+    state.variables["__pools"] = []
+    state.variables["__quizNumbers"] = [None]
+    state.variables["__quizCount"] = 0
+    state.variables["__quizIndex"] = 0
+    state.variables["__choice"] = ""
+    return 0
+
+
+def _add_pool(state, args):
+    if len(args) < 4:
+        return 0
+    pools = state.variables.setdefault("__pools", [])
+    pools.append((_num(args[1]), _num(args[2]), _num(args[3])))
+    return 0
+
+
+def _from_pool(state, words: list[str], count: int) -> int:
+    if count > len(words):
+        return -1
+    picked = random.sample(words, count)
+    numbers = _numbers(state)
+    for word in picked:
+        numbers.append(_num(word))
+    state.variables["__quizCount"] = len(numbers) - 1
+    state.variables["__quizIndex"] = 0
+    return 0
+
+
+def _setup_pool(state, _args):
+    pools = list(state.variables.get("__pools") or [])
+    state.variables["__quizNumbers"] = [None]
+    state.variables["__quizCount"] = 0
+    for start, stop, count in pools:
+        words = [str(number) for number in range(start, stop + 1)]
+        if _from_pool(state, words, count) < 0:
+            return -1
+    return 0
+
+
+def _page_question(page) -> str:
+    return str(((page.raw or {}).get("props") or {}).get("QuestionNo") or "")
+
+
+def _find_page(state, number: int):
+    for page in state.book.pages:
+        if _page_question(page) == str(number):
+            return page.id
+    return ""
+
+
+def _shape(page, name: str):
+    for shape in page.shapes or []:
+        if (shape.get("name") or "").lower() == name.lower():
+            return shape
+    return None
+
+
+def _prepare(state, page_id: str, index: int) -> None:
+    page = next((item for item in state.book.pages if item.id == page_id), None)
+    if page is None:
+        return
+    state.variables["__choice"] = ""
+    for shape in page.shapes or []:
+        if (shape.get("name") or "").upper() in _CHOICES:
+            shape["checked"] = False
+        if (shape.get("name") or "").lower() == "correct":
+            shape["visible"] = False
+    label = _shape(page, "Index")
+    if label is not None:
+        label["text"] = f"Question {index}."
+
+
+def _score(state) -> None:
+    page = state.page
+    if page is None:
+        return
+    answer = str(((page.raw or {}).get("props") or {}).get("Answer") or "")
+    choice = str(state.variables.get("__choice") or "")
+    scores = state.variables.setdefault("__quizScore", {})
+    index = int(state.variables.get("__quizIndex") or 0)
+    scores[index] = 100 if choice and choice.upper() == answer.upper() else 0
+
+
+def _next(state, _args):
+    index = int(state.variables.get("__quizIndex") or 0)
+    if index > 0:
+        _score(state)
+    count = int(state.variables.get("__quizCount") or 0)
+    pages = state.variables.get("__quizPages") or {}
+    end = pages.get(3) or pages.get("3") or ""
+    if index >= count:
+        return ("goto", end) if end else 0
+    index += 1
+    state.variables["__quizIndex"] = index
+    number = _numbers(state)[index]
+    page_id = _find_page(state, number)
+    if not page_id:
+        return ("goto", end) if end else 0
+    _prepare(state, page_id, index)
+    return ("goto", page_id)
+
+
+def _previous(state, _args):
+    index = int(state.variables.get("__quizIndex") or 0)
+    if index <= 1:
+        return 0
+    index -= 1
+    state.variables["__quizIndex"] = index
+    number = _numbers(state)[index]
+    page_id = _find_page(state, number)
+    if not page_id:
+        return 0
+    _prepare(state, page_id, index)
+    return ("goto", page_id)
+
+
+def _choose(state, letter: str) -> int:
+    page = state.page
+    letter = letter.upper()
+    if page is None:
+        return 0
+    state.variables["__choice"] = letter
+    for shape in page.shapes or []:
+        name = (shape.get("name") or "").upper()
+        if name in _CHOICES:
+            shape["checked"] = name == letter
+    state.variables["__redraw"] = True
+    return 0
+
+
+def _click(state, args):
+    target = args[0] if args else str(state.variables.get("target") or "")
+    if target.lower() == "target":
+        target = str(state.variables.get("target") or "")
+    name = target.strip().strip('"').upper()
+    if name in _CHOICES:
+        return _choose(state, name)
+    if name == "OK":
+        if int(state.variables.get("__quizPass") or 1) in (1, 2) and not state.variables.get("__choice"):
+            return 0
+        return _next(state, [])
+    if name in ("SKIP", "NEXT"):
+        if name == "SKIP":
+            state.variables["__choice"] = ""
+        return _next(state, [])
+    if name == "BACK":
+        return _previous(state, [])
+    if name == "HELP":
+        page = state.page
+        help_page = str(((page.raw or {}).get("props") or {}).get("HelpPage") or "") if page else ""
+        if help_page and any(item.id.lower() == help_page.lower() for item in state.book.pages):
+            return ("goto", help_page)
+        return 0
+    return 0
+
+
+_CALLS = {
+    "setupquizex": _setup,
+    "clearpool": _clear,
+    "addobjectivetopool": _add_pool,
+    "setuppool": _setup_pool,
+    "gotonextquestionex": _next,
+    "gotopreviousquestionex": _previous,
+    "handlequizclick": _click,
+}

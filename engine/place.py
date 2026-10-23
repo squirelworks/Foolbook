@@ -73,6 +73,18 @@ def fit_view(box, width: int, height: int, margin: int = 12):
     return scale, ox - x0, oy - y0, ox, oy
 
 
+def page_box(page, shapes) -> tuple[float, float, float, float]:
+    """The window shows the page, not the bounding box of whatever is on it.
+
+    ToolBook sizes the viewer to the page. A second book uses the same
+    rectangle, so a stray object cannot shrink or slide the whole page.
+    """
+    size = ((getattr(page, "raw", None) or {}).get("size") if page is not None else None) or ()
+    if len(size) >= 2 and size[0] and size[1]:
+        return (0.0, 0.0, float(size[0]), float(size[1]))
+    return content_box(shapes)
+
+
 def content_box(shapes) -> tuple[float, float, float, float]:
     """The bounds the window scales. Glyphs that spill a field do not count."""
     left = top = right = bottom = None

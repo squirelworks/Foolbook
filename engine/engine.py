@@ -33,7 +33,7 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
-_SEND = re.compile(r'send\s+(\w+)', re.IGNORECASE)
+_SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
 _GET = re.compile(r'get\s+(.+)', re.IGNORECASE)
@@ -162,7 +162,15 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
         m = _SEND.search(line)
         if m:
-            actions.append({"kind": "send", "name": m.group(1)})
+            name = m.group(1)
+            key = (m.group(2) or "").lower()
+            if name.lower() == "keyup" and key in ("keyf2", "keyf4"):
+                page, book = _menu_return(state, key)
+                if page:
+                    actions.append({"kind": "goto", "page": page, "book": book})
+                i += 1
+                continue
+            actions.append({"kind": "send", "name": name})
             i += 1
             continue
         m = _PUT.match(line)
@@ -187,7 +195,14 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                 i += 1
                 continue
             value = _eval(call, state)
-            actions.append({"kind": "get", "expr": call, "value": value})
+            if isinstance(value, tuple) and value and value[0] == "goto":
+                actions.append({
+                    "kind": "goto",
+                    "page": value[1],
+                    "book": value[2] if len(value) > 2 else None,
+                })
+            else:
+                actions.append({"kind": "get", "expr": call, "value": value})
             i += 1
             continue
         m = _INC.match(line)
@@ -307,6 +322,9 @@ def _eval(expr: str, state: RuntimeState):
             return _cmp(op.strip(), _eval(left, state), _eval(right, state))
     if expr in state.variables:
         return state.variables[expr]
+    called = _call_value(expr, state)
+    if called is not _NOT_A_CALL:
+        return called
     return expr
 
 
@@ -333,6 +351,36 @@ def _truth(value) -> bool:
     if isinstance(value, str):
         return value.lower() not in ("", "false", "0")
     return bool(value)
+
+
+_NOT_A_CALL = object()
+
+
+def _call_value(expr: str, state: RuntimeState):
+    match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
+    if not match:
+        return _NOT_A_CALL
+    from engine.quiz import call
+    return call(state, match.group(1), match.group(2))
+
+
+def _menu_return(state: RuntimeState, key: str) -> tuple[str, str | None]:
+    """F4 is the lesson menu. F2 is Exit the Lesson.
+
+    Exit quits. From another book, the lesson that opened it is the menu
+    to return to. On the menu page itself there is nowhere further to go.
+    """
+    last = str(state.variables.get("lastbook") or "")
+    here = ""
+    if state.book is not None:
+        here = Path(state.book.path).stem
+    other = bool(last) and last.lower() != here.lower()
+    if key == "keyf4" or (key == "keyf2" and other):
+        if other:
+            return "P900", last
+        if _has_page(state, "P900") and (state.page is None or state.page.id.lower() != "p900"):
+            return "P900", None
+    return "", None
 
 
 def _lesson_mode(state: RuntimeState) -> int:

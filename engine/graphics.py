@@ -141,6 +141,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         else:
             x, y, w, h = _box(shape)
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
+    for shape in shapes:
+        if not shape.get("checked") or shape.get("visible") is False:
+            continue
+        x, y, w, h = _box(shape)
+        canvas.create_rectangle(x + 1, y + 1, x + w - 1, y + h - 1, outline="#0030c0", width=3)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
 

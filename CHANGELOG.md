@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5r32
+
+- A click on P0 or P1 reaches `send next`. Choosing the page in the list no longer puts it back.
+- Begin, the choices, OK, Skip and Back run the quiz script. The Correct box stays hidden, so it does not mark the answer.
+- Another book is drawn in the page rectangle, which is how ToolBook sizes the viewer. The book is also looked for in the folders next to the course, not only in core/.
+
 ## 1.0.5r31
 
 - P450 draws the background bitmap that is stored in the book.

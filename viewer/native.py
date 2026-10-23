@@ -12,7 +12,7 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.place import content_box, fit_view, place_window
+from engine.place import fit_view, page_box, place_window
 from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
@@ -188,9 +188,13 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             for page_id in ids:
                 lb.insert("end", page_id)
         idx.set(state.index)
-        lb.selection_clear(0, "end")
-        lb.selection_set(state.index)
-        lb.see(state.index)
+        held["lock"] = True
+        try:
+            lb.selection_clear(0, "end")
+            lb.selection_set(state.index)
+            lb.see(state.index)
+        finally:
+            held["lock"] = False
         root.title(state.book.title or Path(state.book.path).name)
         gfx.delete("all")
         objects = _objects(p)
@@ -238,7 +242,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             objects = _objects(page)
             pile = held.setdefault("piles", {}).setdefault(state.book.path, [])
             arrive(pile, state.index, objects)
-            box = content_box(visible(pile))
+            box = page_box(page, visible(pile))
             scale, dx, dy, ox, oy = fit_view(box, cw, ch)
             x0, y0 = box[0], box[1]
             _redraw((scale, x0, y0, dx, dy))
@@ -272,13 +276,16 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         x = (event.x - view["ox"]) / view["scale"] + view["x0"]
         y = (event.y - view["oy"]) / view["scale"] + view["y0"]
         for obj in reversed(page.raw.get("objects") or []):
+            if obj.get("visible") is False:
+                continue
             kind = obj.get("kind")
-            clickable = kind in ("button", "text", "field", "group") or (
-                kind == "image" and (obj.get("script") or obj.get("item"))
-            )
-            if kind in ("text", "field", "group") and not (obj.get("script") or obj.get("item")):
-                clickable = False
-            if not clickable or obj.get("visible") is False:
+            # The page fill is the paper, not a control. A click on it is the page.
+            if (
+                kind == "rect"
+                and (obj.get("w") or 0) > 500
+                and (obj.get("h") or 0) > 400
+                and not (obj.get("script") or obj.get("item"))
+            ):
                 continue
             left, top = obj.get("x") or 0, obj.get("y") or 0
             if left <= x <= left + (obj.get("w") or 0) and top <= y <= top + (obj.get("h") or 0):
@@ -290,17 +297,24 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if page is None:
             return
         obj = _hit(event)
-        if obj is None:
-            if follow(state, run_page_handlers(state, "buttonclick")):
-                show(state.index)
-            return
-        script = obj.get("script") or ""
-        if script and follow(state, run_handler(state, script)):
+        state.variables["target"] = (obj or {}).get("name") or "page"
+        script = (obj or {}).get("script") or ""
+        moved = False
+        if script:
+            moved = follow(state, run_handler(state, script))
+        # A picture with no handler of its own forwards to the page.
+        # That is P0's send next, and the quiz background's handleQuizClick.
+        if not moved:
+            moved = follow(state, run_page_handlers(state, "buttonclick"))
+        if moved:
             show(state.index)
             return
-        item = obj.get("item") or {}
+        if state.variables.pop("__redraw", None):
+            _paint()
+            return
+        item = (obj or {}).get("item") or {}
         if item.get("page") or item.get("book") or item.get("label"):
-            on_button(item.get("label") or obj.get("text") or "", item.get("page") or "", item.get("book") or "")
+            on_button(item.get("label") or (obj or {}).get("text") or "", item.get("page") or "", item.get("book") or "")
 
     def on_button(label: str, target: str, book_name: str = ""):
         if book_name and open_other(state, book_name, target or ""):
@@ -311,7 +325,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     gfx.bind("<Configure>", _on_configure)
     gfx.bind("<Button-1>", on_canvas)
-    lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() else None)
+    lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
     show(idx.get())
     root.mainloop()
     return 0
