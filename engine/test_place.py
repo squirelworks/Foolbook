@@ -66,7 +66,7 @@ class WindowTests(unittest.TestCase):
         shapes = [{"kind": "text", "x": 0, "y": 0, "w": 100, "h": 40, "size": 12, "marginL": 24, "text": "Hello"}]
         placed = place_window(shapes, 2, 0, 0, 0, 0)
         self.assertEqual(placed[0]["w"], 200)
-        self.assertEqual(placed[0]["size"], 32)
+        self.assertEqual(placed[0]["size"], 24)
         self.assertTrue(placed[0]["px"])
         self.assertEqual(placed[0]["marginL"], 48)
 
@@ -78,7 +78,7 @@ class WindowTests(unittest.TestCase):
         placed = place_window(shapes, 1, 0, 0, 0, 0)
         runs = placed[0]["runs"]
         self.assertNotIn("size", runs[0])
-        self.assertEqual(runs[1]["size"], 13)
+        self.assertEqual(runs[1]["size"], 10)
 
     def test_a_field_past_the_page_is_cut_at_the_page(self):
         shapes = [{"kind": "text", "x": 17, "y": 300, "w": 626, "h": 120, "text": "Copyright"}]

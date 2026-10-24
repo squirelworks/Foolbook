@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r13 — 2026-10-25
+
+- The type size is the point size times the window scale, not that times 96/72. The extra factor made the type a third too big at every window size.
+
 ## 1.0.7r12 — 2026-10-25
 
 - The window opens at the size of the page, not the size of the monitor. A field stored past the page edge is cut there, so the P0 copyright no longer runs off.
