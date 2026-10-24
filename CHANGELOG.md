@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r12 — 2026-10-25
+
+- The window opens at the size of the page, not the size of the monitor. A field stored past the page edge is cut there, so the P0 copyright no longer runs off.
+
 ## 1.0.7r11 — 2026-10-25
 
 - A coloured letter is measured with the rest of its word, so it no longer sits on the next letter. The P2170 rows use the 10-point run, including the first letter of the header.

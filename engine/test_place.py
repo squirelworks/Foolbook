@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import content_box, fit_view, in_front, place_page, place_window
+from engine.place import clip_to_page, content_box, fit_view, in_front, place_page, place_window
 
 
 class PlaceTests(unittest.TestCase):
@@ -79,6 +79,12 @@ class WindowTests(unittest.TestCase):
         runs = placed[0]["runs"]
         self.assertNotIn("size", runs[0])
         self.assertEqual(runs[1]["size"], 13)
+
+    def test_a_field_past_the_page_is_cut_at_the_page(self):
+        shapes = [{"kind": "text", "x": 17, "y": 300, "w": 626, "h": 120, "text": "Copyright"}]
+        clipped = clip_to_page(shapes, 624, 442)
+        self.assertEqual(clipped[0]["w"], 607)
+        self.assertEqual(clipped[0]["h"], 120)
 
     def test_a_frame_does_not_cover_the_button_inside_it(self):
         frame = {"kind": "image", "name": "MenuFrame", "x": 20, "y": 10, "w": 400, "h": 300}

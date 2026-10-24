@@ -54,6 +54,28 @@ def tighten(text: str) -> str:
     return re.sub(r" {3,}", " ", text)
 
 
+def clip_to_page(shapes, width: float, height: float) -> list[dict]:
+    """A field may be stored past the page. ToolBook clips it when it draws.
+
+    The P0 copyright box ends at 9638 twips on a page that is 9360 wide,
+    so the words run off the right edge. The box stops at the page.
+    """
+    if not width or not height:
+        return shapes
+    clipped = []
+    for shape in shapes:
+        item = dict(shape)
+        if item.get("kind") == "text":
+            x = float(item.get("x") or 0)
+            y = float(item.get("y") or 0)
+            if x < width:
+                item["w"] = min(float(item.get("w") or 0), width - x)
+            if y < height:
+                item["h"] = min(float(item.get("h") or 0), height - y)
+        clipped.append(item)
+    return clipped
+
+
 def fit_view(box, width: int, height: int, margin: int = 12):
     """Scale a drawing so it sits inside the window, and center it.
 

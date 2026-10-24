@@ -244,6 +244,10 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                     items.append(item)
                     shape["item"] = item
         from engine.engine import split_handlers
+        from engine.place import clip_to_page
+        page_size = (to_pixel(raw["size"][0]), to_pixel(raw["size"][1])) if raw.get("size") else None
+        if page_size:
+            shapes = clip_to_page(shapes, page_size[0], page_size[1])
         for source in (raw.get("script") or "", raw.get("background_script") or ""):
             handlers.extend(split_handlers(source))
         pages.append(Page(
@@ -255,7 +259,7 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
             raw={
                 "store": True,
                 "props": raw.get("props") or {},
-                "size": (to_pixel(raw["size"][0]), to_pixel(raw["size"][1])) if raw.get("size") else None,
+                "size": page_size,
             },
         ))
     return Book(path=str(path), title=path.stem, pages=pages, handlers=_book_keyup(file_bytes, keywords))

@@ -50,7 +50,14 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     root.title(book.title or Path(path).name)
     screen_w = root.winfo_screenwidth()
     screen_h = root.winfo_screenheight()
-    root.geometry(f"{max(800, screen_w - 24)}x{max(600, screen_h - 80)}")
+    page_size = ((book.pages[0].raw or {}).get("size") if book.pages else None) or (624, 442)
+    page_w = int(page_size[0] or 624)
+    page_h = int(page_size[1] or 442)
+    # The page is 624 by 442. Opening at the size of the monitor scales
+    # that page up until the type is enormous and the edge runs off.
+    win_w = min(max(800, screen_w - 24), 160 + page_w + 24)
+    win_h = min(max(600, screen_h - 80), page_h + 48)
+    root.geometry(f"{win_w}x{win_h}")
 
     pages = book.pages
     last = progress.last_page(course_id)
