@@ -89,12 +89,16 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 
 ## Graphics
 
-A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels, not ToolBook units. A `.tbk` does not get shapes from its page stream. That stream is decoded to handlers, and the window runs those handlers.
+A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels. A `.tbk` is not drawn from its page stream. The object store is read into these shapes, and the page stream is decoded to handlers.
 
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
-- `line` and `polygon`: `points` as `[[x, y], ...]`.
-- `text`: `x`, `y`, `text`. `size` is the type size. `bold` is optional.
+- `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
+- `arc`: the open curve between its endpoints. It is not filled.
+- `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
+- `button`: the picture stored for that button, or a caption when there is no picture.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
+
+A field named Page# shows the page that is open. A text field named `correct` is the practice answer and stays on the page. The Correct rectangle is the answer key and stays hidden.
 
 A new install opens `using_foolbook`. Its First Light button opens the other example, `first_light`, which is shipped in the same folder.
 

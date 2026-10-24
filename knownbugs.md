@@ -1,27 +1,24 @@
 # Known bugs
 
-Things that are wrong in the current release.
+Things that are still wrong in 1.0.6.
 
-## ToolBook is settled, and it is still not ToolBook
+## OpenScript
 
-The file is read to the end before a page is shown. A later copy of a page replaces the earlier one. A later copy of an object does the same. A TBX is then ordered by `Book.Pages`. One page is one surface: the bounds the book stored, then the text or the bitmap that belongs there.
+The reader runs the handlers it has decoded for this course: next and previous, the menu and quiz calls, and a click that is `go to page`. Most other OpenScript does not run.
 
-That is still not ToolBook.
+- A script that is only bytecode is not executed.
+- A handler that lives in a system book is run only when that book was decoded and the call is one the reader knows. The rest are skipped.
+- The scored test still stops on the results page. The percent stays at the placeholder, and OK does not open the review page.
 
-- A button picture is the bitmap whose directory id is one less than the word stored in the graphics block. The 8x8 pattern tiles are not drawn.
-- Field text is the handle in word 1 of the block at `+0x24`. A script that lives in another book is not run.
-- Most OpenScript still does not run. A quiz is graded by comparing the clicked button's name with the page's Answer property. `handleQuizClick` itself is not run. Help, Skip, and OK do nothing.
-- Next and Back move along the settled page list. A button that has its own `send next` or `send previous` uses that.
-- Bitmaps are drawn only when a TBX export left the file beside `Book.xml`.
-- Groups inside one page are still skipped. A nested page (`81 65`) is its own page.
-- A class `0x10` pattern other than solid fill (`0xFE`) is drawn as a solid of the record's RGB. The 8×8 tile is not applied.
+## Paint
 
-## TBX
+- An 8×8 pattern tile is not drawn. A class `0x10` pattern other than solid fill (`0xFE`) is painted as the record's colour.
+- A style run is used when it names a font. A colour-only run is not. Two flag bits in the font entry, `0x10` and `0x40`, are unread, as are the words at `+0x30` and `+0x32`.
 
-`Book.xml` opens through `Book.Pages`. Text keeps the font face the file named. A button keeps its caption or its bitmap path. The rich-text face table is not drawn as words.
+## Writing a book back
 
-What a `.tbk` and a `.tbx` share is the settled page: bounds, then the thing that goes in them. The two files are still not the same reader.
+`write_store` writes an object store. ToolBook has not opened one of those files. `splice_text` can replace a string of the same length inside a book ToolBook already opens, and it leaves the rest of the store alone. A script is not written back as bytecode.
 
-## Notes
+## Other formats
 
-`.txt`, `.text`, `.md`, `.markdown`, `.rst`, `.log`, and `.rtf` open in the viewer. An `.rtf` shows the words. The font is not applied.
+A `.tbk` button picture is the bitmap embedded in the file. A TBX button picture is a path beside `Book.xml`. The two are still different readers. An `.rtf` shows the words. The font is not applied.

@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.6 — 2026-10-25
+
+This is the release. The `v1.0.5r1` through `v1.0.5r38` tags were interim builds. They are no longer published as releases.
+
+What changed since 1.0.5, for a `.tbk`:
+
+- The object store is what gets drawn. A page is its own list. A field's words are word 1 of the block at `+0x24`.
+- The corner label is the page that is open, not the last page that wrote the field.
+- A field is drawn in the face, point size, and weight the record names. The P400 body is Arial 12 bold. A style run can name a smaller face, which is why the copyright line is 8 point.
+- The first indent word is the first line. The second is every line under it. The third is the right indent. The fourth is tab spacing and is not an inset. On the body those are 360, 360 and 310. On the P1 title the first line is 0 and the line under it is 650.
+- A button picture is the bitmap stored in the book, drawn at the button's size. A transparent edge stays clear.
+- A polygon is the outline in its own record, mapped onto its bounds. An arc is the open curve between its endpoints. A background fill is the colour stored on that record. A background with no fill leaves the page underneath where it does not paint.
+- The window has one scale and one offset, applied before anything is drawn. The page is not shown until that scale is known.
+- Next, Back, Menu, and the lesson choices run the script that was stored. A click on P0 or P1 sends next. A jump to another book leaves the first one open, and the return comes back to it.
+- A text field named `correct` stays visible. That is the practice answer. The Correct rectangle, which is the answer key, stays hidden.
+- Depends on `openscript_analysis` 1.0.1.
+
 ## 1.0.5r38
 
 - The P1 title starts at the left of its box. Its first-line indent is 0. The 650 on the next word is only the line under it. Body text is unchanged, because those two words are both 360.
