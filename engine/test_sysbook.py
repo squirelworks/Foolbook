@@ -111,6 +111,7 @@ class ButtonScripts(unittest.TestCase):
                 raw={"props": {"QuestionNo": str(number), "Answer": "C"}},
                 shapes=[
                     {"name": "A", "kind": "image"},
+                    {"name": "A", "kind": "text", "text": "7400"},
                     {"name": "C", "kind": "image"},
                     {"name": "Correct", "kind": "rect", "visible": False},
                     {"name": "Index", "kind": "text", "text": "Question 10."},
@@ -130,6 +131,8 @@ class ButtonScripts(unittest.TestCase):
         state.variables["target"] = "A"
         self.assertEqual(call(state, "handleQuizClick", "target"), 0)
         self.assertEqual(state.variables["__choice"], "A")
+        self.assertTrue(page.shapes[0]["checked"])
+        self.assertFalse(page.shapes[1].get("checked"))
         moved = call(state, "handleQuizClick", "OK")
         self.assertEqual(moved[0], "goto")
         self.assertNotEqual(moved[1], landed[1])

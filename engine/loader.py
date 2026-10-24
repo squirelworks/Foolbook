@@ -237,7 +237,8 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 text.append(shape["text"])
             script = obj.get("script") or ""
             if script:
-                handlers.append(Handler(name=obj.get("name") or "handler", source=script))
+                # The script stays on the object. Copying it onto the page
+                # made an empty click run Next, and asked the exit question twice.
                 item = _item_from_script(obj.get("name") or "", script)
                 if item:
                     items.append(item)

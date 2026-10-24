@@ -145,18 +145,18 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             item["ends"] = [
                 [mx(pt[0]), my(pt[1])] for pt in shape["ends"] if len(pt) >= 2
             ]
-        # The number in the book is the pixel height ToolBook draws. Multiplying
-        # by 96/72 turned a 12-point word into a 16-pixel word, and the window
-        # scale turned that into a 24-point word. The box and the face use one scale.
+        # The book stores points. ToolBook draws them at 96 dpi, so 12 point
+        # is 16 pixels. The window scale multiplies that once. Tk is given
+        # pixels, or it would apply 96/72 a second time.
         if shape.get("kind") == "text" or shape.get("size"):
             recorded = float(shape.get("size") or 12)
-            item["size"] = max(1, int(round(recorded * scale)))
+            item["size"] = max(1, int(round(recorded * scale * 96 / 72)))
             item["px"] = True
         if shape.get("runs"):
             item["runs"] = [
                 {
                     **run,
-                    "size": max(1, int(round(float(run.get("size") or shape.get("size") or 12) * scale))),
+                    "size": max(1, int(round(float(run.get("size") or shape.get("size") or 12) * scale * 96 / 72))),
                 }
                 for run in shape["runs"]
             ]

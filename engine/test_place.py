@@ -66,7 +66,7 @@ class WindowTests(unittest.TestCase):
         shapes = [{"kind": "text", "x": 0, "y": 0, "w": 100, "h": 40, "size": 12, "marginL": 24, "text": "Hello"}]
         placed = place_window(shapes, 2, 0, 0, 0, 0)
         self.assertEqual(placed[0]["w"], 200)
-        self.assertEqual(placed[0]["size"], 24)
+        self.assertEqual(placed[0]["size"], 32)
         self.assertTrue(placed[0]["px"])
         self.assertEqual(placed[0]["marginL"], 48)
 

@@ -249,7 +249,7 @@ def _choose(state, letter: str) -> int:
     state.variables["__choice"] = letter
     for shape in page.shapes or []:
         name = (shape.get("name") or "").upper()
-        if name in _CHOICES:
+        if name in _CHOICES and shape.get("kind") != "text":
             shape["checked"] = name == letter
     state.variables["__redraw"] = True
     return 0

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.7r7 — 2026-10-25
+
+- A 12-point word is 16 pixels, which is what ToolBook draws. The window scale still multiplies that, and Tk is not allowed to do it again.
+- An object's script stays on the object. An empty click no longer runs Next, and Lesson Exit asks once.
+- A chosen answer turns the letter button light cyan. The words beside it are not framed.
+- The reader now uses openscript-analysis 1.0.1r2, so the fields that had lost their font get it back.
+
 ## 1.0.7r6 — 2026-10-25
 
 - Exit asks "Are you sure you want to Exit the Lesson?" The words are the book's own key handler. No stays. Yes leaves.
