@@ -153,6 +153,14 @@ class ButtonScripts(unittest.TestCase):
         self.assertEqual(state.page.id, "P10302")
         self.assertIn("50", end.shapes[0]["text"])
 
+    def test_a_practice_answer_takes_the_fill_the_script_names(self):
+        page = Page(id="P1310", shapes=[{"name": "correct", "kind": "text", "text": "10", "fill": "#40ffff"}])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[page, Page(id="P1311")]))
+        actions = run_handler(state, 'rgbfill of field "correct" = 255,255,63\ngo to page "p1311"\n')
+        self.assertEqual(page.shapes[0]["fill"], "#ffff3f")
+        self.assertTrue(follow(state, actions))
+        self.assertEqual(state.page.id, "P1311")
+
 
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):

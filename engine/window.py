@@ -54,5 +54,8 @@ def visible(window: list) -> list[dict]:
         if place == last:
             shown.extend(shapes)
         else:
-            shown.extend(shape for shape in shapes if not shape.get("direct"))
+            shown.extend(
+                shape for shape in shapes
+                if not shape.get("direct") and (shape.get("name") or "") != "Page#"
+            )
     return shown

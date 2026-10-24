@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r2 — 2026-10-25
+
+- A practice answer named `correct` stays on the page. Clicking it uses the fill the script names, then opens the CORRECT! page.
+- An overlay page keeps the page under it and shows only its own corner label.
+
 ## 1.0.7r1 — 2026-10-25
 
 - The face is sized in pixels, so it stays inside the field instead of growing past it.

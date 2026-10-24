@@ -41,6 +41,14 @@ class WindowTests(unittest.TestCase):
         text = [item["text"] for item in visible(window) if item.get("text")]
         self.assertEqual(text, ["10V", "flames"])
 
+    def test_an_overlay_keeps_only_the_open_page_number(self):
+        first = _paper() + [{"name": "Page#", "kind": "text", "text": "P1310"}]
+        second = _overlay("CORRECT!", "banner") + [{"name": "Page#", "kind": "text", "text": "P1311"}]
+        window = arrive([], 0, first)
+        window = arrive(window, 1, second)
+        labels = [shape["text"] for shape in visible(window) if shape.get("name") == "Page#"]
+        self.assertEqual(labels, ["P1311"])
+
     def test_page_number_is_the_page_now_open(self):
         shapes = [{"name": "Page#", "text": "P1270"}, {"name": "title", "text": "INTRODUCTION"}]
         show_page_number(shapes, "P400")

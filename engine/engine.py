@@ -43,6 +43,10 @@ _STEP = re.compile(
 )
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
+_FILL = re.compile(
+    r'rgbfill\s+of\s+field\s+"([^"]+)"\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)',
+    re.IGNORECASE,
+)
 _NAME_OF = re.compile(r'name\s+of\s+this\s+(book|page)', re.IGNORECASE)
 
 
@@ -241,9 +245,28 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = _FILL.search(line)
+        if m:
+            _recolor(state, m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)))
+            actions.append({"kind": "setprop", "target": m.group(1), "value": m.group(0)})
+            i += 1
+            continue
+
         actions.append({"kind": "note", "text": line})
         i += 1
     return i
+
+
+def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) -> None:
+    """A clicked practice answer names its new fill. The page under an overlay still shows it."""
+    page = state.page
+    if page is None:
+        return
+    color = f"#{red & 255:02x}{green & 255:02x}{blue & 255:02x}"
+    for shape in page.shapes or []:
+        if (shape.get("name") or "").lower() == name.lower():
+            shape["fill"] = color
+    state.variables["__redraw"] = True
 
 
 def _split_if(lines: list[str], start: int, end: int) -> tuple[int, int]:
