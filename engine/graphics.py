@@ -421,19 +421,78 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
     return True
 
 
+_FONTS = {}
+_FACTOR = None
+# Liberation Sans Bold at 16px, the Arial metrics ToolBook uses.
+# "INTRODUCTION" advances 123 pixels there. A desktop face that draws
+# wider is divided back down to this, or the P400 labels break mid-word.
+_PROBE = "INTRODUCTION"
+_PROBE_PX = 123
+
+
+def _family(requested):
+    name = (requested or "").strip()
+    key = name.lower()
+    if key not in ("", "arial", "helvetica", "ms sans serif", "ms shell dlg", "tahoma"):
+        return name or "TkDefaultFont"
+    try:
+        from tkinter import font as tkfont
+        have = {item.lower() for item in tkfont.families()}
+    except Exception:
+        return name or "TkDefaultFont"
+    for face in ("Liberation Sans", "Nimbus Sans", "FreeSans", "Arial", "DejaVu Sans"):
+        if face.lower() in have:
+            return face
+    return name or "TkDefaultFont"
+
+
+def _ink_factor():
+    """How much wider the face Tk actually draws is than Arial at 16px.
+
+    One on a machine whose Arial matches the book. More than one where the
+    desktop enlarges the face, which is what splits the P400 labels.
+    """
+    global _FACTOR
+    if _FACTOR is not None:
+        return _FACTOR
+    _FACTOR = 1.0
+    try:
+        from tkinter import font as tkfont
+        got = tkfont.Font(family=_family("Arial"), size=-16, weight="bold").measure(_PROBE)
+        if got:
+            _FACTOR = got / _PROBE_PX
+        if not 0.5 <= _FACTOR <= 3:
+            _FACTOR = 1.0
+    except Exception:
+        _FACTOR = 1.0
+    return _FACTOR
+
+
 def _typeface(shape, size):
-    face = shape.get("font") or "TkDefaultFont"
+    face = _family(shape.get("font") or "")
     recorded = int(shape.get("size") or 0)
     if recorded:
         size = recorded
-    # A placed field stores pixels. A negative Tk size is pixels, so the
-    # display does not enlarge the face a second time.
+    # A placed field stores pixels. A negative Tk size is pixels. The
+    # factor puts that pixel size back onto Arial's width.
     if shape.get("px"):
-        size = -abs(int(size))
-    style = " ".join(part for part in ("bold" if shape.get("bold") else "", "italic" if shape.get("italic") else "") if part)
-    if style:
-        return (face, size, style)
-    return (face, size)
+        size = -max(1, int(round(abs(int(size)) / _ink_factor())))
+    weight = "bold" if shape.get("bold") else "normal"
+    slant = "italic" if shape.get("italic") else "roman"
+    key = (face, int(size), weight, slant)
+    found = _FONTS.get(key)
+    if found is not None:
+        return found
+    try:
+        from tkinter import font as tkfont
+        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant)
+        _FONTS[key] = found
+        return found
+    except Exception:
+        style = " ".join(part for part in ("bold" if weight == "bold" else "", "italic" if slant == "italic" else "") if part)
+        if style:
+            return (face, size, style)
+        return (face, size)
 
 
 def _text_width(shape, size, text) -> int:
@@ -442,6 +501,26 @@ def _text_width(shape, size, text) -> int:
         return tkfont.Font(font=_typeface(shape, size)).measure(text)
     except Exception:
         return int(len(text) * max(int(size), 1) * 0.55)
+
+
+def _fit_words(shape, size, width, raw):
+    """The longest word has to sit on one line. A 10-point label is only
+    as wide as the word, so a face that is a pixel too wide breaks "Output"
+    into "Out" and "put".
+    """
+    if not shape.get("px") or width <= 1:
+        return size
+    words = [word for word in raw.replace("\n", " ").split(" ") if word]
+    if not words:
+        return size
+    px = abs(int(size))
+    while px > 6:
+        trial = dict(shape)
+        trial["size"] = px
+        if max(_text_width(trial, px, word) for word in words) <= width + 1:
+            return px
+        px -= 1
+    return px
 
 
 def _fit_text(shape, x, y, w, h):
@@ -453,7 +532,7 @@ def _fit_text(shape, x, y, w, h):
     """
     raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
     recorded = int(shape.get("size") or 0)
-    size = recorded or 12
+    size = _fit_words(shape, recorded or 12, w, raw)
     pieces = raw.split("\n")
     widest = max((_text_width(shape, size, line) for line in pieces), default=0)
     if len(pieces) > 1 or widest > max(1, w):

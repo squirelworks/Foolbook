@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r15 — 2026-10-25
+
+- The type is sized from the face Tk actually draws. Where that face is wider than Arial, the pixel size is divided back down. A label that is still wider than its field drops a pixel at a time until the word fits, instead of breaking in the middle.
+
 ## 1.0.7r14 — 2026-10-25
 
 - Put the 96/72 type size back. The real viewer already matched ToolBook at every window size. r13 made it too small.
