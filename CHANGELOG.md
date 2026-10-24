@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r14 — 2026-10-25
+
+- Put the 96/72 type size back. The real viewer already matched ToolBook at every window size. r13 made it too small.
+
 ## 1.0.7r13 — 2026-10-25
 
 - The type size is the point size times the window scale, not that times 96/72. The extra factor made the type a third too big at every window size.
