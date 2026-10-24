@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r16 — 2026-10-25
+
+- A quiz letter is not coloured in before it is chosen. OK, Next, Skip and Back leave a question that was opened from the page list.
+- The nida81 equipment picture is drawn. P310 is the computer.
+
 ## 1.0.7r15 — 2026-10-25
 
 - The type is sized from the face Tk actually draws. Where that face is wider than Arial, the pixel size is divided back down. A label that is still wider than its field drops a pixel at a time until the word fits, instead of breaking in the middle.

@@ -265,6 +265,23 @@ def _choose(state, letter: str) -> int:
     return 0
 
 
+def _running(state) -> bool:
+    return int(state.variables.get("__quizCount") or 0) > 0
+
+
+def _neighbor(state, step: int):
+    """The next page in the book, when the quiz itself was never started.
+
+    Opening a question from the page list does not build the pool. OK,
+    Next, Skip and Back still have to leave the page.
+    """
+    pages = state.book.pages if state.book is not None else []
+    nxt = state.index + step
+    if 0 <= nxt < len(pages):
+        return ("goto", pages[nxt].id)
+    return 0
+
+
 def _click(state, args):
     target = args[0] if args else str(state.variables.get("target") or "")
     if target.lower() == "target":
@@ -273,14 +290,20 @@ def _click(state, args):
     if name in _CHOICES:
         return _choose(state, name)
     if name == "OK":
+        if not _running(state):
+            return _neighbor(state, 1)
         if int(state.variables.get("__quizPass") or 1) in (1, 2) and not state.variables.get("__choice"):
             return 0
         return _next(state, [])
     if name in ("SKIP", "NEXT"):
+        if not _running(state):
+            return _neighbor(state, 1)
         if name == "SKIP":
             state.variables["__choice"] = ""
         return _next(state, [])
     if name == "BACK":
+        if not _running(state):
+            return _neighbor(state, -1)
         return _previous(state, [])
     if name == "HELP":
         page = state.page

@@ -137,6 +137,17 @@ class ButtonScripts(unittest.TestCase):
         self.assertEqual(moved[0], "goto")
         self.assertNotEqual(moved[1], landed[1])
 
+    def test_a_list_opened_question_still_leaves_the_page(self):
+        from engine.quiz import call
+        pages = [Page(id="P10213"), Page(id="P10214"), Page(id="P10215")]
+        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=pages), index=1)
+        self.assertEqual(call(state, "handleQuizClick", "OK"), ("goto", "P10215"))
+        self.assertEqual(call(state, "handleQuizClick", "Back"), ("goto", "P10213"))
+        state.variables["__quizCount"] = 10
+        state.variables["__quizPass"] = 1
+        state.variables["__choice"] = ""
+        self.assertEqual(call(state, "handleQuizClick", "OK"), 0)
+
     def test_the_end_page_shows_the_percent_and_review_is_a_choice(self):
         from engine.engine import run_handler, follow
         from engine.quiz import finish
