@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r37
+
+- Text is drawn in the face, point size, and weight stored on the field. The P400 body is Arial 12 bold. A style run can name a different entry, which is why the copyright line is 8 point.
+- A text field named `correct` stays on the page. That is the answer on the practice questions. The Correct rectangle, which is the answer key, stays hidden.
+
 ## 1.0.5r36
 
 - The right inset is the paragraph's right indent, not the left one. The tab spacing stays out of the picture. A field with no style runs is drawn in the face the record names. For the P400 body that face is Arial. Bold and 12-point are still not read.

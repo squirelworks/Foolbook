@@ -110,7 +110,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 ty,
                 text=text,
                 anchor=anchor,
-                font=(face, size),
+                font=_typeface(shape, size),
                 fill=ink,
                 **text_kwargs,
             )
@@ -199,6 +199,17 @@ def _pale(color: str) -> bool:
     return (red + green + blue) / 3 >= 220
 
 
+def _typeface(shape, size):
+    face = shape.get("font") or "TkDefaultFont"
+    recorded = int(shape.get("size") or 0)
+    if recorded:
+        size = recorded
+    style = " ".join(part for part in ("bold" if shape.get("bold") else "", "italic" if shape.get("italic") else "") if part)
+    if style:
+        return (face, size, style)
+    return (face, size)
+
+
 def _fit_text(shape, x, y, w, h):
     """Keep a line inside its box. A tall field wraps. A label does not.
 
@@ -210,16 +221,18 @@ def _fit_text(shape, x, y, w, h):
     words = [line for line in lines if line.strip()]
     longest = max((len(line.strip()) for line in words), default=1)
     amount = sum(len(line.strip()) for line in words)
+    recorded = int(shape.get("size") or 0)
     wrap = w if w > 80 and h > 48 and amount > 40 else 0
     if wrap:
-        size = 15
-        while size > 8 and _wrapped_rows(raw, w, size) * size * 1.25 > h:
-            size -= 1
+        size = recorded or 15
+        if not recorded:
+            while size > 8 and _wrapped_rows(raw, w, size) * size * 1.25 > h:
+                size -= 1
         return raw, size, w, "nw", x, y
     count = max(1, len(words))
     by_height = ((h - 2) / count / 1.3) if h else 12
     by_width = ((w - 4) / longest / 0.62) if w else 12
-    size = int(max(7, min(20, by_height, by_width)))
+    size = recorded or int(max(7, min(20, by_height, by_width)))
     align = int(shape.get("align") or 0)
     if align == 2:
         return raw, size, 0, "center", x + w / 2, y + h / 2

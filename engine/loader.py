@@ -273,6 +273,9 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "h": max(1, y1 - y0),
         "text": (obj.get("text") or "").replace("\r\n", "\n").replace("\r", "\n"),
         "font": obj.get("font") or "",
+        "size": int(obj["size"]) if obj.get("size") else 0,
+        "bold": bool(obj.get("bold")),
+        "italic": bool(obj.get("italic")),
         "fill": obj.get("fill") or "",
         "outline": obj.get("outline") or "",
         "script": obj.get("script") or "",
@@ -280,8 +283,9 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "align": int(obj.get("align") or 0),
         "border": int(obj["border"]) if obj.get("border") is not None else 1,
         "direct": bool(obj.get("direct")),
-        # The Correct rectangle is the answer key. Reader level hides it.
-        "visible": (obj.get("name") or "").lower() != "correct",
+        # The Correct rectangle is the answer key, so Reader level hides it.
+        # A text field of that name is the choice the lesson asks for.
+        "visible": not ((obj.get("name") or "").lower() == "correct" and obj.get("kind") != "text"),
         "layer": obj.get("layer") or "page",
     }
     if obj.get("marginL"):
@@ -461,7 +465,7 @@ def _place_widgets(records: list) -> list:
             "bold": kind == "text",
             "fill": "" if kind == "button" else (src.get("fill") or ""),
             "outline": "black" if kind == "button" else (src.get("outline") or ""),
-            "visible": name.lower() != "correct",
+            "visible": not (name.lower() == "correct" and kind != "text"),
             "script": script,
         }
         item = _item_from_script(name, script)
