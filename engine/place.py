@@ -67,7 +67,7 @@ def fit_view(box, width: int, height: int, margin: int = 12):
     ph = max(1, y1 - y0)
     avail_w = max(1, width - 2 * margin)
     avail_h = max(1, height - 2 * margin)
-    scale = min(avail_w / pw, avail_h / ph)
+    scale = min(avail_w / pw, avail_h / ph, 1.0)
     ox = (width - pw * scale) / 2
     oy = (height - ph * scale) / 2
     return scale, ox - x0, oy - y0, ox, oy
@@ -145,11 +145,11 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             item["ends"] = [
                 [mx(pt[0]), my(pt[1])] for pt in shape["ends"] if len(pt) >= 2
             ]
-        # The box was scaled in pixels. A point size would be scaled again by
-        # the display, so the words came out bigger than the field. The size
-        # stored here is pixels, at the 96 dpi the page was measured in.
+        # The number in the book is the pixel height ToolBook draws. Multiplying
+        # by 96/72 turned a 12-point word into a 16-pixel word, and the window
+        # scale turned that into a 24-point word. The box and the face use one scale.
         if shape.get("size"):
-            item["size"] = max(1, int(round(float(shape["size"]) * scale * 96 / 72)))
+            item["size"] = max(1, int(round(float(shape["size"]) * scale)))
             item["px"] = True
         for key in ("marginL", "marginR", "indentRest"):
             if shape.get(key):

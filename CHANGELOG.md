@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r3 — 2026-10-25
+
+- A 12-point word is 12 pixels. The last change still drew it at 24-point size, and a large window stretched the page. The page now stays the size ToolBook uses.
+
 ## 1.0.7r2 — 2026-10-25
 
 - A practice answer named `correct` stays on the page. Clicking it uses the fill the script names, then opens the CORRECT! page.

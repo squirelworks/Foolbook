@@ -43,10 +43,14 @@ class FitTests(unittest.TestCase):
 
     def test_a_corner_drawing_is_moved_onto_the_window(self):
         scale, dx, dy, ox, oy = fit_view((800, 600, 900, 700), 400, 300)
-        self.assertAlmostEqual(scale, 276 / 100)
-        self.assertAlmostEqual(ox, (400 - 100 * scale) / 2)
+        self.assertAlmostEqual(scale, 1)
+        self.assertAlmostEqual(ox, (400 - 100) / 2)
         self.assertAlmostEqual(dx, ox - 800)
         self.assertAlmostEqual(dy, oy - 600)
+
+    def test_a_large_window_does_not_enlarge_the_page(self):
+        scale, _dx, _dy, _ox, _oy = fit_view((0, 0, 624, 442), 1600, 1000)
+        self.assertEqual(scale, 1)
 
 
 class WindowTests(unittest.TestCase):
@@ -66,7 +70,7 @@ class WindowTests(unittest.TestCase):
         shapes = [{"kind": "text", "x": 0, "y": 0, "w": 100, "h": 40, "size": 12, "marginL": 24, "text": "Hello"}]
         placed = place_window(shapes, 2, 0, 0, 0, 0)
         self.assertEqual(placed[0]["w"], 200)
-        self.assertEqual(placed[0]["size"], 32)
+        self.assertEqual(placed[0]["size"], 24)
         self.assertTrue(placed[0]["px"])
         self.assertEqual(placed[0]["marginL"], 48)
 
