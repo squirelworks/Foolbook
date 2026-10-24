@@ -99,6 +99,10 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             if rest is not None and int(rest) != pad_l:
                 _hanging(canvas, shape, x, y, w, h, pad_l, int(rest), pad_r, fill, outline)
                 continue
+            if shape.get("runs") and _paint_runs(
+                canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
+            ):
+                continue
             text, size, wrap, anchor, tx, ty = _fit_text(
                 shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8)
             )
@@ -221,6 +225,58 @@ def _hanging(canvas, shape, x, y, w, h, first, rest, right, fill, outline):
     for index, line in enumerate(lines):
         inset = first if index == 0 else rest
         canvas.create_text(x + inset, y + 4 + index * pitch, text=line, anchor="nw", font=face, fill=ink)
+
+
+def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
+    """A short run keeps its own face. The rest of the line uses the field.
+
+    P900's "* Lesson Exit" is MS Shell Dlg 8 for the star and Arial 12 for
+    the words. One face for the whole field made the words 8 point.
+    """
+    raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
+    if not raw or "\n" in raw:
+        return False
+    try:
+        from tkinter import font as tkfont
+    except Exception:
+        return False
+    size = int(shape.get("size") or 12)
+    ink = outline or "black"
+    if fill and _pale(ink) and _pale(fill):
+        ink = "#202020"
+    pieces = []
+    cursor = 0
+    for run in sorted(shape.get("runs") or [], key=lambda item: int(item.get("start") or 0)):
+        start = max(0, int(run.get("start") or 0))
+        end = min(len(raw), int(run.get("end") or 0))
+        if end <= start or start < cursor:
+            continue
+        if start > cursor:
+            pieces.append((raw[cursor:start], None))
+        pieces.append((raw[start:end], run))
+        cursor = end
+    if cursor < len(raw):
+        pieces.append((raw[cursor:], None))
+    if not any(run for _text, run in pieces):
+        return False
+    at = x
+    for text, run in pieces:
+        if not text:
+            continue
+        span = dict(shape)
+        span_size = size
+        if run:
+            span["font"] = run.get("font") or shape.get("font")
+            span_size = int(run.get("size") or size)
+            span["size"] = span_size
+            span["bold"] = bool(run.get("bold"))
+            span["italic"] = bool(run.get("italic"))
+        face = _typeface(span, span_size)
+        canvas.create_text(at, y + max(0, size - span_size), text=text, anchor="nw", font=face, fill=ink)
+        at += tkfont.Font(font=face).measure(text)
+        if at > x + w:
+            break
+    return True
 
 
 def _typeface(shape, size):

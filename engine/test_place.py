@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import content_box, fit_view, place_page, place_window
+from engine.place import content_box, fit_view, in_front, place_page, place_window
 
 
 class PlaceTests(unittest.TestCase):
@@ -69,6 +69,12 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(placed[0]["size"], 24)
         self.assertTrue(placed[0]["px"])
         self.assertEqual(placed[0]["marginL"], 48)
+
+    def test_a_frame_does_not_cover_the_button_inside_it(self):
+        frame = {"kind": "image", "name": "MenuFrame", "x": 20, "y": 10, "w": 400, "h": 300}
+        button = {"kind": "image", "name": "selection1", "x": 100, "y": 70, "w": 200, "h": 30}
+        ordered = in_front([button, frame])
+        self.assertIs(ordered[-1], button)
 
 
 

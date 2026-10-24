@@ -152,6 +152,14 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             recorded = float(shape.get("size") or 12)
             item["size"] = max(1, int(round(recorded * scale)))
             item["px"] = True
+        if shape.get("runs"):
+            item["runs"] = [
+                {
+                    **run,
+                    "size": max(1, int(round(float(run.get("size") or shape.get("size") or 12) * scale))),
+                }
+                for run in shape["runs"]
+            ]
         for key in ("marginL", "marginR", "indentRest"):
             if shape.get(key):
                 item[key] = int(round(float(shape[key]) * scale))

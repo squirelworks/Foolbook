@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r5 — 2026-10-25
+
+- A click lands on the object under the pointer. An empty part of P300, P400, P450 or P900 stays there. P0 and P1 still go on, because that is their own script.
+- "* Lesson Exit" is Arial 12. Only the star is the 8-point face.
+
 ## 1.0.7r4 — 2026-10-25
 
 - The page fills the window again.

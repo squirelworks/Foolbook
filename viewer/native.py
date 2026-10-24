@@ -270,7 +270,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return None
         x = (event.x - view["ox"]) / view["scale"] + view["x0"]
         y = (event.y - view["oy"]) / view["scale"] + view["y0"]
-        for obj in reversed(page.raw.get("objects") or []):
+        from engine.place import in_front
+        for obj in reversed(in_front(_objects(page))):
             if obj.get("visible") is False:
                 continue
             kind = obj.get("kind")
