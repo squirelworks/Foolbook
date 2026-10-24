@@ -1,13 +1,13 @@
 [project]
 name = "foolbook"
-version = "1.0.5r32"
+version = "1.0.5r33"
 description = "Clean-room reader for ToolBook books"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cryptography",
     "pillow",
-    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@v1.0.0r23",
+    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@v1.0.0r24",
 ]
 
 [project.urls]

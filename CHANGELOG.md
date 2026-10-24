@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r33
+
+- A shape keeps the layer it was stored on. Background objects are `background`. Page objects are `page`.
+
 ## 1.0.5r32
 
 - A click on P0 or P1 reaches `send next`. Choosing the page in the list no longer puts it back.

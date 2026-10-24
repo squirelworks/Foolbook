@@ -281,6 +281,7 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "direct": bool(obj.get("direct")),
         # The Correct rectangle is the answer key. Reader level hides it.
         "visible": (obj.get("name") or "").lower() != "correct",
+        "layer": obj.get("layer") or "page",
     }
     points = obj.get("points") or []
     if obj.get("kind") == "arc" and obj.get("ends"):
