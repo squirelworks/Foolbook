@@ -156,6 +156,40 @@ def _prepare(state, page_id: str, index: int) -> None:
         label["text"] = f"Question {index}."
 
 
+def _percent(state) -> int:
+    scores = state.variables.get("__quizScore") or {}
+    count = int(state.variables.get("__quizCount") or 0) or len(scores)
+    total = sum(int(value) for value in scores.values())
+    return round(total / count) if count else 0
+
+
+def _stamp(page, percent: int) -> None:
+    if page is None:
+        return
+    for shape in page.shapes or []:
+        text = shape.get("text")
+        if isinstance(text, str) and "XX" in text:
+            shape["text"] = text.replace("XX", str(percent))
+
+
+def finish(state):
+    """The end page. OK shows the percent, then review or the menu.
+
+    A is "review the test?" and B is "exit?". The score is the mean of the
+    questions already marked, each of which is 100 or 0.
+    """
+    percent = _percent(state)
+    _stamp(state.page, percent)
+    state.variables["__redraw"] = True
+    choice = str(state.variables.get("__choice") or "").upper()
+    pages = state.variables.get("__quizPages") or {}
+    if choice == "A":
+        return ("goto", pages.get(2) or "P10302")
+    if choice == "B":
+        return ("goto", "P900")
+    return 0
+
+
 def _score(state) -> None:
     page = state.page
     if page is None:
@@ -175,6 +209,9 @@ def _next(state, _args):
     pages = state.variables.get("__quizPages") or {}
     end = pages.get(3) or pages.get("3") or ""
     if index >= count:
+        if end:
+            destination = next((item for item in state.book.pages if item.id == end), None)
+            _stamp(destination, _percent(state))
         return ("goto", end) if end else 0
     index += 1
     state.variables["__quizIndex"] = index

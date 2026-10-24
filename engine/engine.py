@@ -326,6 +326,13 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
+    is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
+    if is_at:
+        left = _eval(expr[:is_at.start()], state)
+        named = re.search(r'"([^"]+)"', expr[is_at.end():])
+        if named:
+            return str(left).strip().lower() == named.group(1).lower()
+        return False
     # comparisons, longest operator first
     padded = f" {expr} "
     for op in (" <> ", " != ", " <= ", " >= ", " < ", " > ", " = "):
@@ -535,6 +542,12 @@ def follow(state: RuntimeState, actions: list[dict]) -> bool:
                 return True
         if act.get("kind") == "send":
             name = (act.get("name") or "").lower()
+            if name.lower() == "okclicked":
+                from engine.quiz import finish
+                result = finish(state)
+                if isinstance(result, tuple) and result and result[0] == "goto" and result[1]:
+                    return goto(state, result[1])
+                return False
             if name == "next":
                 if _follow_label(state, "next"):
                     return True

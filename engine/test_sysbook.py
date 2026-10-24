@@ -134,6 +134,25 @@ class ButtonScripts(unittest.TestCase):
         self.assertEqual(moved[0], "goto")
         self.assertNotEqual(moved[1], landed[1])
 
+    def test_the_end_page_shows_the_percent_and_review_is_a_choice(self):
+        from engine.engine import run_handler, follow
+        end = Page(id="P10303", shapes=[{"name": "Stem", "kind": "text", "text": "score is XX%"}])
+        review = Page(id="P10302")
+        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=[end, review, Page(id="P900")]))
+        state.variables["__quizScore"] = {1: 100, 2: 0}
+        state.variables["__quizCount"] = 2
+        state.variables["__quizPages"] = {2: "P10302"}
+        script = 'if  target is button "OK" of parent of this page  then\n\tsend okClicked to this page\nend if'
+        state.variables["target"] = "A"
+        self.assertEqual(run_handler(state, script), [])
+        state.variables["target"] = "OK"
+        state.variables["__choice"] = "A"
+        actions = run_handler(state, script)
+        self.assertEqual(actions[0]["name"], "okClicked")
+        self.assertTrue(follow(state, actions))
+        self.assertEqual(state.page.id, "P10302")
+        self.assertIn("50", end.shapes[0]["text"])
+
 
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):

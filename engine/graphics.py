@@ -228,6 +228,10 @@ def _typeface(shape, size):
     recorded = int(shape.get("size") or 0)
     if recorded:
         size = recorded
+    # A placed field stores pixels. A negative Tk size is pixels, so the
+    # display does not enlarge the face a second time.
+    if shape.get("px"):
+        size = -abs(int(size))
     style = " ".join(part for part in ("bold" if shape.get("bold") else "", "italic" if shape.get("italic") else "") if part)
     if style:
         return (face, size, style)

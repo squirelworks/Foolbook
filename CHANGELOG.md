@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r1 — 2026-10-25
+
+- The face is sized in pixels, so it stays inside the field instead of growing past it.
+- A quiz choice marks the letter that was clicked. OK moves to the next question. At the end, the percent replaces XX. A then OK opens the review, and B then OK returns to the menu.
+
 ## 1.0.7 — 2026-10-25
 
 1.0.6 cleared the 1.0.5 revisions. This stays the version. A small change after it is `1.0.7r1`, then `r2`, and so on. A new version number waits for a real step.

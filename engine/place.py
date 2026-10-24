@@ -145,10 +145,12 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             item["ends"] = [
                 [mx(pt[0]), my(pt[1])] for pt in shape["ends"] if len(pt) >= 2
             ]
-        # The box was scaled. The face has to be scaled with it, or the
-        # words stay at the page's point size inside a box that moved.
+        # The box was scaled in pixels. A point size would be scaled again by
+        # the display, so the words came out bigger than the field. The size
+        # stored here is pixels, at the 96 dpi the page was measured in.
         if shape.get("size"):
-            item["size"] = max(1, int(round(float(shape["size"]) * scale)))
+            item["size"] = max(1, int(round(float(shape["size"]) * scale * 96 / 72)))
+            item["px"] = True
         for key in ("marginL", "marginR", "indentRest"):
             if shape.get(key):
                 item[key] = int(round(float(shape[key]) * scale))

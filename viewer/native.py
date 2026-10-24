@@ -149,7 +149,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         stored = list((page.raw or {}).get("objects") or [])
         if stored:
             return stored
-        objects = [dict(shape) for shape in extract(page)]
+        objects = list(extract(page))
         objects = [shape for shape in objects if not _corner_stub(shape, objects)]
         y = bottom(objects) + 16
         named = {(shape.get("name") or "").lower() for shape in objects}
@@ -293,6 +293,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         obj = _hit(event)
         state.variables["target"] = (obj or {}).get("name") or "page"
+        # A letter is the choice. The page script reads it when OK is clicked.
+        picked = ((obj or {}).get("name") or "").upper()
+        if picked in ("A", "B", "C", "D", "E"):
+            from engine.quiz import call
+            call(state, "handleQuizClick", f'"{picked}"')
         script = click_script(obj)
         moved = False
         if script:
