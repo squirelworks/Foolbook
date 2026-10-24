@@ -438,6 +438,11 @@ def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
         return _NOT_A_CALL
+    from engine.menu import call as menu_call
+    from engine.menu import _UNKNOWN as menu_unknown
+    hit = menu_call(state, match.group(1), match.group(2))
+    if hit is not menu_unknown:
+        return hit
     from engine.quiz import call
     return call(state, match.group(1), match.group(2))
 
@@ -553,17 +558,30 @@ def _builtin_page(state: RuntimeState, call: str) -> str | None:
     return None
 
 
-def goto(state: RuntimeState, page_id: str) -> bool:
+def leave_page(state: RuntimeState) -> None:
+    """The page being left. P1910 and P2910 set the menu flag here."""
+    if state.page is None:
+        return
+    run_page_handlers(state, "leavepage")
+
+
+def goto(state: RuntimeState, page_id: str, leave: bool = True) -> bool:
     idx = state.book.index_of(page_id)
     if idx < 0:
         # case-insensitive fallback; real books mix P1292 and p1292
         for i, p in enumerate(state.book.pages):
             if p.id.lower() == page_id.lower():
-                state.index = i
+                if leave and i != state.index:
+                    leave_page(state)
+                    state.index = i
+                elif i != state.index:
+                    state.index = i
                 state.note(f"goto {p.id}")
                 return True
         state.note(f"missing page {page_id}")
         return False
+    if leave and idx != state.index:
+        leave_page(state)
     state.index = idx
     state.note(f"goto {page_id}")
     return True
@@ -627,13 +645,15 @@ def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
             state.note(f"missing book {book_name}")
             return False
         book = load(found)
+    if state.page is not None:
+        leave_page(state)
     state.book = book
     state.index = state.where.get(id(book), 0)
     state.note(f"open {Path(book.path).name}")
     if fresh:
         enter_book(state)
     if page_id:
-        ok = goto(state, page_id)
+        ok = goto(state, page_id, leave=False)
         _remember(state)
         return ok
     _remember(state)
@@ -729,9 +749,11 @@ def press(state: RuntimeState, label: str = "", target: str = "") -> bool:
         return (id(state.book), state.index) != start
     low = (label or "").lower()
     if low == "next" and state.index + 1 < len(state.book.pages):
+        leave_page(state)
         state.index += 1
         return True
     if low in ("back", "previous") and state.index > 0:
+        leave_page(state)
         state.index -= 1
         return True
     return False

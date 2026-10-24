@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r10 — 2026-10-25
+
+- The menu labels change colour after the section is left. Flag 1 is P1910, flag 2 is P2910, and flag 10 is a quiz at 70 or better. The colour is hue 270, which is light purple. Exit stays black. The flags last for the session only.
+
 ## 1.0.7r9 — 2026-10-25
 
 - The yellow letters on P1040 are painted on the same word, so they no longer open a gap or push "family" down a line. The P2170 table uses its 10-point run instead of the field's 12.

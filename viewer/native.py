@@ -13,7 +13,7 @@ from pathlib import Path
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view, page_box, place_window
-from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler, run_page_handlers, click_script
+from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -138,7 +138,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         painting["on"] = True
         try:
-            state.index = max(0, min(i, len(state.book.pages) - 1))
+            nxt = max(0, min(i, len(state.book.pages) - 1))
+            if nxt != state.index:
+                leave_page(state)
+            state.index = nxt
             enter_page(state)
         finally:
             painting["on"] = False

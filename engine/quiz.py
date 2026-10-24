@@ -181,6 +181,16 @@ def finish(state):
     percent = _percent(state)
     _stamp(state.page, percent)
     state.variables["__redraw"] = True
+    # saveQuizResults marks the menu when the score reaches the pass mark.
+    # The guest has no INI override, so the mark is 70.
+    mark = state.variables.get("__quizObjectiveLevel", 70)
+    try:
+        mark = int(mark)
+    except (TypeError, ValueError):
+        mark = 70
+    if percent >= mark:
+        from engine.menu import set_flag
+        set_flag(state, 10)
     choice = str(state.variables.get("__choice") or "").upper()
     if choice == "A":
         state.variables["__quizPass"] = 4

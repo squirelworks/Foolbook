@@ -154,10 +154,12 @@ class ButtonScripts(unittest.TestCase):
         state.variables["__choice"] = "B"
         self.assertTrue(follow(state, run_handler(state, script)))
         self.assertEqual(state.page.id, "P10410")
+        self.assertEqual((state.variables.get("__menuFlags") or [1] * 10)[9], 1)
         state.index = 0
         state.variables["__quizScore"] = {1: 100, 2: 100}
         state.variables["__choice"] = "B"
         self.assertEqual(finish(state)[1], "P900")
+        self.assertEqual(state.variables["__menuFlags"][9], 2)
         state.variables["__choice"] = "A"
         state.variables["__pools"] = [(110, 110, 1)]
         landed = finish(state)
@@ -192,6 +194,26 @@ end'''
         self.assertEqual(page.shapes[0]["fill"], "#ffff3f")
         self.assertTrue(follow(state, actions))
         self.assertEqual(state.page.id, "P1311")
+
+    def test_leaving_the_section_recolours_the_menu_label(self):
+        from foolbook.model import Handler
+        from engine.engine import enter_page, goto
+        labels = [
+            {"name": "Selection 1", "kind": "text", "text": "1. TTL", "outline": "#000000"},
+            {"name": "Selection 2", "kind": "text", "text": "2. Other", "outline": "#000000"},
+            {"name": "Selection T", "kind": "text", "text": "3. Final Quiz", "outline": "#000000"},
+            {"name": "Exit", "kind": "text", "text": "* Lesson Exit", "outline": "#000000"},
+        ]
+        menu = Page(id="P900", handlers=[Handler(name="enterPage", source="get setupMenuPageLocal()")], shapes=labels)
+        end = Page(id="P1910", handlers=[Handler(name="leavePage", source="get SetMenuFlag(1)")])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[menu, end]), index=1)
+        self.assertTrue(goto(state, "P900"))
+        enter_page(state)
+        ink = {shape["name"]: shape["outline"] for shape in state.page.shapes}
+        self.assertEqual(ink["Selection 1"], "#bf80ff")
+        self.assertEqual(ink["Selection 2"], "#000000")
+        self.assertEqual(ink["Selection T"], "#000000")
+        self.assertEqual(ink["Exit"], "#000000")
 
 
 class FaceTests(unittest.TestCase):
