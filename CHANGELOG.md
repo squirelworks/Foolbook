@@ -2,6 +2,8 @@
 
 ## 1.0.7 — 2026-10-25
 
+1.0.6 cleared the 1.0.5 revisions. This stays the version. A small change after it is `1.0.7r1`, then `r2`, and so on. A new version number waits for a real step.
+
 - A book opened from the command line starts on the first page.
 - A click on P0 or P1 runs the page's `send next`. The window was calling that handler without importing it, so the click did nothing.
 - The type size and the indents scale with the window. A line that is wider than its box wraps. A short label that fits stays one line.
