@@ -70,6 +70,16 @@ class WindowTests(unittest.TestCase):
         self.assertTrue(placed[0]["px"])
         self.assertEqual(placed[0]["marginL"], 48)
 
+    def test_a_colour_run_does_not_grow_a_size(self):
+        shapes = [{
+            "kind": "text", "x": 0, "y": 0, "w": 100, "h": 40, "size": 12, "text": "TTL",
+            "runs": [{"start": 0, "end": 3, "color": "#ffff00"}, {"start": 0, "end": 3, "font": "Arial", "size": 10, "bold": True}],
+        }]
+        placed = place_window(shapes, 1, 0, 0, 0, 0)
+        runs = placed[0]["runs"]
+        self.assertNotIn("size", runs[0])
+        self.assertEqual(runs[1]["size"], 13)
+
     def test_a_frame_does_not_cover_the_button_inside_it(self):
         frame = {"kind": "image", "name": "MenuFrame", "x": 20, "y": 10, "w": 400, "h": 300}
         button = {"kind": "image", "name": "selection1", "x": 100, "y": 70, "w": 200, "h": 30}

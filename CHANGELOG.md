@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r9 — 2026-10-25
+
+- The yellow letters on P1040 are painted on the same word, so they no longer open a gap or push "family" down a line. The P2170 table uses its 10-point run instead of the field's 12.
+
 ## 1.0.7r8 — 2026-10-25
 
 - The highlighted letters on P1040 are drawn in the colour the run stores, which is yellow. The 16-colour guest is what made them look cyan.

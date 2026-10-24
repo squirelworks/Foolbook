@@ -233,10 +233,12 @@ def _hanging(canvas, shape, x, y, w, h, first, rest, right, fill, outline):
 
 
 def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
-    """Words keep the field colour. A run can paint some of them another one.
+    """A run can change the colour or the size. The line stays one string.
 
-    On P1040 the letters T, T, L and the word TTL are yellow. A return is
-    one character here, which is how those runs are counted.
+    On P1040 the letters T, T, L and TTL are yellow, in the field's own
+    face. Drawing each colour as its own word opened a gap and pushed
+    "family" onto the next line. On P2170 the table is a 10-point run on
+    a 12-point field, so the field size is not the size of those words.
     """
     raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
     if not raw:
@@ -245,42 +247,85 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
         from tkinter import font as tkfont
     except Exception:
         return
-    size = int(shape.get("size") or 12)
-    face = _typeface(shape, size)
-    measure = tkfont.Font(font=face).measure
+    field_size = int(shape.get("size") or 12)
     ink = outline or "black"
     if fill and _pale(ink) and _pale(fill):
         ink = "#202020"
-    runs = [run for run in (shape.get("runs") or []) if run.get("color")]
-    pitch = max(size, round(size * 1.2))
+    runs = shape.get("runs") or []
     width = max(8, w)
-    top = y
+    pitch = max(field_size, round(field_size * 1.2))
 
-    def colour(index):
+    def style_at(index):
+        font = shape.get("font") or "TkDefaultFont"
+        size = field_size
+        bold = bool(shape.get("bold"))
+        italic = bool(shape.get("italic"))
+        color = ink
         for run in runs:
-            if int(run.get("start") or 0) <= index < int(run.get("end") or 0):
-                return run["color"]
-        return ink
+            if not (int(run.get("start") or 0) <= index < int(run.get("end") or 0)):
+                continue
+            if run.get("font"):
+                font = run["font"]
+                size = int(run.get("size") or size)
+                bold = bool(run.get("bold"))
+                italic = bool(run.get("italic"))
+            if run.get("color"):
+                color = run["color"]
+        return font, size, bold, italic, color
+
+    def face_of(font, size, bold, italic):
+        return _typeface(
+            {"font": font, "size": size, "bold": bold, "italic": italic, "px": shape.get("px")},
+            size,
+        )
+
+    def piece_width(text, start):
+        total = 0
+        i = 0
+        while i < len(text):
+            font, size, bold, italic, _color = style_at(start + i)
+            j = i + 1
+            while j < len(text) and style_at(start + j)[:4] == (font, size, bold, italic):
+                j += 1
+            total += tkfont.Font(font=face_of(font, size, bold, italic)).measure(text[i:j])
+            i = j
+        return total
 
     def draw(text, start, left, top):
-        at = left
-        piece = ""
-        paint = None
-        for offset, char in enumerate(text):
-            here = colour(start + offset)
-            if paint is None:
-                paint = here
-            if here != paint:
-                canvas.create_text(at, top, text=piece, anchor="nw", font=face, fill=paint)
-                at += measure(piece)
-                piece = char
-                paint = here
-            else:
-                piece += char
-        if piece:
-            canvas.create_text(at, top, text=piece, anchor="nw", font=face, fill=paint)
+        pen = left
+        i = 0
+        while i < len(text):
+            font, size, bold, italic, _color = style_at(start + i)
+            j = i + 1
+            while j < len(text) and style_at(start + j)[:4] == (font, size, bold, italic):
+                j += 1
+            piece = text[i:j]
+            face = face_of(font, size, bold, italic)
+            measure = tkfont.Font(font=face).measure
+            canvas.create_text(
+                pen, top + max(0, field_size - size), text=piece, anchor="nw", font=face, fill=ink
+            )
+            k = 0
+            while k < len(piece):
+                paint = style_at(start + i + k)[4]
+                n = k + 1
+                while n < len(piece) and style_at(start + i + n)[4] == paint:
+                    n += 1
+                if paint != ink:
+                    canvas.create_text(
+                        pen + measure(piece[:k]),
+                        top + max(0, field_size - size),
+                        text=piece[k:n],
+                        anchor="nw",
+                        font=face,
+                        fill=paint,
+                    )
+                k = n
+            pen += measure(piece)
+            i = j
 
     cursor = 0
+    top = y
     for para in raw.split("\n"):
         if not para.strip():
             top += pitch
@@ -292,7 +337,6 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
         taken = 0
         for word in words:
             if not word:
-                # "of  integrated" splits into an empty word. That space stays.
                 if not line:
                     line_at = cursor + taken
                 line += " "
@@ -302,7 +346,8 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
             while taken + gap < len(para) and para[taken + gap] == " ":
                 gap += 1
             trial = f"{line}{' ' * gap}{word}" if line else word
-            if line and measure(trial) > width:
+            trial_at = line_at if line else cursor + taken + gap
+            if line and piece_width(trial, trial_at) > width:
                 draw(line, line_at, x, top)
                 top += pitch
                 line = word

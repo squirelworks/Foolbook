@@ -153,13 +153,15 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             item["size"] = max(1, int(round(recorded * scale * 96 / 72)))
             item["px"] = True
         if shape.get("runs"):
-            item["runs"] = [
-                {
-                    **run,
-                    "size": max(1, int(round(float(run.get("size") or shape.get("size") or 12) * scale * 96 / 72))),
-                }
-                for run in shape["runs"]
-            ]
+            scaled = []
+            for run in shape["runs"]:
+                item_run = dict(run)
+                # A colour run has no size of its own. Inventing one hid the
+                # 10-point runs on the P2170 table.
+                if run.get("size"):
+                    item_run["size"] = max(1, int(round(float(run["size"]) * scale * 96 / 72)))
+                scaled.append(item_run)
+            item["runs"] = scaled
         for key in ("marginL", "marginR", "indentRest"):
             if shape.get(key):
                 item[key] = int(round(float(shape[key]) * scale))
