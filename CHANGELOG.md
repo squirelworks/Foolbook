@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r38
+
+- The P1 title starts at the left of its box. Its first-line indent is 0. The 650 on the next word is only the line under it. Body text is unchanged, because those two words are both 360.
+
 ## 1.0.5r37
 
 - Text is drawn in the face, point size, and weight stored on the field. The P400 body is Arial 12 bold. A style run can name a different entry, which is why the copyright line is 8 point.

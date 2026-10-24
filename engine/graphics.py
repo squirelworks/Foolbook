@@ -94,7 +94,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             x, y, w, h = _box(shape)
             _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
             pad_l = int(shape["marginL"]) if shape.get("marginL") is not None else 0
-            pad_r = int(shape["marginR"]) if shape.get("marginR") is not None else pad_l
+            pad_r = int(shape["marginR"]) if shape.get("marginR") is not None else 0
+            rest = shape.get("indentRest")
+            if rest is not None and int(rest) != pad_l:
+                _hanging(canvas, shape, x, y, w, h, pad_l, int(rest), pad_r, fill, outline)
+                continue
             text, size, wrap, anchor, tx, ty = _fit_text(
                 shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8)
             )
@@ -197,6 +201,46 @@ def _pale(color: str) -> bool:
     green = int(color[3:5], 16)
     blue = int(color[5:7], 16)
     return (red + green + blue) / 3 >= 220
+
+
+def _hanging(canvas, shape, x, y, w, h, first, rest, right, fill, outline):
+    """First line and the lines under it use different left indents.
+
+    One field in this book does that: the P1 title, first line 0 and the
+    line under it 650. A single text item cannot say both.
+    """
+    raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
+    size = int(shape.get("size") or 12)
+    face = _typeface(shape, size)
+    ink = outline or "black"
+    if fill and _pale(ink) and _pale(fill):
+        ink = "#202020"
+    pitch = int(size * 1.25) or size
+    try:
+        from tkinter import font as tkfont
+        measure = tkfont.Font(font=face).measure
+    except Exception:
+        measure = lambda words: int(len(words) * size * 0.55)
+    lines = []
+    for para in raw.split("\n"):
+        if not para.strip():
+            lines.append("")
+            continue
+        width = max(8, w - (first if not lines else rest) - right)
+        line = ""
+        for word in para.split(" "):
+            trial = f"{line} {word}".strip()
+            if line and measure(trial) > width:
+                lines.append(line)
+                line = word
+                width = max(8, w - rest - right)
+            else:
+                line = trial
+        if line:
+            lines.append(line)
+    for index, line in enumerate(lines):
+        inset = first if index == 0 else rest
+        canvas.create_text(x + inset, y + 4 + index * pitch, text=line, anchor="nw", font=face, fill=ink)
 
 
 def _typeface(shape, size):

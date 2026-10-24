@@ -290,6 +290,8 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
     }
     if obj.get("marginL"):
         shape["marginL"] = to_pixel(int(obj["marginL"]))
+    if obj.get("indentRest"):
+        shape["indentRest"] = to_pixel(int(obj["indentRest"]))
     if obj.get("marginR"):
         shape["marginR"] = to_pixel(int(obj["marginR"]))
     points = obj.get("points") or []
