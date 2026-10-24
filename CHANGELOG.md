@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r11 — 2026-10-25
+
+- A coloured letter is measured with the rest of its word, so it no longer sits on the next letter. The P2170 rows use the 10-point run, including the first letter of the header.
+
 ## 1.0.7r10 — 2026-10-25
 
 - The menu labels change colour after the section is left. Flag 1 is P1910, flag 2 is P2910, and flag 10 is a quiz at 70 or better. The colour is hue 270, which is light purple. Exit stays black. The flags last for the session only.

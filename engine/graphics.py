@@ -280,6 +280,12 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
         )
 
     def piece_width(text, start):
+        # One face is one measure. Adding the pieces up counts each
+        # letter's side bearing twice, so the line wraps early and a
+        # coloured letter lands on top of the next one.
+        font, size, bold, italic, _color = style_at(start)
+        if all(style_at(start + i)[:4] == (font, size, bold, italic) for i in range(len(text))):
+            return tkfont.Font(font=face_of(font, size, bold, italic)).measure(text)
         total = 0
         i = 0
         while i < len(text):
