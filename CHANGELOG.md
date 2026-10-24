@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r4 — 2026-10-25
+
+- The page fills the window again.
+- Body text that lost its font was drawn at 12 points instead of the 12 pixels stored on the field. It uses the field's own font record.
+
 ## 1.0.7r3 — 2026-10-25
 
 - A 12-point word is 12 pixels. The last change still drew it at 24-point size, and a large window stretched the page. The page now stays the size ToolBook uses.
