@@ -257,7 +257,25 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 "size": (to_pixel(raw["size"][0]), to_pixel(raw["size"][1])) if raw.get("size") else None,
             },
         ))
-    return Book(path=str(path), title=path.stem, pages=pages)
+    return Book(path=str(path), title=path.stem, pages=pages, handlers=_book_keyup(file_bytes, keywords))
+
+
+def _book_keyup(data: bytes, keywords) -> list:
+    """The book-level key handler. F2 asks before leaving the lesson."""
+    try:
+        from openscript_analysis.formats.tbk.expand import read_handlers
+    except ImportError:
+        return []
+    from foolbook.model import Handler
+    found = []
+    for item in read_handlers(data, keywords or None):
+        source = item.get("source") or ""
+        if (item.get("name") or "").lower() != "keyup":
+            continue
+        if "exit the lesson" not in source.lower():
+            continue
+        found.append(Handler(name="keyup", source=source))
+    return found
 
 
 def _store_shape(obj: dict, to_pixel) -> dict | None:

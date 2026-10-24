@@ -173,20 +173,23 @@ def _stamp(page, percent: int) -> None:
 
 
 def finish(state):
-    """The end page. OK shows the percent, then review or the menu.
+    """P10303. The handler is okClicked in the lesson at file 0xb34aa.
 
-    A is "review the test?" and B is "exit?". The score is the mean of the
-    questions already marked, each of which is 100 or 0.
+    A starts the critique pass. B goes to the menu only when the score is
+    100, and to P10410 otherwise. Neither choice beeps and stays.
     """
     percent = _percent(state)
     _stamp(state.page, percent)
     state.variables["__redraw"] = True
     choice = str(state.variables.get("__choice") or "").upper()
-    pages = state.variables.get("__quizPages") or {}
     if choice == "A":
-        return ("goto", pages.get(2) or "P10302")
+        state.variables["__quizPass"] = 4
+        state.variables["__quizIndex"] = 0
+        return _next(state, [])
     if choice == "B":
-        return ("goto", "P900")
+        if percent == 100:
+            return ("goto", "P900")
+        return ("goto", "P10410")
     return 0
 
 
@@ -209,6 +212,7 @@ def _next(state, _args):
     pages = state.variables.get("__quizPages") or {}
     end = pages.get(3) or pages.get("3") or ""
     if index >= count:
+        state.variables["__choice"] = ""
         if end:
             destination = next((item for item in state.book.pages if item.id == end), None)
             _stamp(destination, _percent(state))

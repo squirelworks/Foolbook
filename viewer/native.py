@@ -85,6 +85,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     idx = tk.IntVar(value=start_at)
     state = RuntimeState(book=book, index=start_at)
+    state.ask = lambda text: "Yes" if messagebox.askyesno("Foolbook", text, parent=root) else "No"
     enter_book(state)
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
@@ -307,6 +308,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         # That is P0's send next, and the quiz background's handleQuizClick.
         if not moved:
             moved = follow(state, run_page_handlers(state, "buttonclick"))
+        if state.variables.pop("__exit", None):
+            root.destroy()
+            return
         if moved:
             show(state.index)
             return

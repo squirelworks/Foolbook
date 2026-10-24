@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r6 — 2026-10-25
+
+- Exit asks "Are you sure you want to Exit the Lesson?" The words are the book's own key handler. No stays. Yes leaves.
+- On the score page, B goes to the menu only at 100. Any other score goes to P10410. A reviews the questions. OK with nothing chosen stays.
+
 ## 1.0.7r5 — 2026-10-25
 
 - A click lands on the object under the pointer. An empty part of P300, P400, P450 or P900 stays there. P0 and P1 still go on, because that is their own script.

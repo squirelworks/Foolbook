@@ -37,6 +37,7 @@ _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
 _GET = re.compile(r'get\s+(.+)', re.IGNORECASE)
+_REQUEST = re.compile(r'request\s+"([^"]*)"', re.IGNORECASE)
 _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
@@ -166,6 +167,29 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                 continue
 
         if low.startswith("system "):
+            parts = line.split()
+            if len(parts) >= 3 and parts[-1].rstrip("[]") not in state.variables:
+                kind = parts[-2].lower()
+                state.variables[parts[-1].rstrip("[]")] = 0 if kind in ("int", "long", "word", "byte", "logical") else ""
+            i += 1
+            continue
+
+        if low == "conditions":
+            end_at = _find_conditions(lines, i + 1, end)
+            _run_conditions(state, lines, i + 1, end_at, actions)
+            i = end_at + 1
+            continue
+
+        if low in ("end conditions", "else", "forward", "break"):
+            return i + 1
+
+        m = _REQUEST.match(line)
+        if m:
+            answer = "No"
+            ask = getattr(state, "ask", None)
+            if ask is not None:
+                answer = ask(m.group(1)) or "No"
+            state.variables["it"] = answer
             i += 1
             continue
 
@@ -182,10 +206,20 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             name = m.group(1)
             key = (m.group(2) or "").lower()
-            if name.lower() == "keyup" and key in ("keyf2", "keyf4"):
-                page, book = _menu_return(state, key)
-                if page:
-                    actions.append({"kind": "goto", "page": page, "book": book})
+            if name.lower() == "exit":
+                state.variables["__exit"] = True
+                actions.append({"kind": "exit"})
+                i += 1
+                continue
+            if name.lower() == "keyup" and key:
+                state.variables["key"] = key
+                if _book_keyup(state, actions):
+                    i += 1
+                    continue
+                if key in ("keyf2", "keyf4"):
+                    page, book = _menu_return(state, key)
+                    if page:
+                        actions.append({"kind": "goto", "page": page, "book": book})
                 i += 1
                 continue
             actions.append({"kind": "send", "name": name})
@@ -406,6 +440,59 @@ def _call_value(expr: str, state: RuntimeState):
         return _NOT_A_CALL
     from engine.quiz import call
     return call(state, match.group(1), match.group(2))
+
+
+def _find_conditions(lines: list[str], start: int, end: int) -> int:
+    depth = 0
+    for i in range(start, end):
+        low = lines[i].lower()
+        if low == "conditions":
+            depth += 1
+        elif low == "end conditions" or (low == "end" and depth == 0):
+            if depth == 0:
+                return i
+            depth -= 1
+    return end
+
+
+def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int, actions: list[dict]) -> None:
+    """OpenScript `conditions` / `when`. The first true branch runs."""
+    branches = []
+    otherwise = None
+    depth = 0
+    for i in range(start, end):
+        low = lines[i].lower()
+        if low == "conditions":
+            depth += 1
+        elif low == "end conditions":
+            depth = max(0, depth - 1)
+        elif depth == 0 and low.startswith("when "):
+            branches.append(i)
+        elif depth == 0 and low == "else":
+            otherwise = i
+    for index, at in enumerate(branches):
+        nxt = branches[index + 1] if index + 1 < len(branches) else (otherwise if otherwise is not None else end)
+        if _truth(_eval(lines[at][5:].strip(), state)):
+            _run_block(state, lines, at + 1, nxt, actions)
+            return
+    if otherwise is not None:
+        _run_block(state, lines, otherwise + 1, end, actions)
+
+
+def _book_keyup(state: RuntimeState, actions: list[dict]) -> bool:
+    """The lesson's own key handler. F2 asks before it exits."""
+    book = state.book
+    if book is None:
+        return False
+    ran = False
+    for handler in book.handlers or []:
+        if handler.name.lower() != "keyup":
+            continue
+        if "keyf2" not in (handler.source or "").lower():
+            continue
+        actions.extend(run_handler(state, handler.source))
+        ran = True
+    return ran
 
 
 def _menu_return(state: RuntimeState, key: str) -> tuple[str, str | None]:

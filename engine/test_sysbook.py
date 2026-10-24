@@ -136,22 +136,51 @@ class ButtonScripts(unittest.TestCase):
 
     def test_the_end_page_shows_the_percent_and_review_is_a_choice(self):
         from engine.engine import run_handler, follow
+        from engine.quiz import finish
         end = Page(id="P10303", shapes=[{"name": "Stem", "kind": "text", "text": "score is XX%"}])
-        review = Page(id="P10302")
-        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=[end, review, Page(id="P900")]))
+        question = Page(id="Q110", raw={"props": {"QuestionNo": "110", "Answer": "A"}}, shapes=[{"name": "Index", "kind": "text", "text": ""}])
+        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=[end, Page(id="P10410"), Page(id="P900"), question]))
         state.variables["__quizScore"] = {1: 100, 2: 0}
         state.variables["__quizCount"] = 2
-        state.variables["__quizPages"] = {2: "P10302"}
+        state.variables["__quizNumbers"] = [0, 110]
         script = 'if  target is button "OK" of parent of this page  then\n\tsend okClicked to this page\nend if'
-        state.variables["target"] = "A"
-        self.assertEqual(run_handler(state, script), [])
         state.variables["target"] = "OK"
+        state.variables["__choice"] = ""
+        self.assertFalse(follow(state, run_handler(state, script)))
+        self.assertEqual(state.page.id, "P10303")
+        state.variables["__choice"] = "B"
+        self.assertTrue(follow(state, run_handler(state, script)))
+        self.assertEqual(state.page.id, "P10410")
+        state.index = 0
+        state.variables["__quizScore"] = {1: 100, 2: 100}
+        state.variables["__choice"] = "B"
+        self.assertEqual(finish(state)[1], "P900")
         state.variables["__choice"] = "A"
-        actions = run_handler(state, script)
-        self.assertEqual(actions[0]["name"], "okClicked")
-        self.assertTrue(follow(state, actions))
-        self.assertEqual(state.page.id, "P10302")
-        self.assertIn("50", end.shapes[0]["text"])
+        state.variables["__pools"] = [(110, 110, 1)]
+        landed = finish(state)
+        self.assertEqual(landed[1], "Q110")
+
+    def test_exit_asks_and_no_stays(self):
+        from engine.engine import run_handler
+        source = '''to handle keyup key
+\tconditions
+\t\twhen key = keyf2
+\t\t\trequest "Are you sure you want to Exit the Lesson?" with "&Yes" or "&No"
+\t\t\tif it is "Yes" then
+\t\t\t\tsend exit
+\t\t\tend if
+\tend conditions
+end'''
+        state = RuntimeState(book=Book(path="lesson.tbk", title="lesson", pages=[Page(id="P900")], handlers=[]))
+        state.book.handlers = [type("H", (), {"name": "keyup", "source": source})()]
+        state.ask = lambda text: "No"
+        actions = run_handler(state, 'send keyup keyF2')
+        self.assertFalse(state.variables.get("__exit"))
+        self.assertNotIn("Are you sure", "")
+        state.ask = lambda text: "Yes"
+        actions = run_handler(state, 'send keyup keyF2')
+        self.assertTrue(state.variables.get("__exit"))
+        self.assertTrue(actions)
 
     def test_a_practice_answer_takes_the_fill_the_script_names(self):
         page = Page(id="P1310", shapes=[{"name": "correct", "kind": "text", "text": "10", "fill": "#40ffff"}])
