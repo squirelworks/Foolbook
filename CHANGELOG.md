@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5r35
+
+- A field is drawn inside the margin words the record stored. A copyright inset of 720 twips is 48 pixels, and a body panel's 360 is 24.
+- Saving a `.tbk` or `.sbk` writes an object store, not the page-marker shell. ToolBook has not opened one of these yet. Replacing text inside a book it already opens is `splice_text`, and that leaves the store alone.
+
 ## 1.0.5r34
 
 - A click on a field runs the group's buttonClick when the field does not have one. The field's own script stays the mouse handlers.

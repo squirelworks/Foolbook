@@ -93,9 +93,10 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind == "text":
             x, y, w, h = _box(shape)
             _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
-            pad = 4 if int(shape.get("border") or 1) != 1 else 2
+            pad_l = int(shape["marginL"]) if shape.get("marginL") is not None else 0
+            pad_r = int(shape["marginR"]) if shape.get("marginR") is not None else pad_l
             text, size, wrap, anchor, tx, ty = _fit_text(
-                shape, x + pad, y + pad, max(1, w - 2 * pad), max(1, h - 2 * pad)
+                shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8)
             )
             ink = outline or "black"
             if fill and _pale(ink) and _pale(fill):
@@ -224,7 +225,7 @@ def _fit_text(shape, x, y, w, h):
         return raw, size, 0, "center", x + w / 2, y + h / 2
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
-    return raw, size, 0, "w", x + 2, y + h / 2
+    return raw, size, 0, "w", x, y + h / 2
 
 
 def _arc_between(x, y, w, h, ends) -> list[int]:

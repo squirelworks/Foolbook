@@ -110,11 +110,11 @@ def export_book(path: str | Path, book: dict, compile_script=None) -> Path:
         from openscript_analysis.formats.tbx import write_tbx
         return write_tbx(path if suffix == ".tbx" or path.is_dir() else path.with_suffix(".tbx"), book)
     if suffix == ".sbk":
-        from openscript_analysis.formats.tbk import write_sbk
-        return write_sbk(path, book, compile_script or _compile)
+        from openscript_analysis.formats.tbk.storewrite import write_store
+        return write_store(path if path.suffix.lower() == ".sbk" else path.with_suffix(".sbk"), book)
     if suffix == ".tbk":
-        from openscript_analysis.formats.tbk import write_tbk
-        return write_tbk(path, book, compile_script or _compile)
+        from openscript_analysis.formats.tbk.storewrite import write_store
+        return write_store(path, book)
     if suffix == ".fsk":
         return save_system(path, book)
     if suffix == ".fsc":

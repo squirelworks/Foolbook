@@ -284,6 +284,10 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "visible": (obj.get("name") or "").lower() != "correct",
         "layer": obj.get("layer") or "page",
     }
+    if obj.get("marginL"):
+        shape["marginL"] = to_pixel(int(obj["marginL"]))
+    if obj.get("marginR"):
+        shape["marginR"] = to_pixel(int(obj["marginR"]))
     points = obj.get("points") or []
     if obj.get("kind") == "arc" and obj.get("ends"):
         shape["ends"] = [[to_pixel(x), to_pixel(y)] for x, y in obj["ends"]]
