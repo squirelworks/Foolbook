@@ -99,6 +99,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             if rest is not None and int(rest) != pad_l:
                 _hanging(canvas, shape, x, y, w, h, pad_l, int(rest), pad_r, fill, outline)
                 continue
+            if shape.get("runs") and any(run.get("color") for run in shape["runs"]):
+                _paint_marked(
+                    canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
+                )
+                continue
             if shape.get("runs") and _paint_runs(
                 canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
             ):
@@ -227,6 +232,92 @@ def _hanging(canvas, shape, x, y, w, h, first, rest, right, fill, outline):
         canvas.create_text(x + inset, y + 4 + index * pitch, text=line, anchor="nw", font=face, fill=ink)
 
 
+def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
+    """Words keep the field colour. A run can paint some of them another one.
+
+    On P1040 the letters T, T, L and the word TTL are yellow. A return is
+    one character here, which is how those runs are counted.
+    """
+    raw = str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
+    if not raw:
+        return
+    try:
+        from tkinter import font as tkfont
+    except Exception:
+        return
+    size = int(shape.get("size") or 12)
+    face = _typeface(shape, size)
+    measure = tkfont.Font(font=face).measure
+    ink = outline or "black"
+    if fill and _pale(ink) and _pale(fill):
+        ink = "#202020"
+    runs = [run for run in (shape.get("runs") or []) if run.get("color")]
+    pitch = max(size, round(size * 1.2))
+    width = max(8, w)
+    top = y
+
+    def colour(index):
+        for run in runs:
+            if int(run.get("start") or 0) <= index < int(run.get("end") or 0):
+                return run["color"]
+        return ink
+
+    def draw(text, start, left, top):
+        at = left
+        piece = ""
+        paint = None
+        for offset, char in enumerate(text):
+            here = colour(start + offset)
+            if paint is None:
+                paint = here
+            if here != paint:
+                canvas.create_text(at, top, text=piece, anchor="nw", font=face, fill=paint)
+                at += measure(piece)
+                piece = char
+                paint = here
+            else:
+                piece += char
+        if piece:
+            canvas.create_text(at, top, text=piece, anchor="nw", font=face, fill=paint)
+
+    cursor = 0
+    for para in raw.split("\n"):
+        if not para.strip():
+            top += pitch
+            cursor += len(para) + 1
+            continue
+        words = para.split(" ")
+        line = ""
+        line_at = cursor
+        taken = 0
+        for word in words:
+            if not word:
+                # "of  integrated" splits into an empty word. That space stays.
+                if not line:
+                    line_at = cursor + taken
+                line += " "
+                taken += 1
+                continue
+            gap = 0
+            while taken + gap < len(para) and para[taken + gap] == " ":
+                gap += 1
+            trial = f"{line}{' ' * gap}{word}" if line else word
+            if line and measure(trial) > width:
+                draw(line, line_at, x, top)
+                top += pitch
+                line = word
+                line_at = cursor + taken + gap
+            else:
+                if not line:
+                    line_at = cursor + taken + gap
+                line = trial
+            taken += gap + len(word)
+        if line:
+            draw(line, line_at, x, top)
+        top += pitch
+        cursor += len(para) + 1
+
+
 def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
     """A short run keeps its own face. The rest of the line uses the field.
 
@@ -272,7 +363,7 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
             span["bold"] = bool(run.get("bold"))
             span["italic"] = bool(run.get("italic"))
         face = _typeface(span, span_size)
-        canvas.create_text(at, y + max(0, size - span_size), text=text, anchor="nw", font=face, fill=ink)
+        canvas.create_text(at, y + max(0, size - span_size), text=text, anchor="nw", font=face, fill=(run or {}).get("color") or ink)
         at += tkfont.Font(font=face).measure(text)
         if at > x + w:
             break

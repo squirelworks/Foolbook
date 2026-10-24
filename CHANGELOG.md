@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7r8 — 2026-10-25
+
+- The highlighted letters on P1040 are drawn in the colour the run stores, which is yellow. The 16-colour guest is what made them look cyan.
+
 ## 1.0.7r7 — 2026-10-25
 
 - A 12-point word is 16 pixels, which is what ToolBook draws. The window scale still multiplies that, and Tk is not allowed to do it again.
