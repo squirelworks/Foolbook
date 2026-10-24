@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r36
+
+- The right inset is the paragraph's right indent, not the left one. The tab spacing stays out of the picture. A field with no style runs is drawn in the face the record names. For the P400 body that face is Arial. Bold and 12-point are still not read.
+
 ## 1.0.5r35
 
 - A field is drawn inside the margin words the record stored. A copyright inset of 720 twips is 48 pixels, and a body panel's 360 is 24.
