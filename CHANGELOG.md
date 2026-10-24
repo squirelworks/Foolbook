@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7 — 2026-10-25
+
+- A book opened from the command line starts on the first page.
+- A click on P0 or P1 runs the page's `send next`. The window was calling that handler without importing it, so the click did nothing.
+- The type size and the indents scale with the window. A line that is wider than its box wraps. A short label that fits stays one line.
+
 ## 1.0.6 — 2026-10-25
 
 This is the release. The `v1.0.5r1` through `v1.0.5r38` tags were interim builds. They are no longer published as releases.

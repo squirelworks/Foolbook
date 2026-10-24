@@ -174,26 +174,6 @@ def _bevel(canvas, x, y, w, h, light, dark):
     canvas.create_line(x + w, y, x + w, y + h, x, y + h, fill=dark)
 
 
-def _wrapped_rows(text, width, size):
-    chars = max(1, int(width / max(1, size * 0.55)))
-    rows = 0
-    for line in text.split("\n"):
-        if not line:
-            rows += 1
-            continue
-        length = 0
-        line_rows = 1
-        for word in line.split(" "):
-            extra = len(word) if length == 0 else len(word) + 1
-            if length and length + extra > chars:
-                line_rows += 1
-                length = len(word)
-            else:
-                length += extra
-        rows += line_rows
-    return max(1, rows)
-
-
 def _pale(color: str) -> bool:
     if not (isinstance(color, str) and len(color) == 7 and color.startswith("#")):
         return False
@@ -254,29 +234,30 @@ def _typeface(shape, size):
     return (face, size)
 
 
-def _fit_text(shape, x, y, w, h):
-    """Keep a line inside its box. A tall field wraps. A label does not.
+def _text_width(shape, size, text) -> int:
+    try:
+        from tkinter import font as tkfont
+        return tkfont.Font(font=_typeface(shape, size)).measure(text)
+    except Exception:
+        return int(len(text) * max(int(size), 1) * 0.55)
 
-    The wrap width used to be the box, at a fixed 12-point bold. A label
-    such as 7400 or INTRODUCTION then broke in the middle of the word.
+
+def _fit_text(shape, x, y, w, h):
+    """Keep the words inside the box they were given.
+
+    The size is already the window size. A line that is wider than the box
+    wraps on its spaces. A line that fits, such as a short label, stays one
+    line so it is not broken in the middle of a word.
     """
     raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
-    lines = raw.split("\n")
-    words = [line for line in lines if line.strip()]
-    longest = max((len(line.strip()) for line in words), default=1)
-    amount = sum(len(line.strip()) for line in words)
     recorded = int(shape.get("size") or 0)
-    wrap = w if w > 80 and h > 48 and amount > 40 else 0
-    if wrap:
-        size = recorded or 15
-        if not recorded:
-            while size > 8 and _wrapped_rows(raw, w, size) * size * 1.25 > h:
-                size -= 1
-        return raw, size, w, "nw", x, y
+    size = recorded or 12
+    pieces = raw.split("\n")
+    widest = max((_text_width(shape, size, line) for line in pieces), default=0)
+    if len(pieces) > 1 or widest > max(1, w):
+        return raw, size, max(1, w), "nw", x, y
+    words = [line for line in pieces if line.strip()]
     count = max(1, len(words))
-    by_height = ((h - 2) / count / 1.3) if h else 12
-    by_width = ((w - 4) / longest / 0.62) if w else 12
-    size = recorded or int(max(7, min(20, by_height, by_width)))
     align = int(shape.get("align") or 0)
     if align == 2:
         return raw, size, 0, "center", x + w / 2, y + h / 2

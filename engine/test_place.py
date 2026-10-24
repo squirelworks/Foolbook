@@ -62,6 +62,13 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(placed[1]["w"], 200)
         self.assertEqual(content_box(shapes), (10, 20, 110, 60))
 
+    def test_the_face_and_the_indent_scale_with_the_box(self):
+        shapes = [{"kind": "text", "x": 0, "y": 0, "w": 100, "h": 40, "size": 12, "marginL": 24, "text": "Hello"}]
+        placed = place_window(shapes, 2, 0, 0, 0, 0)
+        self.assertEqual(placed[0]["w"], 200)
+        self.assertEqual(placed[0]["size"], 24)
+        self.assertEqual(placed[0]["marginL"], 48)
+
 
 
 if __name__ == "__main__":

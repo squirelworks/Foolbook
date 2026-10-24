@@ -43,7 +43,7 @@ python3 -m foolbook "/path/to/Book.xml"
 
 ## How it starts
 
-- Passed a path: opens that book.
+- Passed a path: opens that book on its first page.
 - Started with no path: asks for a file.
 - Launched by a course module: the module passes the book path, and Foolbook opens it.
 

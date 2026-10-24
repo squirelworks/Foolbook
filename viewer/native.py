@@ -13,7 +13,7 @@ from pathlib import Path
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view, page_box, place_window
-from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler, click_script
+from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler, run_page_handlers, click_script
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -38,8 +38,8 @@ def _corner_stub(shape: dict, others: list[dict]) -> bool:
 def open_book(path: str | Path, student: str = "", course: str = "", splash: bool = False) -> int:
     """Open a book in a native window. Returns when the window closes.
 
-    splash=True only for the bare launch. Course and direct file skip it
-    and open at the last page.
+    splash=True only for the bare launch, which can reopen the last page.
+    A book passed on the command line starts at the first page.
     """
     book = load(path)
     course_id = course or Path(path).stem
@@ -82,11 +82,6 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
                 if p.id == last:
                     start_at = i
                     break
-    elif last:
-        for i, p in enumerate(pages):
-            if p.id == last:
-                start_at = i
-                break
 
     idx = tk.IntVar(value=start_at)
     state = RuntimeState(book=book, index=start_at)
