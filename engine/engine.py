@@ -91,6 +91,20 @@ def _strip_handler_end(body: str) -> str:
     return "\n".join(lines[:cut])
 
 
+def click_script(obj: dict | None) -> str:
+    """The buttonClick a click should run.
+
+    The object's own script wins when it handles the click. Otherwise the
+    group's script runs. A field's mouse handlers are not that click.
+    """
+    if not obj:
+        return ""
+    own = obj.get("script") or ""
+    if "buttonclick" in own.lower():
+        return own
+    return obj.get("group_script") or ""
+
+
 def run_handler(state: RuntimeState, source: str) -> list[dict]:
     """Execute a handler source against the current state."""
     actions: list[dict] = []

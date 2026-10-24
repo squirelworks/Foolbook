@@ -276,6 +276,7 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "fill": obj.get("fill") or "",
         "outline": obj.get("outline") or "",
         "script": obj.get("script") or "",
+        "group_script": obj.get("group_script") or "",
         "align": int(obj.get("align") or 0),
         "border": int(obj["border"]) if obj.get("border") is not None else 1,
         "direct": bool(obj.get("direct")),

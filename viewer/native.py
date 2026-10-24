@@ -13,7 +13,7 @@ from pathlib import Path
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view, page_box, place_window
-from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler
+from engine.engine import enter_book, enter_page, follow, goto, open_book as open_other, press, run_handler, click_script
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -298,7 +298,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         obj = _hit(event)
         state.variables["target"] = (obj or {}).get("name") or "page"
-        script = (obj or {}).get("script") or ""
+        script = click_script(obj)
         moved = False
         if script:
             moved = follow(state, run_handler(state, script))

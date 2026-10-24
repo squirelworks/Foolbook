@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5r34
+
+- A click on a field runs the group's buttonClick when the field does not have one. The field's own script stays the mouse handlers.
+
 ## 1.0.5r33
 
 - A shape keeps the layer it was stored on. Background objects are `background`. Page objects are `page`.
