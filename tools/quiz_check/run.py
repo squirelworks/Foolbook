@@ -61,7 +61,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.list:
         for s in SPECS:
-            print(f"{s['name']:32} {s['type']:12} {s['book']:10} {s.get('doc', '')}")
+            print(f"{s['name']:32} {s['type']:12} {s['book']:10} {'(gated) ' if s.get('gated') else ''}{s.get('doc', '')}")
         return 0
     if not args.courses:
         ap.error("--courses (or FOOLBOOK_COURSES) is required")
