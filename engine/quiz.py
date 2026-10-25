@@ -100,6 +100,16 @@ def _add_pool(state, args):
     return 0
 
 
+def _add_pool_ex(state, args):
+    """addObjectiveToPoolEx(objective, "110,111,115", count): the questions are a list, not a range."""
+    if len(args) < 3:
+        return 0
+    words = [word.strip() for word in args[1].split(",") if word.strip()]
+    pools = state.variables.setdefault("__pools", [])
+    pools.append((words, _num(args[2])))
+    return 0
+
+
 def _from_pool(state, words: list[str], count: int) -> int:
     if count > len(words):
         return -1
@@ -116,8 +126,12 @@ def _setup_pool(state, _args):
     pools = list(state.variables.get("__pools") or [])
     state.variables["__quizNumbers"] = [None]
     state.variables["__quizCount"] = 0
-    for start, stop, count in pools:
-        words = [str(number) for number in range(start, stop + 1)]
+    for entry in pools:
+        if len(entry) == 2:
+            words, count = entry
+        else:
+            start, stop, count = entry
+            words = [str(number) for number in range(start, stop + 1)]
         if _from_pool(state, words, count) < 0:
             return -1
     return 0
@@ -328,6 +342,7 @@ _CALLS = {
     "setupquizex": _setup,
     "clearpool": _clear,
     "addobjectivetopool": _add_pool,
+    "addobjectivetopoolex": _add_pool_ex,
     "setuppool": _setup_pool,
     "gotonextquestionex": _next,
     "gotopreviousquestionex": _previous,
