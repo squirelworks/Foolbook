@@ -61,7 +61,11 @@ def main() -> int:
         serve(path=None, port=port, student=student, locale=locale, course=course)
         return 0
     if args and args[0] == "--export":
-        return _export([normalize_path(item) for item in args[1:]])
+        rest = args[1:]
+        force = "--force" in rest
+        if force:
+            rest.remove("--force")
+        return _export([normalize_path(item) for item in rest], force=force)
     if not args:
         # Default book ships with Foolbook
         default = Path(__file__).resolve().parent / "books" / "using_foolbook.json"
@@ -94,36 +98,78 @@ def main() -> int:
 
 
 
-def _export(paths: list[Path]) -> int:
+def _export_sources(paths: list[Path]) -> list[Path]:
+    """The folder you named, then the folders inside it.
+
+    A sorted walk puts ``courses/`` before ``nida81.tbk``, because
+    ``c`` comes before ``n``. The files in the directory you passed
+    are the ones to do first.
+    """
+    found = []
+    for path in paths:
+        if path.is_dir():
+            found.extend(_books_under(path))
+        elif path.suffix.lower() in (".tbk", ".sbk"):
+            found.append(path)
+        else:
+            print(f"skip {path}")
+    return found
+
+
+def _books_under(path: Path) -> list[Path]:
+    files = []
+    folders = []
+    try:
+        children = list(path.iterdir())
+    except OSError as exc:
+        print(f"skip {path}: {exc}")
+        return []
+    for child in children:
+        if child.name.startswith("."):
+            continue
+        if child.is_file() and child.suffix.lower() in (".tbk", ".sbk"):
+            files.append(child)
+        elif child.is_dir():
+            folders.append(child)
+    files.sort(key=lambda item: item.name.lower())
+    folders.sort(key=lambda item: item.name.lower())
+    found = list(files)
+    for folder in folders:
+        found.extend(_books_under(folder))
+    return found
+
+
+def _export(paths: list[Path], force: bool = False) -> int:
     """Write an .fbk or .fsk beside each ToolBook file.
 
     The copy is the book the reader already drew: pages, scripts, quiz
     properties, and pictures. It does not replace the .tbk. A jump still
-    opens the original while that file is there.
+    opens the original while that file is there. A file that is already
+    written is left alone, and a file that will not parse does not stop
+    the rest.
     """
     from foolbook.core import export_book, read
 
-    sources = []
-    for path in paths:
-        if path.is_dir():
-            sources.extend(sorted(path.rglob("*.tbk")))
-            sources.extend(sorted(path.rglob("*.TBK")))
-            sources.extend(sorted(path.rglob("*.sbk")))
-            sources.extend(sorted(path.rglob("*.SBK")))
-        elif path.suffix.lower() in (".tbk", ".sbk"):
-            sources.append(path)
-        else:
-            print(f"skip {path}")
     seen = set()
     wrote = 0
-    for src in sources:
+    failed = 0
+    for src in _export_sources(paths):
         key = str(src.resolve()).lower()
         if key in seen or not src.is_file():
             continue
         seen.add(key)
         dest = src.with_suffix(".fsk" if src.suffix.lower() == ".sbk" else ".fbk")
-        record = read(src)
-        export_book(dest, record)
+        if dest.is_file() and dest.stat().st_size > 0 and not force:
+            print(f"keep {dest}")
+            wrote += 1
+            continue
+        try:
+            record = read(src)
+            export_book(dest, record)
+        except Exception as exc:
+            failed += 1
+            print(f"fail {src.name}: {exc}")
+            continue
         pages = len(record.get("pages") or [])
         pictures = sum(
             1
@@ -133,10 +179,12 @@ def _export(paths: list[Path]) -> int:
         )
         print(f"{dest}  {pages} pages, {pictures} pictures")
         wrote += 1
-    if not wrote:
+    if failed:
+        print(f"{failed} file(s) not exported")
+    if not wrote and not failed:
         print("no .tbk or .sbk to export")
         return 1
-    return 0
+    return 1 if failed else 0
 
 
 def _freshstart() -> int:

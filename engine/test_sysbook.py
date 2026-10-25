@@ -137,6 +137,19 @@ class ButtonScripts(unittest.TestCase):
         self.assertEqual(saved["shapes"][0]["data"], "abc")
         self.assertNotIn("checked", saved["shapes"][0])
 
+    def test_export_does_the_named_folder_before_a_subdirectory(self):
+        import tempfile
+        from foolbook.__main__ import _export_sources
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "nida81.tbk").write_bytes(b"a")
+            (root / "tb80.sbk").write_bytes(b"b")
+            courses = root / "courses"
+            courses.mkdir()
+            (courses / "10001001.tbk").write_bytes(b"c")
+            found = [item.name for item in _export_sources([root])]
+        self.assertEqual(found, ["nida81.tbk", "tb80.sbk", "10001001.tbk"])
+
     def test_a_quiz_opens_on_a_question_and_the_choice_is_not_the_marker(self):
         pages = [Page(id="P10004"), Page(id="P10303")]
         for number in range(110, 130):

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r21 — 2026-10-25
+
+- `--export` of a folder does the files in that folder first, then the folders inside it. `courses/` was sorting ahead of the books sitting in the folder you named.
+- A book that will not parse is reported and the rest continue. An `.fbk` or `.fsk` already written is left alone. `--force` writes it again.
+
 ## 1.0.7r20 — 2026-10-25
 
 - A jump to nida81.tbk opens the .tbk when a .fsk or .fbk of that name is sitting next to it. The converted copy was the blank page.
