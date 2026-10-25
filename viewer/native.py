@@ -401,11 +401,17 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             call(state, "handleQuizClick", f'"{picked}"')
         script = click_script(obj)
         moved = False
+        revealed = False
         if script:
-            moved = follow(state, run_handler(state, script))
+            actions = run_handler(state, script)
+            # A Next that shows what the page was holding back has done its
+            # job. It does not also turn the page.
+            revealed = any(a.get("kind") == "setprop" and str(a.get("target") or "").startswith("visible of")
+                           for a in actions)
+            moved = follow(state, actions)
         if not moved:
             moved = follow(state, run_page_handlers(state, "buttonclick"))
-        if not moved and picked in ("OK", "NEXT", "SKIP", "BACK", "HELP"):
+        if not moved and not revealed and picked in ("OK", "NEXT", "SKIP", "BACK", "HELP"):
             from engine.quiz import call
             result = call(state, "handleQuizClick", f'"{picked}"')
             if isinstance(result, tuple) and result and result[0] == "goto" and result[1]:

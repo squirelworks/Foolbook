@@ -23,6 +23,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
+from engine import groups
 
 
 _GOTO = re.compile(
@@ -373,6 +374,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = groups.GROUP_SHOW.fullmatch(line)
+        if m:
+            groups.set_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of group", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
         m = _FILL.search(line)
         if m:
             _recolor(state, m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)))
@@ -499,6 +507,16 @@ def _eval(expr: str, state: RuntimeState):
     m = _PROP_OF_PAGE.fullmatch(expr)
     if m:
         return _page_property(state, m.group(1))
+    m = groups.GROUP_TEST.fullmatch(expr)
+    if m:
+        same = groups.is_visible(state, m) == (m.group("val").lower() == "true")
+        return same if m.group("op").lower() in ("is", "=") else not same
+    m = groups.GROUP_VISIBLE.fullmatch(expr)
+    if m:
+        return groups.is_visible(state, m)
+    m = groups.IS_OBJECT.fullmatch(expr)
+    if m:
+        return groups.exists(state, m)
     if expr.startswith("(") and _closes_at_end(expr):
         return _eval(expr[1:-1], state)
     joined = _joined(expr, state)
@@ -638,6 +656,10 @@ def _split_join(expr: str, op: str) -> list[str] | None:
     return parts
 
 
+def _flag(value) -> bool:
+    return value if isinstance(value, bool) else str(value).lower() not in ("", "false", "0", "none")
+
+
 def _apply_set(state: RuntimeState, target: str, value) -> None:
     """set text of field "First" changes the field the window draws.
 
@@ -645,9 +667,13 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     checked picture is not this face.
     """
     page = state.page
+    shown = groups.GROUP_VISIBLE.fullmatch(target or "")
+    if shown is not None:
+        groups.set_visible(state, shown, _flag(value))
+        return
     invert = _INVERT.search(target or "")
     if invert is not None and page is not None:
-        flag = value if isinstance(value, bool) else str(value).lower() not in ("", "false", "0", "none")
+        flag = _flag(value)
         name = invert.group(1).lower()
         for shape in page.shapes or []:
             if (shape.get("name") or "").lower() != name or (shape.get("kind") or "") == "text":
