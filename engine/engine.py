@@ -57,6 +57,15 @@ _LINE_OF_TEXT = re.compile(
     r'\s*(?:the\s+)?(?:text)?line\s+(\d+)\s+of\s+text\s+of\s+field\s+"([^"]+)"',
     re.IGNORECASE,
 )
+_TEXT_OF_FIELD = re.compile(
+    r'text\s+of\s+field\s+"([^"]+)"(?:\s+of\s+this\s+page)?',
+    re.IGNORECASE,
+)
+_CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
+_CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
+_PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
+_BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
+_NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
 _INVERT = re.compile(
     r'invert\s+of\s+button\s+"([^"]+)"',
     re.IGNORECASE,
@@ -131,6 +140,10 @@ def click_script(obj: dict | None) -> str:
     return obj.get("group_script") or ""
 
 
+class _Break(Exception):
+    """`break` ends the handler it is in."""
+
+
 def run_handler(state: RuntimeState, source: str, parents: list[str] | None = None) -> list[dict]:
     """Execute a handler source against the current state.
 
@@ -146,6 +159,8 @@ def run_handler(state: RuntimeState, source: str, parents: list[str] | None = No
     state.variables["__parents"] = parents if parents is not None else []
     try:
         _run_block(state, lines, 0, len(lines), actions)
+    except _Break:
+        pass
     finally:
         if outer is None:
             state.variables.pop("__parents", None)
@@ -225,8 +240,28 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
-        if low in ("end conditions", "else", "break"):
+        if low == "break":
+            raise _Break()
+
+        if low in ("end conditions", "else"):
             return i + 1
+
+        if _BEEP.match(low):
+            state.variables["__beep"] = True
+            actions.append({"kind": "beep"})
+            i += 1
+            continue
+
+        m = _CLEAR_CHAR.match(line)
+        if m:
+            name = m.group(2)
+            cur = _var(state, name)
+            text = "" if cur is _MISSING or cur is None else str(cur)
+            at = int(m.group(1)) - 1
+            if 0 <= at < len(text):
+                state.variables[name] = text[:at] + text[at + 1:]
+            i += 1
+            continue
 
         m = _REQUEST.match(line)
         if m:
@@ -440,6 +475,20 @@ def _eval(expr: str, state: RuntimeState):
         return quoted
     if re.fullmatch(r"-?\d+", expr):
         return int(expr)
+    m = _TEXT_OF_FIELD.fullmatch(expr)
+    if m:
+        return _field_text(state, m.group(1))
+    m = _CHAR_OF.fullmatch(expr)
+    if m:
+        found = _var(state, m.group(2))
+        text = "" if found is _MISSING or found is None else str(found)
+        at = int(m.group(1)) - 1
+        return text[at] if 0 <= at < len(text) else ""
+    m = _PROP_OF_PAGE.fullmatch(expr)
+    if m:
+        return _page_property(state, m.group(1))
+    if expr.startswith("(") and _closes_at_end(expr):
+        return _eval(expr[1:-1], state)
     joined = _joined(expr, state)
     if joined is not _MISSING:
         return joined
@@ -459,14 +508,11 @@ def _eval(expr: str, state: RuntimeState):
         if named:
             return str(left).strip().lower() == named.group(1).lower()
         return False
-    # comparisons, longest operator first
-    padded = f" {expr} "
-    for op in (" <> ", " != ", " <= ", " >= ", " < ", " > ", " = "):
-        idx = padded.find(op)
-        if idx >= 0:
-            left = padded[:idx].strip()
-            right = padded[idx + len(op):].strip()
-            return _cmp(op.strip(), _eval(left, state), _eval(right, state))
+    # comparisons. OpenScript does not need spaces round the operator.
+    split = _split_compare(expr)
+    if split is not None:
+        left, op, right = split
+        return _cmp(op, _eval(left, state), _eval(right, state))
     found = _var(state, expr)
     if found is not _MISSING:
         return found
@@ -506,6 +552,10 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "keyenter":
+        return 13
+    if low == "keyback":
+        return 8
     return _MISSING
 
 
@@ -638,7 +688,95 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
     state.variables["__redraw"] = True
 
 
+def _split_compare(expr: str):
+    """(left, operator, right) at the first comparison outside quotes and brackets."""
+    quote = ""
+    depth = 0
+    i = 0
+    n = len(expr)
+    while i < n:
+        ch = expr[i]
+        if quote:
+            if ch == quote:
+                quote = ""
+            i += 1
+            continue
+        if ch in "\"'":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        elif depth == 0:
+            for op in ("<>", "!=", "<=", ">=", "<", ">", "="):
+                if expr.startswith(op, i):
+                    left, right = expr[:i].strip(), expr[i + len(op):].strip()
+                    if left and right:
+                        return left, op, right
+                    return None
+        i += 1
+    return None
+
+
+def _closes_at_end(expr: str) -> bool:
+    """The bracket that opens the expression is the one that closes it."""
+    depth = 0
+    quote = ""
+    for i, ch in enumerate(expr):
+        if quote:
+            if ch == quote:
+                quote = ""
+            continue
+        if ch in "\"'":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return i == len(expr) - 1
+    return False
+
+
+def _field_text(state: RuntimeState, name: str) -> str:
+    """`text of field "Response"` is what is in the field now."""
+    page = state.page
+    for shape in (page.shapes if page is not None else None) or []:
+        if (shape.get("name") or "").lower() == name.lower() and (shape.get("kind") or "") == "text":
+            return str(shape.get("text") or "")
+    return ""
+
+
+def _page_property(state: RuntimeState, name: str):
+    """`testno of this page` is a property stored on the page."""
+    page = state.page
+    props = ((page.raw or {}).get("props") or {}) if page is not None else {}
+    for key, value in props.items():
+        if str(key).lower() == name.lower():
+            text = str(value)
+            return int(text) if re.fullmatch(r"-?\d+", text) else text
+    return ""
+
+
+def _number(value):
+    """The number a value stands for, or None when it is not one."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str) and _NUMBER.fullmatch(value.strip()):
+        return float(value)
+    return None
+
+
 def _cmp(op: str, a, b) -> bool:
+    """`=` is a number compare when both sides are numbers, 7 and "07" and "+7.0"
+    alike, and a compare that ignores case when they are text."""
+    x, y = _number(a), _number(b)
+    if x is not None and y is not None:
+        a, b = x, y
+    elif isinstance(a, str) and isinstance(b, str):
+        a, b = a.lower(), b.lower()
     if op in ("=",):
         return a == b
     if op in ("<>", "!="):

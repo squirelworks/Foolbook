@@ -376,6 +376,23 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             _paint()
         return "break"
 
+    def on_key_up(event):
+        # keyUp is the handler that reads the answer and moves the page.
+        actions = fields.key_up(state, event.keysym, event.char)
+        if not actions:
+            return None
+        moved = follow(state, actions)
+        if state.variables.pop("__beep", None):
+            try:
+                root.bell()
+            except tk.TclError:
+                pass
+        if moved:
+            show(state.index)
+        elif state.variables.pop("__redraw", None):
+            _paint()
+        return "break"
+
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
         picked = ((obj or {}).get("name") or "").upper()
@@ -418,6 +435,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     gfx.bind("<ButtonPress-1>", on_press)
     gfx.bind("<ButtonRelease-1>", on_release)
     gfx.bind("<KeyPress>", on_key)
+    gfx.bind("<KeyRelease>", on_key_up)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
     show(idx.get())
     try:
