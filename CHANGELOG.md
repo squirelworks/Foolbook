@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A field's own keyChar handler decides which keys go in. A numeric answer field takes `0-9 . + -` and Backspace and beeps on anything else. An alphabetic one takes A-Z in either case. A field with no keyChar handler takes every key. `DoNumeric` and `DoAlphabetic` are read as nc81test.sbk writes them, and `forward` is now recorded as an action.
 - A click on an answer field gives it the keyboard. Typed characters and Backspace edit its text, and a caret shows where the next one goes. 93950101 P2070: click the field after `2 + 5 =`, type 7, and 7 is in the field. Return is taken by the field. What the field's own keyChar and keyUp scripts do with it is not run yet.
 
 ## 1.0.8r1 — 2026-10-25

@@ -197,7 +197,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i = end_at + 1
             continue
 
-        if low in ("end conditions", "else", "forward", "break"):
+        if low == "forward":
+            # The message goes on to the object's parent and then to the
+            # default action. A key handler is allowed or refused by this.
+            actions.append({"kind": "forward"})
+            return i + 1
+
+        if low in ("end conditions", "else", "break"):
             return i + 1
 
         m = _REQUEST.match(line)
@@ -619,6 +625,11 @@ def _call_value(expr: str, state: RuntimeState):
     from engine.menu import _UNKNOWN as menu_unknown
     hit = menu_call(state, match.group(1), match.group(2))
     if hit is not menu_unknown:
+        return hit
+    from engine.fillin import call as fillin_call
+    from engine.fillin import _UNKNOWN as fillin_unknown
+    hit = fillin_call(state, match.group(1), match.group(2))
+    if hit is not fillin_unknown:
         return hit
     from engine.quiz import call
     return call(state, match.group(1), match.group(2))
