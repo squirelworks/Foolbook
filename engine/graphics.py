@@ -308,24 +308,23 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
             piece = text[i:j]
             face = face_of(font, size, bold, italic)
             measure = tkfont.Font(font=face).measure
-            canvas.create_text(
-                pen, top + max(0, field_size - size), text=piece, anchor="nw", font=face, fill=ink
-            )
+            # One item per colour, placed at the width of the prefix.
+            # Drawing the whole word and then the colour again put the
+            # yellow letter on top of the next one.
             k = 0
             while k < len(piece):
                 paint = style_at(start + i + k)[4]
                 n = k + 1
                 while n < len(piece) and style_at(start + i + n)[4] == paint:
                     n += 1
-                if paint != ink:
-                    canvas.create_text(
-                        pen + measure(piece[:k]),
-                        top + max(0, field_size - size),
-                        text=piece[k:n],
-                        anchor="nw",
-                        font=face,
-                        fill=paint,
-                    )
+                canvas.create_text(
+                    pen + measure(piece[:k]),
+                    top + max(0, field_size - size),
+                    text=piece[k:n],
+                    anchor="nw",
+                    font=face,
+                    fill=paint,
+                )
                 k = n
             pen += measure(piece)
             i = j
@@ -470,9 +469,10 @@ def _ink_factor():
 
 def _typeface(shape, size):
     face = _family(shape.get("font") or "")
-    recorded = int(shape.get("size") or 0)
-    if recorded:
-        size = recorded
+    # The caller may already have shrunk this so the longest word fits.
+    # The recorded size is the fallback, not a replacement for that.
+    if not size:
+        size = int(shape.get("size") or 0) or 12
     # A placed field stores pixels. A negative Tk size is pixels. The
     # factor puts that pixel size back onto Arial's width.
     if shape.get("px"):

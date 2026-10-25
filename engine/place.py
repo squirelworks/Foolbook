@@ -38,9 +38,21 @@ def in_front(shapes: list[dict]) -> list[dict]:
 
     pictures = [shape for shape in shapes if shape.get("kind") == "image"]
 
+    def covers_drawing(shape) -> bool:
+        # A filled field that holds the pins is the back of the chip.
+        # Putting every text field in front covered P1290.
+        if (shape.get("kind") or "") != "text":
+            return False
+        for other in shapes:
+            if other is shape or (other.get("kind") or "") == "text":
+                continue
+            if holds(shape, other):
+                return True
+        return False
+
     def rank(item):
         index, shape = item
-        if shape.get("kind") == "text":
+        if shape.get("kind") == "text" and not covers_drawing(shape):
             return (2, 0, index)
         cover = sum(1 for picture in pictures if picture is not shape and holds(picture, shape))
         return (1 if cover else 0, cover, index)

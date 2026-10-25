@@ -92,6 +92,20 @@ class WindowTests(unittest.TestCase):
         ordered = in_front([button, frame])
         self.assertIs(ordered[-1], button)
 
+    def test_a_chip_field_stays_under_the_pins_it_holds(self):
+        field = {"kind": "text", "name": "correct", "x": 400, "y": 200, "w": 180, "h": 120, "fill": "#40ffff"}
+        pin = {"kind": "polygon", "x": 430, "y": 280, "w": 10, "h": 16}
+        body = {"kind": "rect", "x": 420, "y": 230, "w": 150, "h": 70}
+        label = {"kind": "text", "x": 470, "y": 250, "w": 40, "h": 16, "text": "7408"}
+        ordered = in_front([field, pin, body, label])
+        self.assertLess(ordered.index(field), ordered.index(pin))
+        self.assertLess(ordered.index(field), ordered.index(body))
+        self.assertGreater(ordered.index(label), ordered.index(body))
+        lone = {"kind": "text", "x": 0, "y": 0, "w": 40, "h": 16, "text": "Output"}
+        dot = {"kind": "polygon", "x": 200, "y": 0, "w": 4, "h": 4}
+        ordered = in_front([lone, dot])
+        self.assertIs(ordered[-1], lone)
+
 
 
 if __name__ == "__main__":

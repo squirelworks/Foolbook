@@ -49,6 +49,10 @@ _FILL = re.compile(
     re.IGNORECASE,
 )
 _NAME_OF = re.compile(r'name\s+of\s+this\s+(book|page)', re.IGNORECASE)
+_FIELD_TEXT = re.compile(
+    r'text\s+of\s+(?:field|button)\s+"([^"]+)"',
+    re.IGNORECASE,
+)
 
 
 _TO_HANDLE = re.compile(
@@ -235,7 +239,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         m = _SET.match(line)
         if m:
             value = _eval(m.group(2), state)
-            actions.append({"kind": "setprop", "target": m.group(1).strip(), "value": value})
+            target = m.group(1).strip()
+            _apply_set(state, target, value)
+            actions.append({"kind": "setprop", "target": target, "value": value})
             i += 1
             continue
         m = _GET.match(line)
@@ -352,6 +358,24 @@ def _run_step(state, name, a, b, by, lines, start, end, actions):
         guard += 1
 
 
+def _whole_quote(expr: str) -> str | None:
+    """A quote that opens the expression is a string only if it also closes it."""
+    if len(expr) < 2 or expr[0] not in "\"'":
+        return None
+    quote = expr[0]
+    i = 1
+    while i < len(expr):
+        if expr[i] == quote:
+            if quote == '"' and i + 1 < len(expr) and expr[i + 1] == '"':
+                i += 2
+                continue
+            if i == len(expr) - 1:
+                return expr[1:-1]
+            return None
+        i += 1
+    return None
+
+
 def _eval(expr: str, state: RuntimeState):
     """Evaluate a small OpenScript expression."""
     expr = expr.strip().rstrip(".")
@@ -370,10 +394,14 @@ def _eval(expr: str, state: RuntimeState):
             return state.book.title or state.book.path
         page = state.page
         return page.id if page else ""
-    if (expr.startswith('"') and expr.endswith('"')) or (expr.startswith("'") and expr.endswith("'")):
-        return expr[1:-1]
+    quoted = _whole_quote(expr)
+    if quoted is not None:
+        return quoted
     if re.fullmatch(r"-?\d+", expr):
         return int(expr)
+    joined = _joined(expr, state)
+    if joined is not _MISSING:
+        return joined
     # and / or
     if " and " in low:
         i = low.index(" and ")
@@ -398,12 +426,111 @@ def _eval(expr: str, state: RuntimeState):
             left = padded[:idx].strip()
             right = padded[idx + len(op):].strip()
             return _cmp(op.strip(), _eval(left, state), _eval(right, state))
-    if expr in state.variables:
-        return state.variables[expr]
+    found = _var(state, expr)
+    if found is not _MISSING:
+        return found
     called = _call_value(expr, state)
     if called is not _NOT_A_CALL:
         return called
     return expr
+
+
+_MISSING = object()
+
+
+def _var(state: RuntimeState, name: str):
+    """A system property is the same word in either case.
+
+    The book writes syslevel. The reader stores sysLevel. With no
+    profile and no assignment, ToolBook is at reader level.
+    """
+    variables = state.variables
+    if name in variables:
+        return variables[name]
+    low = name.lower()
+    for key, value in variables.items():
+        if isinstance(key, str) and key.lower() == low:
+            return value
+    if low == "syslevel":
+        return "reader"
+    return _MISSING
+
+
+def _joined(expr: str, state: RuntimeState):
+    """OpenScript & joins two texts. && joins them with one space."""
+    parts = _split_join(expr, "&&")
+    if parts is not None:
+        return " ".join(_as_text(_eval(part, state)) for part in parts)
+    parts = _split_join(expr, "&")
+    if parts is not None:
+        return "".join(_as_text(_eval(part, state)) for part in parts)
+    return _MISSING
+
+
+def _as_text(value) -> str:
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _split_join(expr: str, op: str) -> list[str] | None:
+    """Split on op outside quotes and parentheses. && is not two & joins."""
+    parts: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    quote = ""
+    i = 0
+    n = len(expr)
+    while i < n:
+        ch = expr[i]
+        if quote:
+            buf.append(ch)
+            if ch == quote:
+                if ch == '"' and i + 1 < n and expr[i + 1] == '"':
+                    buf.append(expr[i + 1])
+                    i += 2
+                    continue
+                quote = ""
+            i += 1
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf.append(ch)
+            i += 1
+            continue
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        elif depth == 0 and expr.startswith(op, i):
+            if op == "&" and i + 1 < n and expr[i + 1] == "&":
+                buf.append("&")
+                i += 1
+                continue
+            parts.append("".join(buf).strip())
+            buf = []
+            i += len(op)
+            continue
+        buf.append(ch)
+        i += 1
+    if not parts:
+        return None
+    parts.append("".join(buf).strip())
+    return parts
+
+
+def _apply_set(state: RuntimeState, target: str, value) -> None:
+    """set text of field "First" changes the field the window draws."""
+    match = _FIELD_TEXT.search(target or "")
+    page = state.page
+    if match is None or page is None:
+        return
+    name = match.group(1).lower()
+    text = "" if value is None else str(value)
+    for shape in page.shapes or []:
+        if (shape.get("name") or "").lower() == name:
+            shape["text"] = text
+            state.variables["__redraw"] = True
 
 
 def _cmp(op: str, a, b) -> bool:
@@ -438,6 +565,11 @@ def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
         return _NOT_A_CALL
+    if match.group(1).lower() == "getfirst":
+        # No INI on this machine. The profile default for First is Student.
+        found = _var(state, "__studentFirst")
+        text = "" if found is _MISSING or found is None else str(found).strip()
+        return text or "Student"
     from engine.menu import call as menu_call
     from engine.menu import _UNKNOWN as menu_unknown
     hit = menu_call(state, match.group(1), match.group(2))
@@ -593,9 +725,9 @@ def _token(state: RuntimeState, quoted: str | None, bare: str | None):
         return quoted
     if not bare:
         return None
-    if bare in state.variables:
-        value = state.variables[bare]
-        return "" if value is None else str(value)
+    found = _var(state, bare)
+    if found is not _MISSING:
+        return "" if found is None else str(found)
     return bare
 
 
@@ -732,7 +864,31 @@ def enter_page(state: RuntimeState, hops: int = 8) -> bool:
     for _ in range(hops):
         if not follow(state, run_page_handlers(state, "enterpage")):
             break
+    _reader_score(state)
     return state.index != start
+
+
+def _reader_score(state: RuntimeState) -> None:
+    """P10303's score handler is not stored on the page.
+
+    At reader level the line already says where the percent goes.
+    Author level is the one that still shows XX.
+    """
+    if str(_var(state, "sysLevel")).lower() != "reader" or state.page is None:
+        return
+    from engine.quiz import _percent
+    number = str(_percent(state))
+    for shape in state.page.shapes or []:
+        if (shape.get("name") or "").lower() != "stem":
+            continue
+        text = shape.get("text")
+        if not isinstance(text, str) or "XX" not in text:
+            continue
+        low = text.lower()
+        if "xx%" not in low and "your score is" not in low:
+            continue
+        shape["text"] = text.replace("XX", number)
+        state.variables["__redraw"] = True
 
 
 def press(state: RuntimeState, label: str = "", target: str = "") -> bool:

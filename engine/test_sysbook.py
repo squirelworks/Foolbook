@@ -226,6 +226,46 @@ end'''
         self.assertEqual(ink["Selection T"], "#000000")
         self.assertEqual(ink["Exit"], "#000000")
 
+    def test_reader_level_greets_the_student(self):
+        from foolbook.model import Handler
+        from engine.engine import enter_page
+        source = '''if syslevel = reader then
+\tset text of field "First" to "Hello" && getFirst() & ", this lesson is about:"
+else
+\tset text of field "First" to "Hello, this lesson is about:"
+end if
+get setSection("Intro")
+forward'''
+        field = {"name": "first", "kind": "text", "text": "stored"}
+        page = Page(id="P10", handlers=[Handler(name="enterPage", source=source)], shapes=[field])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[page]))
+        state.variables["sysLevel"] = "reader"
+        enter_page(state)
+        self.assertEqual(field["text"], "Hello Student, this lesson is about:")
+        field["text"] = "stored"
+        state.variables["__studentFirst"] = " Ada "
+        enter_page(state)
+        self.assertEqual(field["text"], "Hello Ada, this lesson is about:")
+        field["text"] = "stored"
+        state.variables["sysLevel"] = "author"
+        enter_page(state)
+        self.assertEqual(field["text"], "Hello, this lesson is about:")
+
+    def test_the_score_line_is_filled_when_the_page_opens(self):
+        from engine.engine import enter_page
+        line = "The test is complete and your score is XX%.  Do you want to _________"
+        field = {"name": "Stem", "kind": "text", "text": line}
+        page = Page(id="P10303", shapes=[field])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[page]))
+        state.variables["__quizScore"] = {1: 100, 2: 0}
+        state.variables["__quizCount"] = 2
+        enter_page(state)
+        self.assertEqual(field["text"], "The test is complete and your score is 50%.  Do you want to _________")
+        field["text"] = line
+        state.variables["sysLevel"] = "author"
+        enter_page(state)
+        self.assertEqual(field["text"], line)
+
 
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):

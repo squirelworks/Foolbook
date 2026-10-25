@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r17 — 2026-10-25
+
+- A coloured letter is drawn once, at the width of the letters before it. A word that was fitted to its field keeps that size.
+- The pale field behind a chip stays behind the pins and the number. P10 greets the student. The end of a test shows the score instead of XX.
+
 ## 1.0.7r16 — 2026-10-25
 
 - A quiz letter is not coloured in before it is chosen. OK, Next, Skip and Back leave a question that was opened from the page list.
