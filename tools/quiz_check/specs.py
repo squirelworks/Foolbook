@@ -186,4 +186,16 @@ SPECS = [
      "steps": [{"goto": "P10004"}, {"set": {"__quizTimed": 1, "__quizTimeLimit": 2, "__quizTimeType": 0}},
                {"click": "selection1", "kind": "button", "expect": {"has_prop": "QuestionNo"}},
                {"wait": 0.2, "expect": {"text_contains": {"Time": ":"}}}]},
+    # ---- reveal on double-click (PLC lesson 9395N200) ------------------------------------------------------
+    {"name": "reveal_double_click_question_mark", "type": "reveal", "book": "9395N200",
+     "doc": "P2700: double-click '?' hides it and shows the Response field (buttonDoubleClick)",
+     "steps": [{"goto": "P2700"},
+               {"dblclick": "questionmark", "kind": "text",
+                "expect": {"visible": {"questionmark": False, "response": True}}}]},
+
+    # ---- objectives already at 100 are not offered for review (getObjectiveScore) -----------------------------
+    {"name": "review_list_hides_objectives_at_100", "type": "review", "book": "93951303",
+     "doc": "P10410 after ten right answers: both Review links are hidden (getObjectiveScore(i) = 100)",
+     "steps": _begin("93951303") + [step for _ in range(10) for step in ({"answer": "right"}, {"click": "OK", "kind": "button"})] + [
+         {"goto": "P10410", "expect": {"visible": {"Review 1": False, "Review 2": False}}}]},
 ]

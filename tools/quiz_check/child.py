@@ -228,6 +228,14 @@ class Driver:
         subprocess.run(["xdotool", "mousemove", str(x), str(y), "click", "1"], check=True)
         pump(14)
 
+    def dblclick(self, name, kind=None, nth=0):
+        shape = self.shape(name, kind, nth)
+        if shape is None:
+            raise LookupError(f"no visible object {name!r} on {self.page.id}")
+        x, y = self.screen_xy(shape)
+        subprocess.run(["xdotool", "mousemove", str(x), str(y), "click", "--repeat", "2", "--delay", "80", "1"], check=True)
+        pump(16)
+
     def click_xy(self, px, py):
         v = self.view
         x = self.gfx.winfo_rootx() + v["ox"] + (px - v["x0"]) * v["scale"]
@@ -344,6 +352,15 @@ def run_steps():
                 d.goto(step["goto"])
             elif "click" in step:
                 d.click(step["click"], step.get("kind"), step.get("nth", 0))
+            elif "answer" in step:
+                # click the letter this question's own Answer property names (right) or any other one (wrong)
+                right = str(((d.page.raw or {}).get("props") or {}).get("Answer") or "").upper()
+                letters = [n for n in "ABCDE" if d.shape(n, "button")]
+                pick = right if step["answer"] in (True, "right") else next((n for n in letters if n != right), right)
+                row["picked"] = pick
+                d.click(pick, "button")
+            elif "dblclick" in step:
+                d.dblclick(step["dblclick"], step.get("kind"), step.get("nth", 0))
             elif "click_xy" in step:
                 d.click_xy(*step["click_xy"])
             elif "type" in step:
