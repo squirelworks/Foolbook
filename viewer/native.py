@@ -368,7 +368,19 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         # A typed key goes to the field that was clicked, or to the quiz question on the page.
         if not fields.handle_key(state, event.keysym, event.char):
             # Not a field: the book's keyChar passes it to handleQuizKey.
-            from engine.quiz import key_letter
+            from engine.quiz import key_letter, ok_button
+            if event.keysym in ("Return", "KP_Enter"):
+                # keyEnter: send buttonClick to button "OK" of the page.
+                ok = ok_button(state)
+                if ok is None:
+                    return None
+                _activate(ok)
+                if state.variables.pop("__beep", None):
+                    try:
+                        root.bell()
+                    except tk.TclError:
+                        pass
+                return "break"
             if not (event.char and key_letter(state, event.char)):
                 return None
         if state.variables.pop("__beep", None):
