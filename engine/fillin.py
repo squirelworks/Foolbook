@@ -66,6 +66,8 @@ def call(state, name: str, args: str):
         return _save_embedded(state, _args(args))
     if key == "incorrectfillin":
         return _incorrect_fill_in(state, _args(args))
+    if key == "incorrectembedded":
+        return _incorrect_embedded(state)
     if key == "setupandgoto":
         return _setup_and_goto(state, _args(args))
     return _UNKNOWN
@@ -217,6 +219,20 @@ def _save_embedded(state, args: list[str]) -> int:
     )
     state.variables["__embeddedTries"] = 0
     return 0
+
+
+def _incorrect_embedded(state) -> int:
+    """IncorrectEmbedded, as nc81test.sbk writes it.
+
+        increment(__embeddedTries)
+        return __embeddedTries
+
+    The page's own script then goes to the try-again page. The count is what
+    saveEmbedded divides 100 by when the right answer finally comes.
+    """
+    count = tries(state) + 1
+    state.variables["__embeddedTries"] = count
+    return count
 
 
 def _incorrect_fill_in(state, args: list[str]):
