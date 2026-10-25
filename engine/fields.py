@@ -69,6 +69,16 @@ def focus(state, shape: dict) -> None:
     state.variables["__redraw"] = True
 
 
+def focus_named(state, name: str) -> bool:
+    """`set focus to field "response 2"`: the keyboard moves to that field of this page."""
+    page = state.page
+    for shape in (page.shapes if page is not None else None) or []:
+        if (shape.get("kind") or "") == "text" and (shape.get("name") or "").lower() == name.lower():
+            focus(state, shape)
+            return True
+    return False
+
+
 def blur(state) -> None:
     shape = state.variables.pop("__focus", None)
     if shape is not None:
