@@ -7,11 +7,15 @@ the keyboard focus, and the keys that follow edit its text:
   BackSpace removes the last character
   Return is taken by the field (nothing else on the window reacts to it)
 
+Each key is first given to the field's own keyChar handler, as `key`, the
+character code. The key goes in only when that handler forwards it, which is
+how a numeric field refuses a letter.
+
 The caret is always at the end of the text. Moving it inside the text is
 not read yet.
 
-What a field's own keyChar and keyUp scripts do with these keys is not run
-here. That is separate behaviour and has its own change.
+The field's keyUp script is not run here. That is separate behaviour and has
+its own change.
 """
 
 from __future__ import annotations
@@ -73,19 +77,53 @@ def blur(state) -> None:
         state.variables["__redraw"] = True
 
 
+def key_code(keysym: str, char: str) -> int:
+    """The number a keyChar handler gets as `key`. 0 when the key is not a character."""
+    if keysym == "BackSpace":
+        return 8
+    if keysym in ("Return", "KP_Enter"):
+        return 13
+    if char and len(char) == 1 and ord(char) >= 32 and ord(char) != 127:
+        return ord(char)
+    return 0
+
+
+def allowed(state, shape: dict, code: int) -> bool:
+    """Run the field's own keyChar handler. The key goes in only if it forwards.
+
+    A field with no keyChar handler takes every key.
+    """
+    from engine.engine import one_handler, run_handler
+    body = one_handler(shape.get("script") or "", "keyChar")
+    if not body:
+        return True
+    saved = state.variables.get("key")
+    state.variables["key"] = code
+    try:
+        actions = run_handler(state, body)
+    finally:
+        if saved is None:
+            state.variables.pop("key", None)
+        else:
+            state.variables["key"] = saved
+    return any(action.get("kind") == "forward" for action in actions)
+
+
 def handle_key(state, keysym: str, char: str) -> bool:
     """One key press for the focused field. True when the field took it."""
     from engine.engine import set_shape_text
     shape = focused(state)
     if shape is None:
         return False
+    code = key_code(keysym, char)
+    if not code:
+        return False
+    # Every key asks keyChar first, Return too. Return is not text.
+    if not allowed(state, shape, code):
+        return True
     text = str(shape.get("text") or "")
-    if keysym == "BackSpace":
+    if code == 8:
         set_shape_text(state, shape, text[:-1])
-        return True
-    if keysym in ("Return", "KP_Enter"):
-        return True
-    if char and len(char) == 1 and ord(char) >= 32 and ord(char) != 127:
-        set_shape_text(state, shape, text + char)
-        return True
-    return False
+    elif code != 13:
+        set_shape_text(state, shape, text + chr(code))
+    return True

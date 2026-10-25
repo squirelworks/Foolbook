@@ -367,6 +367,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         # A typed key goes to the field that was clicked, and to nothing else.
         if not fields.handle_key(state, event.keysym, event.char):
             return None
+        if state.variables.pop("__beep", None):
+            try:
+                root.bell()
+            except tk.TclError:
+                pass
         if state.variables.pop("__redraw", None):
             _paint()
         return "break"
