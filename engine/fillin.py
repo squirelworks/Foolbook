@@ -24,6 +24,8 @@ false (with a beep) for every other key.
 
 from __future__ import annotations
 
+import re
+
 _UNKNOWN = object()
 
 KEY_BACK = 8
@@ -44,6 +46,16 @@ def call(state, name: str, args: str):
         return _setup_fields(state, 25, form=False)
     if key == "setupformfields":
         return _setup_fields(state, 12, form=True)
+    if key == "asym_isnumber":
+        return is_number(_text(state, _args(args)[:1]))
+    if key == "asym_isalphabetic":
+        return is_alphabetic(_text(state, _args(args)[:1]))
+    if key == "saveembedded":
+        return _save_embedded(state, _args(args))
+    if key == "incorrectfillin":
+        return _incorrect_fill_in(state, _args(args))
+    if key == "setupandgoto":
+        return _setup_and_goto(state, _args(args))
     return _UNKNOWN
 
 
@@ -93,3 +105,92 @@ def _setup_fields(state, count: int, form: bool) -> int:
         if form:
             shape["outline"] = "#ffff00"
     return 0
+
+
+_NUMBER = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)")
+
+
+def is_number(text: str) -> bool:
+    """ASYM_IsNumber: an optional sign, digits and at most one point.
+
+    ASYM_IsNumber is a ToolBook runtime function that no book defines, so
+    this is an assumption: it is the plainest reading of a number a numeric
+    field can hold. An empty field, `?`, `7a` and `1-2` are not numbers.
+    """
+    return _NUMBER.fullmatch(text or "") is not None
+
+
+def is_alphabetic(text: str) -> bool:
+    """ASYM_IsAlphabetic: letters only, and at least one (an assumption, as above)."""
+    return bool(text) and text.isascii() and text.isalpha()
+
+
+def _args(text: str) -> list[str]:
+    """The arguments of a call as written, split on commas outside quotes and brackets."""
+    found: list[str] = []
+    cur: list[str] = []
+    quote = ""
+    depth = 0
+    for ch in text or "":
+        if quote:
+            cur.append(ch)
+            if ch == quote:
+                quote = ""
+            continue
+        if ch in "\"'":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        elif ch == "," and depth == 0:
+            found.append("".join(cur).strip())
+            cur = []
+            continue
+        cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail or found:
+        found.append(tail)
+    return found
+
+
+def _text(state, args: list[str]) -> str:
+    from engine.engine import _eval
+    if not args:
+        return ""
+    value = _eval(args[0], state)
+    return "" if value is None else str(value)
+
+
+def _page_arg(state, args: list[str], at: int) -> str:
+    from engine.engine import _eval
+    if at >= len(args):
+        return ""
+    value = _eval(args[at], state)
+    return "" if value is None else str(value)
+
+
+def _save_embedded(state, args: list[str]) -> int:
+    """saveEmbedded(test, question, response).
+
+    The answer is written to the student record in a later change. The call
+    is known here so that a correct answer can be followed to its page.
+    """
+    return 0
+
+
+def _incorrect_fill_in(state, args: list[str]):
+    """IncorrectFillIn(try-again page, reveal page): the try-again page.
+
+    The count of tries and the reveal page are a later change. `lastpage` is
+    where the helper pages return to.
+    """
+    page = state.page
+    state.variables["lastpage"] = page.id if page is not None else ""
+    return _setup_and_goto(state, [args[0]] if args else [])
+
+
+def _setup_and_goto(state, args: list[str]):
+    """setupAndGoto(page): setupAndWait, flushMessageQueue, go to page."""
+    name = _page_arg(state, args, 0)
+    return ("goto", name) if name else 0

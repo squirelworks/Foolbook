@@ -14,8 +14,7 @@ how a numeric field refuses a letter.
 The caret is always at the end of the text. Moving it inside the text is
 not read yet.
 
-The field's keyUp script is not run here. That is separate behaviour and has
-its own change.
+When the key is let go the field's own keyUp handler runs (`key_up`).
 """
 
 from __future__ import annotations
@@ -127,3 +126,29 @@ def handle_key(state, keysym: str, char: str) -> bool:
     elif code != 13:
         set_shape_text(state, shape, text + chr(code))
     return True
+
+
+def key_up(state, keysym: str, char: str) -> list[dict]:
+    """The key was let go. Run the field's own keyUp handler and return its actions.
+
+    The handler gets `key`, the character code, as keyChar did. Return is
+    the key an answer field acts on: its keyUp reads the field, compares the
+    answer and goes to the page that says right or wrong.
+    """
+    from engine.engine import one_handler, run_handler
+    shape = focused(state)
+    if shape is None:
+        return []
+    code = key_code(keysym, char)
+    body = one_handler(shape.get("script") or "", "keyUp")
+    if not code or not body:
+        return []
+    saved = state.variables.get("key")
+    state.variables["key"] = code
+    try:
+        return run_handler(state, body)
+    finally:
+        if saved is None:
+            state.variables.pop("key", None)
+        else:
+            state.variables["key"] = saved
