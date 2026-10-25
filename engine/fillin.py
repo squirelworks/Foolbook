@@ -50,6 +50,18 @@ def call(state, name: str, args: str):
         return is_number(_text(state, _args(args)[:1]))
     if key == "asym_isalphabetic":
         return is_alphabetic(_text(state, _args(args)[:1]))
+    if key == "writeresponse":
+        a = _args(args)
+        return write_response(
+            state, _int(_page_arg(state, a, 0)), _int(_page_arg(state, a, 1)), 0,
+            _page_arg(state, a, 2), _int(_page_arg(state, a, 3)),
+        )
+    if key == "writeresponseb":
+        a = _args(args)
+        return write_response(
+            state, _int(_page_arg(state, a, 0)), _int(_page_arg(state, a, 1)), _int(_page_arg(state, a, 2)),
+            _page_arg(state, a, 3), _int(_page_arg(state, a, 4)),
+        )
     if key == "saveembedded":
         return _save_embedded(state, _args(args))
     if key == "incorrectfillin":
@@ -170,24 +182,97 @@ def _page_arg(state, args: list[str], at: int) -> str:
     return "" if value is None else str(value)
 
 
-def _save_embedded(state, args: list[str]) -> int:
-    """saveEmbedded(test, question, response).
+def _int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
-    The answer is written to the student record in a later change. The call
-    is known here so that a correct answer can be followed to its page.
+
+def tries(state) -> int:
+    """`__embeddedTries`: the wrong answers so far, kept across pages."""
+    return _int(state.variables.get("__embeddedTries"))
+
+
+def _save_embedded(state, args: list[str]) -> int:
+    """saveEmbedded(test, question, response), as nc81test.sbk writes it.
+
+        increment(__embeddedTries)
+        score = 100.00 / __embeddedTries
+        writeResponse(test, question, response, score)
+        __embeddedTries = 0
+
+    So the score is 100 on the first try, 50 after one miss, 33 after two.
     """
+    count = tries(state) + 1
+    # An int takes the real quotient rounded (an assumption: 100/3 is 33 either way).
+    score = int(100.0 / count + 0.5)
+    write_response(
+        state,
+        _int(_page_arg(state, args, 0)),
+        _int(_page_arg(state, args, 1)),
+        0,
+        _page_arg(state, args, 2),
+        score,
+    )
+    state.variables["__embeddedTries"] = 0
     return 0
 
 
 def _incorrect_fill_in(state, args: list[str]):
-    """IncorrectFillIn(try-again page, reveal page): the try-again page.
+    """IncorrectFillIn(try-again page, reveal page), as nc81test.sbk writes it.
 
-    The count of tries and the reveal page are a later change. `lastpage` is
-    where the helper pages return to.
+        increment(__embeddedTries)
+        if __embeddedTries >= 3 then  __embeddedTries = 0 ; setupAndGoto(page2)
+        else                          lastpage = name of this page ; setupAndGoto(page1)
+
+    A wrong answer records nothing. The third one shows the reveal page.
     """
+    count = tries(state) + 1
+    state.variables["__embeddedTries"] = count
+    if count >= 3:
+        state.variables["__embeddedTries"] = 0
+        return _setup_and_goto(state, args[1:2])
     page = state.page
     state.variables["lastpage"] = page.id if page is not None else ""
-    return _setup_and_goto(state, [args[0]] if args else [])
+    return _setup_and_goto(state, args[:1])
+
+
+def _type_number(question: int) -> int:
+    """The record type writeResponseB gives a question number."""
+    if 0 <= question < 100:
+        return 1
+    if 100 <= question < 150:
+        return 2
+    if 150 <= question < 200:
+        return 3
+    if 200 <= question < 250:
+        return 4
+    if question > 32000:
+        return 32
+    return 3
+
+
+def write_response(state, test: int, question: int, part: int, response: str, score: int) -> int:
+    """writeResponse / writeResponseB.
+
+    The book does nothing unless `__studentRecords` is not 0. Otherwise it
+    calls RecWriteResponse in nc81rec.dll, a Windows library this reader does
+    not have. The record is kept in `__responses`, one dict per answer, with
+    the same fields the DLL is given.
+    """
+    if not _int(state.variables.get("__studentRecords")):
+        return 0
+    state.variables.setdefault("__responses", []).append({
+        "student": state.variables.get("__studentIndex", ""),
+        "type": _type_number(question),
+        "test": test,
+        "question": question,
+        "part": part,
+        "response": response,
+        "score": score,
+    })
+    return 0
 
 
 def _setup_and_goto(state, args: list[str]):
