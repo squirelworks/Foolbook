@@ -193,9 +193,29 @@ SPECS = [
                {"dblclick": "questionmark", "kind": "text",
                 "expect": {"visible": {"questionmark": False, "response": True}}}]},
 
+    # ---- groups: hide group / show group / set visible of group / visible of group ----------------------------
+    {"name": "group_step_reveal", "type": "group", "book": "93950605",
+     "doc": "P430 hides groups 2-4 on entry; Next (reader level, group 4 hidden) shows them all, a second Next leaves the page",
+     "steps": [{"goto": "P430", "expect": {"group_visible": {"2": False, "3": False, "4": False}}},
+               {"click": "Next", "kind": "button", "expect": {"page": "P430", "group_visible": {"2": True, "3": True, "4": True}}},
+               {"click": "Next", "kind": "button", "expect": {"page": "P440"}}]},
+    {"name": "group_final_frame_of_timed_reveal", "type": "group", "book": "93950506",
+     "doc": "P2950 shows group 1, 2, 3, 4 in turn with pauses; the picture that stays is group 4",
+     "steps": [{"goto": "P2950", "expect": {"group_visible": {"1": False, "2": False, "3": False, "4": True}}}]},
+    # ---- objects the file stores as hidden ------------------------------------------------------------------
+    {"name": "hidden_field_is_loaded", "type": "hidden", "book": "9395N200",
+     "doc": "P2700: the Response field is stored hidden; it has to be among the page's objects, still not shown",
+     "steps": [{"goto": "P2700", "expect": {"hidden": {"response": True}, "visible": {"questionmark": True}}}]},
     # ---- objectives already at 100 are not offered for review (getObjectiveScore) -----------------------------
     {"name": "review_list_hides_objectives_at_100", "type": "review", "book": "93951303",
      "doc": "P10410 after ten right answers: both Review links are hidden (getObjectiveScore(i) = 100)",
      "steps": _begin("93951303") + [step for _ in range(10) for step in ({"answer": "right"}, {"click": "OK", "kind": "button"})] + [
-         {"goto": "P10410", "expect": {"visible": {"Review 1": False, "Review 2": False}}}]},
+         {"goto": "P10410", "expect": {"group_visible": {"Review 1": False, "Review 2": False}}}]},
+    {"name": "review_list_keeps_objective_below_100", "type": "review", "book": "93951303",
+     "doc": "P10410 after one wrong answer in the first objective: Review 1 stays, Review 2 (all right) goes",
+     "steps": _begin("93951303") + [{"answer": "wrong"}, {"click": "OK", "kind": "button"}] + [step for _ in range(9) for step in ({"answer": "right"}, {"click": "OK", "kind": "button"})] + [
+         {"goto": "P10410", "expect": {"group_visible": {"Review 1": True, "Review 2": False}}}]},
+    {"name": "hidden_try_again_and_correct_groups_start_hidden", "type": "hidden", "book": "93950404",
+     "doc": "P1720: the TRY AGAIN! and CORRECT! boxes are stored in hidden groups; neither shows when the question opens",
+     "steps": [{"goto": "P1720", "expect": {"group_visible": {"TryAgain": False, "correct": False}}}]},
 ]
