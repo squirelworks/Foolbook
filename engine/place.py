@@ -60,6 +60,86 @@ def in_front(shapes: list[dict]) -> list[dict]:
     return [shape for _index, shape in sorted(enumerate(shapes), key=rank)]
 
 
+def _contains(shape, x: float, y: float) -> bool:
+    left, top = float(shape.get("x") or 0), float(shape.get("y") or 0)
+    return left <= x <= left + float(shape.get("w") or 0) and top <= y <= top + float(shape.get("h") or 0)
+
+
+def _paper(shape) -> bool:
+    """The page fill is the paper, not a control."""
+    return (
+        (shape.get("kind") or "") == "rect"
+        and float(shape.get("w") or 0) > 500
+        and float(shape.get("h") or 0) > 400
+        and not (shape.get("script") or shape.get("item"))
+    )
+
+
+def shapes_at(shapes, x: float, y: float) -> list:
+    """Front to back, the objects under this page point."""
+    found = []
+    for shape in reversed(in_front(shapes)):
+        if shape.get("visible") is False or _paper(shape):
+            continue
+        if _contains(shape, x, y):
+            found.append(shape)
+    return found
+
+
+def click_target(shapes, x: float, y: float):
+    """The object a click runs.
+
+    "- Begin" is a field with no buttonClick of its own. The click is
+    the button underneath. A field that handles the click keeps it.
+    """
+    found = shapes_at(shapes, x, y)
+    if not found:
+        return None
+    top = found[0]
+    script = top.get("script") or ""
+    if (top.get("kind") or "") == "text" and "buttonclick" not in script.lower():
+        for shape in found[1:]:
+            if "buttonclick" in (shape.get("script") or "").lower():
+                return shape
+    return top
+
+
+def blank_book_lines(lines, book_name: str = "") -> list[dict]:
+    """Words for a page that stored text and no shapes.
+
+    The core nida81 stub is that kind of page. A white window is how a
+    missing nida81.tbk looks. The words are what the stub actually has.
+    """
+    words = [str(line).strip() for line in lines or [] if str(line).strip()]
+    if not words:
+        return []
+    shapes = []
+    y = 16
+    if str(book_name).lower().endswith("nida81.fsk"):
+        shapes.append({
+            "kind": "text",
+            "x": 24,
+            "y": y,
+            "w": 640,
+            "h": 36,
+            "text": "nida81.tbk is not beside the lesson. This page has the words only.",
+            "size": 12,
+        })
+        y = 56
+    for line in words:
+        shapes.append({
+            "kind": "text",
+            "x": 24,
+            "y": y,
+            "w": 640,
+            "h": 80,
+            "text": line,
+            "size": 12,
+        })
+        y += 88
+    return shapes
+
+
 def tighten(text: str) -> str:
     """Drop the padding a justified line stored as a run of spaces."""
     import re

@@ -329,6 +329,13 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
     if picture:
         shape["kind"] = "image"
         shape["data"] = picture
+    invert = _png(obj.get("invert_bmp"), bool(obj.get("transparent")))
+    if invert:
+        shape["invert_data"] = invert
+    chosen = _png(obj.get("checked_bmp"), bool(obj.get("transparent")))
+    if chosen:
+        # The face a choice turns on. The page does not start on it.
+        shape["checked_data"] = chosen
     return shape
 
 

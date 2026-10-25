@@ -12,8 +12,8 @@ from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.place import fit_view, page_box, place_window
-from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script
+from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines
+from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -180,6 +180,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
                 "fill": "", "outline": "black", "item": item, "visible": True,
             })
             y += 36
+        if not objects:
+            name = ""
+            if state.book is not None and state.book.path:
+                name = Path(state.book.path).name
+            objects.extend(blank_book_lines(getattr(page, "text", None), name))
         return objects
 
     def _redraw(window=None):
@@ -275,37 +280,67 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         _schedule_fit()
 
-    def _hit(event):
-        page = state.page
-        if page is None or view["scale"] == 0:
+    def _page_xy(event):
+        if view["scale"] == 0:
             return None
-        x = (event.x - view["ox"]) / view["scale"] + view["x0"]
-        y = (event.y - view["oy"]) / view["scale"] + view["y0"]
-        from engine.place import in_front
-        for obj in reversed(in_front(_objects(page))):
-            if obj.get("visible") is False:
-                continue
-            kind = obj.get("kind")
-            # The page fill is the paper, not a control. A click on it is the page.
-            if (
-                kind == "rect"
-                and (obj.get("w") or 0) > 500
-                and (obj.get("h") or 0) > 400
-                and not (obj.get("script") or obj.get("item"))
-            ):
-                continue
-            left, top = obj.get("x") or 0, obj.get("y") or 0
-            if left <= x <= left + (obj.get("w") or 0) and top <= y <= top + (obj.get("h") or 0):
-                return obj
-        return None
+        return (
+            (event.x - view["ox"]) / view["scale"] + view["x0"],
+            (event.y - view["oy"]) / view["scale"] + view["y0"],
+        )
 
-    def on_canvas(event):
+    def _run_named(obj, name: str) -> None:
+        if not obj:
+            return
+        body = one_handler(obj.get("script") or "", name)
+        if body:
+            run_handler(state, body)
+
+    def on_press(event):
         page = state.page
+        point = _page_xy(event)
+        if page is None or point is None:
+            return
+        x, y = point
+        found = shapes_at(_objects(page), x, y)
+        top = found[0] if found else None
+        target = click_target(_objects(page), x, y)
+        held["press"] = (top, target)
+        seen = set()
+        for item in (top, target):
+            if item is None or id(item) in seen:
+                continue
+            seen.add(id(item))
+            _run_named(item, "buttonDown")
+        if state.variables.get("__redraw"):
+            _paint()
+
+    def on_release(event):
+        page = state.page
+        top, target = held.get("press") or (None, None)
+        held["press"] = None
         if page is None:
             return
-        obj = _hit(event)
+        seen = set()
+        for item in (top, target):
+            if item is None or id(item) in seen:
+                continue
+            seen.add(id(item))
+            _run_named(item, "buttonUp")
+        point = _page_xy(event)
+        still = shapes_at(_objects(page), *point) if point else []
+        if target is None or target not in still:
+            if state.variables.pop("__redraw", None):
+                _paint()
+            return
+        _activate(target)
+        if state.variables.pop("__beep", None):
+            try:
+                root.bell()
+            except tk.TclError:
+                pass
+
+    def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
-        # A letter is the choice. The page script reads it when OK is clicked.
         picked = ((obj or {}).get("name") or "").upper()
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
@@ -314,10 +349,14 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         moved = False
         if script:
             moved = follow(state, run_handler(state, script))
-        # A picture with no handler of its own forwards to the page.
-        # That is P0's send next, and the quiz background's handleQuizClick.
         if not moved:
             moved = follow(state, run_page_handlers(state, "buttonclick"))
+        if not moved and picked in ("OK", "NEXT", "SKIP", "BACK", "HELP"):
+            from engine.quiz import call
+            result = call(state, "handleQuizClick", f'"{picked}"')
+            if isinstance(result, tuple) and result and result[0] == "goto" and result[1]:
+                book = result[2] if len(result) > 2 else None
+                moved = follow(state, [{"kind": "goto", "page": result[1], "book": book}])
         if state.variables.pop("__exit", None):
             root.destroy()
             return
@@ -339,7 +378,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         show(state.index)
 
     gfx.bind("<Configure>", _on_configure)
-    gfx.bind("<Button-1>", on_canvas)
+    gfx.bind("<ButtonPress-1>", on_press)
+    gfx.bind("<ButtonRelease-1>", on_release)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
     show(idx.get())
     root.mainloop()

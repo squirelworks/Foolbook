@@ -148,7 +148,16 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 if shape.get("text"):
                     canvas.create_text(x + 4, y + 2, text=str(shape.get("text")), anchor="nw", fill=fill or "black")
         elif kind == "image":
-            photo = _photo(canvas, shape, base)
+            shown = shape
+            face = ""
+            if shape.get("invert") and shape.get("invert_data"):
+                face = shape["invert_data"]
+            elif shape.get("checked") and shape.get("checked_data"):
+                face = shape["checked_data"]
+            if face:
+                shown = dict(shape)
+                shown["data"] = face
+            photo = _photo(canvas, shown, base)
             if photo is not None:
                 photos.append(photo)
                 x, y, _w, _h = _box(shape)
@@ -156,11 +165,6 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         else:
             x, y, w, h = _box(shape)
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
-    for shape in shapes:
-        if not shape.get("checked") or shape.get("visible") is False or shape.get("kind") == "text":
-            continue
-        x, y, w, h = _box(shape)
-        canvas.create_rectangle(x, y, x + w, y + h, fill="#91ffff", outline="")
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
 

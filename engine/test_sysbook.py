@@ -80,6 +80,13 @@ class ButtonScripts(unittest.TestCase):
         self.assertIs(state.book, lesson)
         self.assertEqual(state.page.id, "P100")
 
+    def test_a_missing_page_does_not_leave_the_lesson(self):
+        lesson = Book(path="/courses/9e954d01.tbk", title="9e954d01", pages=[Page(id="P300")])
+        state = RuntimeState(book=lesson, index=0)
+        self.assertFalse(open_book(state, "nida81.tbk", "PNOPE"))
+        self.assertIs(state.book, lesson)
+        self.assertEqual(state.page.id, "P300")
+
     def test_the_menu_goes_to_p900_and_the_final_quiz_to_p10004(self):
         lesson = Book(path="x", title="t", pages=[
             Page(id="P450"), Page(id="P900"), Page(id="P10003"), Page(id="P10004"),
@@ -147,6 +154,11 @@ class ButtonScripts(unittest.TestCase):
         state.variables["__quizPass"] = 1
         state.variables["__choice"] = ""
         self.assertEqual(call(state, "handleQuizClick", "OK"), 0)
+        self.assertTrue(state.variables.get("__beep"))
+        state.variables["__quizIndex"] = 1
+        state.variables["__quizMode"] = 0
+        self.assertEqual(call(state, "handleQuizClick", "Skip"), 0)
+        self.assertEqual(state.variables["__quizIndex"], 1)
 
     def test_the_end_page_shows_the_percent_and_review_is_a_choice(self):
         from engine.engine import run_handler, follow
@@ -266,6 +278,26 @@ forward'''
         enter_page(state)
         self.assertEqual(field["text"], "Hello Student, this lesson is about:")
         self.assertEqual(field["runs"][0]["end"], len(field["text"]))
+
+    def test_invert_sinks_the_button_and_a_list_question_still_moves(self):
+        from foolbook.model import Handler
+        from engine.engine import run_handler, follow, one_handler
+        button = {"kind": "image", "name": "selection1", "invert_data": "down", "data": "up"}
+        label = {
+            "kind": "text", "name": "selection1",
+            "script": 'to handle buttonDown\nset invert of button "Selection1" to true\nend\nto handle buttonUp\nset invert of button "Selection1" to false\nend\n',
+        }
+        pages = [Page(id="P10219", shapes=[button, label]), Page(id="P10220")]
+        state = RuntimeState(book=Book(path="x", title="t", pages=pages))
+        run_handler(state, one_handler(label["script"], "buttonDown"))
+        self.assertTrue(button.get("invert"))
+        run_handler(state, one_handler(label["script"], "buttonUp"))
+        self.assertFalse(button.get("invert"))
+        state.variables["target"] = "OK"
+        source = 'get handleQuizClick(target)'
+        actions = run_handler(state, source)
+        self.assertTrue(follow(state, actions))
+        self.assertEqual(state.page.id, "P10220")
 
     def test_an_unknown_book_property_does_not_wipe_the_version(self):
         from foolbook.model import Handler

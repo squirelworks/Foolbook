@@ -53,6 +53,10 @@ _FIELD_TEXT = re.compile(
     r'text\s+of\s+(?:field|button)\s+"([^"]+)"',
     re.IGNORECASE,
 )
+_INVERT = re.compile(
+    r'invert\s+of\s+button\s+"([^"]+)"',
+    re.IGNORECASE,
+)
 
 
 _TO_HANDLE = re.compile(
@@ -98,6 +102,15 @@ def _strip_handler_end(body: str) -> str:
     if cut is None:
         return body
     return "\n".join(lines[:cut])
+
+
+def one_handler(script: str, name: str) -> str:
+    """The body of one `to handle` in a script that holds several."""
+    want = (name or "").lower()
+    for handler in split_handlers(script or ""):
+        if handler.name.lower() == want:
+            return handler.source
+    return ""
 
 
 def click_script(obj: dict | None) -> str:
@@ -520,9 +533,23 @@ def _split_join(expr: str, op: str) -> list[str] | None:
 
 
 def _apply_set(state: RuntimeState, target: str, value) -> None:
-    """set text of field "First" changes the field the window draws."""
-    match = _FIELD_TEXT.search(target or "")
+    """set text of field "First" changes the field the window draws.
+
+    set invert of button "Selection1" to true sinks that button. The
+    checked picture is not this face.
+    """
     page = state.page
+    invert = _INVERT.search(target or "")
+    if invert is not None and page is not None:
+        flag = value if isinstance(value, bool) else str(value).lower() not in ("", "false", "0", "none")
+        name = invert.group(1).lower()
+        for shape in page.shapes or []:
+            if (shape.get("name") or "").lower() != name or (shape.get("kind") or "") == "text":
+                continue
+            shape["invert"] = flag
+        state.variables["__redraw"] = True
+        return
+    match = _FIELD_TEXT.search(target or "")
     if match is None or page is None:
         return
     text = "" if value is None else str(value)
@@ -781,6 +808,8 @@ def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
     book still on the shelf, not a file searched for again.
     """
     from engine.loader import load, find_book
+    previous_book = state.book
+    previous_index = state.index
     _remember(state)
     book = _shelved(state, book_name)
     fresh = book is None
@@ -799,6 +828,12 @@ def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
         enter_book(state)
     if page_id:
         ok = goto(state, page_id, leave=False)
+        if not ok:
+            # The other book is open, but the page is not in it. Stay here.
+            state.book = previous_book
+            state.index = previous_index
+            _remember(state)
+            return False
         _remember(state)
         return ok
     _remember(state)

@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import clip_to_page, content_box, fit_view, in_front, place_page, place_window
+from engine.place import clip_to_page, click_target, content_box, fit_view, in_front, place_page, place_window
 
 
 class PlaceTests(unittest.TestCase):
@@ -105,6 +105,30 @@ class WindowTests(unittest.TestCase):
         dot = {"kind": "polygon", "x": 200, "y": 0, "w": 4, "h": 4}
         ordered = in_front([lone, dot])
         self.assertIs(ordered[-1], lone)
+
+    def test_the_begin_label_clicks_the_button_under_it(self):
+        label = {
+            "kind": "text", "name": "selection1", "x": 110, "y": 80, "w": 180, "h": 20,
+            "script": 'to handle buttonDown\nset invert of button "selection1" to true\nend\n',
+        }
+        button = {
+            "kind": "image", "name": "selection1", "x": 100, "y": 70, "w": 200, "h": 40,
+            "script": 'to handle buttonClick\nget setupQuizEx("Quiz", 2, "P10301", "P10302", "P10303")\nend\n',
+        }
+        self.assertIs(click_target([button, label], 150, 85), button)
+        word = {"kind": "text", "name": "C", "x": 200, "y": 80, "w": 80, "h": 20, "text": "propagation."}
+        letter = {"kind": "image", "name": "C", "x": 160, "y": 80, "w": 20, "h": 20}
+        self.assertIs(click_target([letter, word], 220, 85), word)
+
+    def test_a_blank_stub_page_keeps_its_words(self):
+        from engine.place import blank_book_lines
+        lines = blank_book_lines(
+            ["INPUT DEVICE - Use your mouse to make selections."],
+            "core/nida81.fsk",
+        )
+        self.assertIn("nida81.tbk", lines[0]["text"])
+        self.assertIn("INPUT DEVICE", lines[1]["text"])
+        self.assertEqual(blank_book_lines([], "nida81.tbk"), [])
 
 
 

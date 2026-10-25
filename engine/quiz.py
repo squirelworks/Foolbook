@@ -293,11 +293,21 @@ def _click(state, args):
         if not _running(state):
             return _neighbor(state, 1)
         if int(state.variables.get("__quizPass") or 1) in (1, 2) and not state.variables.get("__choice"):
+            # ToolBook beeps and stays. A silent return looks like a stall.
+            state.variables["__beep"] = True
             return 0
         return _next(state, [])
     if name in ("SKIP", "NEXT"):
         if not _running(state):
             return _neighbor(state, 1)
+        # Pass 1 and 2 at Quiz Mode 0 leave Skip disabled. The file still
+        # stores the enabled face, and the setup script is what turns it off.
+        if (
+            name == "SKIP"
+            and int(state.variables.get("__quizMode") or 0) == 0
+            and int(state.variables.get("__quizPass") or 1) in (1, 2)
+        ):
+            return 0
         if name == "SKIP":
             state.variables["__choice"] = ""
         return _next(state, [])

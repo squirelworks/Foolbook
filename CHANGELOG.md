@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7r19 — 2026-10-25
+
+- Begin on P10004 shows the raised face. Holding it shows the down face, and a chosen quiz letter shows its own checked face instead of a flat block.
+- OK with nothing chosen beeps and stays. Skip does not advance on the first pass.
+- A jump to a missing page stays on the lesson. The nida81 stub says the picture book is not beside the lesson, and shows the words it has.
+
 ## 1.0.7r18 — 2026-10-25
 
 - The greeting keeps one face for the whole line, and the score line wraps inside its field.
