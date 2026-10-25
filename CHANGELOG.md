@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r22 — 2026-10-25
+
+- The books a course names are opened in the background, up to three at a time, before a click asks for them. The terminal prints `opening` and the file.
+- A settled export beside the .tbk or .sbk is what opens. A stub is not. The .tbk stays on disk.
+
 ## 1.0.7r21 — 2026-10-25
 
 - `--export` of a folder does the files in that folder first, then the folders inside it. `courses/` was sorting ahead of the books sitting in the folder you named.

@@ -122,6 +122,35 @@ class ButtonScripts(unittest.TestCase):
             self.assertEqual(found.name, "nida81.tbk")
             self.assertEqual(found.read_bytes(), b"original")
 
+    def test_a_settled_export_opens_instead_of_the_tbk(self):
+        from engine.formats import pack
+        from engine.loader import find_book
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "nida81.tbk").write_bytes(b"original")
+            blob = pack(
+                {"pages": [{"id": "P310", "settled": True, "shapes": [{"kind": "image", "data": "abc"}]}]},
+                "fbk",
+                compress=True,
+            )
+            (folder / "nida81.fbk").write_bytes(blob)
+            found = find_book("nida81.tbk", folder / "lesson.tbk")
+            self.assertEqual(found.name, "nida81.fbk")
+
+    def test_a_course_names_the_other_books_it_opens(self):
+        from engine.preload import referenced
+        from foolbook.model import Handler
+        page = Page(
+            id="P1",
+            handlers=[Handler(name="buttonClick", source='go to page "P20001" of book "nida81.tbk"')],
+            shapes=[{"kind": "button", "script": 'go to page "P900" of book "nc81test.sbk"'}],
+        )
+        book = Book(path="9e954d01.tbk", pages=[page])
+        blob = b"noise nida81.tbk TB80R.SBK 2.004.TBK 004.TBK"
+        names = [item.lower() for item in referenced(book, blob)]
+        self.assertEqual(names, ["nida81.tbk", "nc81test.sbk", "tb80r.sbk"])
+
     def test_an_export_keeps_the_picture_and_the_answer(self):
         from foolbook.core import book_record
         from foolbook.model import Book, Page

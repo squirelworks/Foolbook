@@ -812,6 +812,9 @@ def open_book(state: RuntimeState, book_name: str, page_id: str) -> bool:
     previous_index = state.index
     _remember(state)
     book = _shelved(state, book_name)
+    if book is None:
+        from engine.preload import claim
+        book = claim(book_name)
     fresh = book is None
     if fresh:
         found = find_book(book_name, state.book.path)

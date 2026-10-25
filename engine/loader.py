@@ -71,12 +71,18 @@ def find_book(name: str, near: str | Path) -> Path | None:
     for suf in (asked, ".tbk", ".sbk", ".fsk", ".fbk", ".json"):
         if suf in (".tbk", ".sbk", ".fsk", ".fbk", ".json") and suf not in order:
             order.append(suf)
-    # The original file, in any of these directories, before a .fsk or .fbk.
+    # The original file, in any of these directories, before a stub.
+    # A settled export beside that file is the same book, already drawn.
     for suf in order:
         for directory in dirs:
             found = _named(directory, stem, suf)
-            if found is not None:
-                return found
+            if found is None:
+                continue
+            if suf in (".tbk", ".sbk"):
+                exported = _settled_beside(found)
+                if exported is not None:
+                    return exported
+            return found
     return None
 
 
@@ -92,6 +98,48 @@ def _named(directory: Path, stem: str, suf: str) -> Path | None:
         if child.is_file() and child.name.lower() == want:
             return child
     return None
+
+
+def _settled_beside(original: Path) -> Path | None:
+    """An export sitting next to the .tbk or .sbk, if it is a real one."""
+    for suf in (".fbk", ".fsk"):
+        found = _named(original.parent, original.stem, suf)
+        if found is not None and _usable_export(found):
+            return found
+    return None
+
+
+def _usable_export(path: Path) -> bool:
+    """True when the file is an export, not the old stub with no pictures.
+
+    The export marks each page settled. A short or broken copy does not.
+    """
+    import zlib
+    try:
+        stamp = (str(path), path.stat().st_mtime_ns, path.stat().st_size)
+    except OSError:
+        return False
+    cached = _export_ok.get(stamp)
+    if cached is not None:
+        return cached
+    try:
+        blob = path.read_bytes()
+    except OSError:
+        return False
+    ok = False
+    if len(blob) >= 6 and blob[:4] in (b"FBK1", b"FSK1"):
+        payload = blob[5:]
+        if blob[4] & 1:
+            try:
+                payload = zlib.decompress(payload)
+            except zlib.error:
+                payload = b""
+        ok = b'"settled":true' in payload or b'"settled": true' in payload
+    _export_ok[stamp] = ok
+    return ok
+
+
+_export_ok: dict = {}
 
 
 def load(path: str | Path) -> Book:

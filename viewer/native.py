@@ -12,6 +12,7 @@ from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 
 from engine.loader import load
+from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
@@ -43,6 +44,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     A book passed on the command line starts at the first page.
     """
     book = load(path)
+    open_ahead(book)
     course_id = course or Path(path).stem
     progress = Progress(Path(student) if student else _progress_path())
     progress.touch(course_id)
@@ -136,6 +138,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         held["pile"] = []
         held["piles"] = {}
         progress.touch(held["course"])
+        open_ahead(opened)
         show(0)
 
     ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
@@ -396,7 +399,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     gfx.bind("<ButtonRelease-1>", on_release)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
     show(idx.get())
-    root.mainloop()
+    try:
+        root.mainloop()
+    finally:
+        stop_ahead()
     return 0
 
 

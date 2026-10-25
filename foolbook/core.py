@@ -69,6 +69,7 @@ def book_record(book, stem: str) -> dict:
     return {
         "title": book.title or stem,
         "id": stem,
+        "settled": True,
         "handlers": handlers(book.handlers),
         "pages": pages,
     }
