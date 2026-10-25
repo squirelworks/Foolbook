@@ -100,9 +100,9 @@ def _add_pool(state, args):
     return 0
 
 
-def _from_pool(state, words: list[str], count: int) -> int:
+def _from_pool(state, words: list[str], count: int, keep: bool = False) -> int:
     if count > len(words):
-        return -1
+        return 1 if keep else -1
     picked = random.sample(words, count)
     numbers = _numbers(state)
     for word in picked:
@@ -110,6 +110,22 @@ def _from_pool(state, words: list[str], count: int) -> int:
     state.variables["__quizCount"] = len(numbers) - 1
     state.variables["__quizIndex"] = 0
     return 0
+
+
+def _add_questions(state, args):
+    """addQuestions(start, stop, count) as nc81test.sbk writes it (addToRandomSetX).
+
+    `count` different question numbers from start to stop are added after the
+    ones already chosen, and the count of the quiz grows by `count`. It is 1
+    (nothing added) when count is more than the range holds.
+    """
+    if len(args) < 3:
+        return 1
+    start, stop, count = _num(args[0]), _num(args[1]), _num(args[2])
+    if count > stop - start + 1:
+        return 1
+    words = [str(number) for number in range(start, stop + 1)]
+    return _from_pool(state, words, count, keep=True)
 
 
 def _setup_pool(state, _args):
@@ -329,6 +345,7 @@ _CALLS = {
     "clearpool": _clear,
     "addobjectivetopool": _add_pool,
     "setuppool": _setup_pool,
+    "addquestions": _add_questions,
     "gotonextquestionex": _next,
     "gotopreviousquestionex": _previous,
     "handlequizclick": _click,
