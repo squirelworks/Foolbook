@@ -50,7 +50,11 @@ _FILL = re.compile(
 )
 _NAME_OF = re.compile(r'name\s+of\s+this\s+(book|page)', re.IGNORECASE)
 _FIELD_TEXT = re.compile(
-    r'text\s+of\s+(?:field|button)\s+"([^"]+)"',
+    r'\s*(?:the\s+)?text\s+of\s+(?:field|button)\s+"([^"]+)"',
+    re.IGNORECASE,
+)
+_LINE_OF_TEXT = re.compile(
+    r'\s*(?:the\s+)?(?:text)?line\s+(\d+)\s+of\s+text\s+of\s+field\s+"([^"]+)"',
     re.IGNORECASE,
 )
 _INVERT = re.compile(
@@ -127,13 +131,26 @@ def click_script(obj: dict | None) -> str:
     return obj.get("group_script") or ""
 
 
-def run_handler(state: RuntimeState, source: str) -> list[dict]:
-    """Execute a handler source against the current state."""
+def run_handler(state: RuntimeState, source: str, parents: list[str] | None = None) -> list[dict]:
+    """Execute a handler source against the current state.
+
+    ``parents`` are the handlers of the same message further up the
+    hierarchy, nearest first. ``forward`` runs the next one, then the
+    handler goes on with the lines after it. The list is used up as it runs.
+    """
     actions: list[dict] = []
     if not source:
         return actions
     lines = _lines(source)
-    _run_block(state, lines, 0, len(lines), actions)
+    outer = state.variables.get("__parents")
+    state.variables["__parents"] = parents if parents is not None else []
+    try:
+        _run_block(state, lines, 0, len(lines), actions)
+    finally:
+        if outer is None:
+            state.variables.pop("__parents", None)
+        else:
+            state.variables["__parents"] = outer
     return actions
 
 
@@ -199,9 +216,14 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "forward":
             # The message goes on to the object's parent and then to the
-            # default action. A key handler is allowed or refused by this.
+            # default action, and this handler carries on after it. A key
+            # handler is allowed or refused by this.
             actions.append({"kind": "forward"})
-            return i + 1
+            parents = state.variables.get("__parents")
+            if parents:
+                actions.extend(run_handler(state, parents.pop(0), parents))
+            i += 1
+            continue
 
         if low in ("end conditions", "else", "break"):
             return i + 1
@@ -451,10 +473,22 @@ def _eval(expr: str, state: RuntimeState):
     called = _call_value(expr, state)
     if called is not _NOT_A_CALL:
         return called
+    if _has_arithmetic(expr):
+        return _UNRESOLVED
     return expr
 
 
 _MISSING = object()
+# What an expression is worth when this reader cannot work it out. It is
+# not text, so nothing is written from it.
+_UNRESOLVED = object()
+_OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+def _has_arithmetic(expr: str) -> bool:
+    """`(a-b)` and `x+1`: sums that this reader does not do."""
+    bare = re.sub(r'"[^"]*"|\'[^\']*\'', "", expr)
+    return _OPERATOR.search(bare) is not None
 
 
 def _var(state: RuntimeState, name: str):
@@ -477,12 +511,16 @@ def _var(state: RuntimeState, name: str):
 
 def _joined(expr: str, state: RuntimeState):
     """OpenScript & joins two texts. && joins them with one space."""
-    parts = _split_join(expr, "&&")
-    if parts is not None:
-        return " ".join(_as_text(_eval(part, state)) for part in parts)
-    parts = _split_join(expr, "&")
-    if parts is not None:
-        return "".join(_as_text(_eval(part, state)) for part in parts)
+    for op, glue in (("&&", " "), ("&", "")):
+        parts = _split_join(expr, op)
+        if parts is None:
+            continue
+        values = [_eval(part, state) for part in parts]
+        # A part this reader could not work out makes the whole text unknown.
+        for value in values:
+            if value is not None and not isinstance(value, (str, int, float, bool)):
+                return value
+        return glue.join(_as_text(value) for value in values)
     return _MISSING
 
 
@@ -555,7 +593,23 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
             shape["invert"] = flag
         state.variables["__redraw"] = True
         return
-    match = _FIELD_TEXT.search(target or "")
+    # A value this reader could not work out is not text.
+    if value is not None and not isinstance(value, (str, int, float, bool)):
+        return
+    # `textline 3 of text of field "x"` is one line of the text, not all of it.
+    part = _LINE_OF_TEXT.match(target or "")
+    if part is not None and page is not None:
+        number = max(1, int(part.group(1)))
+        name = part.group(2).lower()
+        for shape in page.shapes or []:
+            if (shape.get("name") or "").lower() != name:
+                continue
+            lines = str(shape.get("text") or "").split("\n")
+            lines += [""] * (number - len(lines))
+            lines[number - 1] = "" if value is None else str(value)
+            set_shape_text(state, shape, "\n".join(lines))
+        return
+    match = _FIELD_TEXT.match(target or "")
     if match is None or page is None:
         return
     text = "" if value is None else str(value)
@@ -920,10 +974,11 @@ def run_page_handlers(state: RuntimeState, kind: str = "enterpage") -> list[dict
     if not page:
         return []
     actions: list[dict] = []
-    for h in page.handlers or []:
-        if h.name.lower() != kind.lower():
-            continue
-        actions.extend(run_handler(state, h.source))
+    # The page's handler, then the background's. A forward in the first
+    # runs the next at that line. Whatever is still waiting runs after it.
+    queue = [h.source for h in page.handlers or [] if h.name.lower() == kind.lower()]
+    while queue:
+        actions.extend(run_handler(state, queue.pop(0), queue))
     return actions
 
 
