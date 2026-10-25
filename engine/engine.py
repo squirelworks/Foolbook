@@ -561,16 +561,21 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     for shape in page.shapes or []:
         if (shape.get("name") or "").lower() != name:
             continue
-        old = shape.get("text") or ""
-        runs = shape.get("runs") or []
-        # One run over the whole field is the field's face. A longer
-        # sentence keeps it, or the tail falls back to the record size.
-        if len(runs) == 1:
-            run = runs[0]
-            if int(run.get("start") or 0) <= 0 and int(run.get("end") or 0) >= len(old):
-                run["end"] = len(text)
-        shape["text"] = text
-        state.variables["__redraw"] = True
+        set_shape_text(state, shape, text)
+
+
+def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
+    """Put new text in a field and ask the window to draw it."""
+    old = shape.get("text") or ""
+    runs = shape.get("runs") or []
+    # One run over the whole field is the field's face. A longer
+    # sentence keeps it, or the tail falls back to the record size.
+    if len(runs) == 1:
+        run = runs[0]
+        if int(run.get("start") or 0) <= 0 and int(run.get("end") or 0) >= len(old):
+            run["end"] = len(text)
+    shape["text"] = text
+    state.variables["__redraw"] = True
 
 
 def _cmp(op: str, a, b) -> bool:
@@ -734,6 +739,8 @@ def leave_page(state: RuntimeState) -> None:
     """The page being left. P1910 and P2910 set the menu flag here."""
     if state.page is None:
         return
+    from engine import fields
+    fields.blur(state)
     run_page_handlers(state, "leavepage")
 
 

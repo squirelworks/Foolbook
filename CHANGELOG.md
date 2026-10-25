@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A click on an answer field gives it the keyboard. Typed characters and Backspace edit its text, and a caret shows where the next one goes. 93950101 P2070: click the field after `2 + 5 =`, type 7, and 7 is in the field. Return is taken by the field. What the field's own keyChar and keyUp scripts do with it is not run yet.
+
 ## 1.0.8r1 — 2026-10-25
 
 - The reader depends on the openscript-analysis page-index fix (squirelworks/openscript_analysis#1, commit b5e6726). Every page table of a book is listed. 93950101 shows 301 pages, not 151, and P900 item 3 opens P3001. 9395B302 shows 423 pages, not 0. 93953402 and five other books open instead of showing "(unloadable)".
