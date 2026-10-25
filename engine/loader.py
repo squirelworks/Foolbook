@@ -273,7 +273,7 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
         from openscript_analysis.formats.tbk.expand import decompress
         return decompress(source, keywords or load_keywords())
 
-    stored = read_store(file_bytes, decode if keywords else None)
+    stored = read_store(file_bytes, decode if keywords else None, pictures=False)
     pages = []
     for raw in stored["pages"]:
         shapes = []
@@ -378,6 +378,13 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
     elif points:
         shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
         shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"
+    later = obj.get("later")
+    if later:
+        # The bitmap stays in the file until this page is shown.
+        shape["later"] = tuple(later)
+        shape["transparent"] = bool(obj.get("transparent"))
+        shape["edge"] = obj.get("kind") == "rect"
+        return shape
     picture = _png(obj.get("bmp"), bool(obj.get("transparent")), edge=obj.get("kind") == "rect")
     if picture:
         shape["kind"] = "image"
@@ -414,6 +421,92 @@ def _png(blob: bytes | None, transparent: bool = False, edge: bool = False) -> s
         return base64.b64encode(out.getvalue()).decode("ascii")
     except Exception:
         return ""
+
+
+_drawn: dict = {}
+_open_stores: dict = {}
+
+
+def realize(path: str | Path, shapes: list[dict]) -> None:
+    """Draw the pictures on this page. The rest of the book stays unread."""
+    if not path or not shapes:
+        return
+    pending = [shape for shape in shapes if shape.get("later") and not shape.get("data")]
+    if not pending:
+        return
+    store = _open_store(path)
+    if store is None:
+        return
+    key = str(Path(path))
+    for shape in pending:
+        later = tuple(shape["later"])
+        cached = _drawn.get((key, later))
+        if cached is None:
+            bmp, invert, checked = _later_bmps(store, later)
+            transparent = bool(shape.get("transparent"))
+            cached = (
+                _png(bmp, transparent, edge=bool(shape.get("edge"))),
+                _png(invert, transparent),
+                _png(checked, transparent),
+            )
+            _drawn[(key, later)] = cached
+        picture, invert, checked = cached
+        if picture:
+            shape["kind"] = "image"
+            shape["data"] = picture
+        if invert:
+            shape["invert_data"] = invert
+        if checked:
+            shape["checked_data"] = checked
+        shape.pop("later", None)
+
+
+def realize_book(book) -> None:
+    """Every page. The export wants the pictures in the file."""
+    path = getattr(book, "path", None)
+    if not path:
+        return
+    for page in book.pages or []:
+        realize(path, page.shapes or [])
+
+
+def _open_store(path: str | Path):
+    path = Path(path)
+    if path.suffix.lower() not in (".tbk", ".sbk"):
+        return None
+    found = _open_stores.get(str(path))
+    if found is not None:
+        return found
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if b"\x03JBO" not in data[:0x1000]:
+        return None
+    from openscript_analysis.formats.tbk.store import _Store
+    store = _Store(data)
+    _open_stores[str(path)] = store
+    return store
+
+
+def _later_bmps(store, later: tuple):
+    kind = later[0]
+    if kind == "picture":
+        return store._picture(later[1]), None, None
+    seg = store.segs.get(later[1])
+    if seg is None or len(later) < 3:
+        return None, None, None
+    rec = later[2]
+    if kind == "paint":
+        return store._paint_bmp(seg, rec), None, None
+    if kind != "button":
+        return None, None, None
+    invert = store._button_face(seg, rec, 0x27)
+    words = store._button_words(seg, rec)
+    checked = None
+    if words and words["style"] in (5, 6, 8, 9):
+        checked = store._button_face(seg, rec, 0x4B)
+    return store._button_bmp(seg, rec), invert, checked
 
 
 def _clear_edge(image) -> None:

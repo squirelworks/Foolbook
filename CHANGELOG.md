@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7r23 — 2026-10-25
+
+- A book opens without drawing every picture in it. The page on the screen is the one that is drawn. `?` was waiting on all of nida81.
+- Another course named only as a number, such as 93954302.tbk, is not opened in the background.
+
 ## 1.0.7r22 — 2026-10-25
 
 - The books a course names are opened in the background, up to three at a time, before a click asks for them. The terminal prints `opening` and the file.

@@ -35,23 +35,32 @@ def referenced(book, file_bytes: bytes | None = None) -> list[str]:
             if isinstance(shape, dict):
                 chunks.append(shape.get("script") or "")
                 chunks.append(shape.get("group_script") or "")
-    if file_bytes:
-        chunks.append(file_bytes.decode("latin1", errors="ignore"))
     self_stem = Path(book.path).stem.lower() if getattr(book, "path", None) else ""
     found = []
     seen = set()
-    for chunk in chunks:
+
+    def take(chunk: str, digits: bool) -> None:
         for match in _REF.finditer(chunk or ""):
             name = match.group(0)
             stem = match.group(1).lower()
             key = name.lower()
             if stem == self_stem or key in seen or stem in seen:
                 continue
+            # 93954302.tbk is another course. The help button does not open it.
+            if stem.isdigit() and not digits:
+                continue
             seen.add(key)
             seen.add(stem)
             found.append(name)
             if len(found) >= _LIMIT:
-                return found
+                return
+
+    for chunk in chunks:
+        take(chunk, True)
+        if len(found) >= _LIMIT:
+            return found
+    if file_bytes:
+        take(file_bytes.decode("latin1", errors="ignore"), False)
     return found
 
 

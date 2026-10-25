@@ -147,7 +147,7 @@ class ButtonScripts(unittest.TestCase):
             shapes=[{"kind": "button", "script": 'go to page "P900" of book "nc81test.sbk"'}],
         )
         book = Book(path="9e954d01.tbk", pages=[page])
-        blob = b"noise nida81.tbk TB80R.SBK 2.004.TBK 004.TBK"
+        blob = b"noise nida81.tbk TB80R.SBK 93954302.TBK 2.004.TBK 004.TBK"
         names = [item.lower() for item in referenced(book, blob)]
         self.assertEqual(names, ["nida81.tbk", "nc81test.sbk", "tb80r.sbk"])
 

@@ -46,6 +46,9 @@ def book_record(book, stem: str) -> dict:
     An older export kept the words and dropped the shapes. That file
     then won over the .tbk and the page was blank.
     """
+    from engine.loader import realize_book
+
+    realize_book(book)
 
     def handlers(items):
         return [{"name": h.name, "source": h.source} for h in items if h.name or h.source]
