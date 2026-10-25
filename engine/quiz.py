@@ -324,7 +324,28 @@ def _click(state, args):
     return 0
 
 
+# nc81trnr.sbk getTrainerType: __trainerType 3 is "130E". initializeTrnr reads
+# [Trainer] Type from NIDAREC.INI and uses 3 when there is no such file.
+_TRAINER_TYPES = {-1: "THEORY", 0: "TD2000", 1: "130C", 2: "130A", 3: "130E"}
+
+
+def _trainer_type(state, args):
+    raw = state.variables.get("__trainerType", 3)
+    try:
+        return _TRAINER_TYPES.get(int(raw), "THEORY")
+    except (TypeError, ValueError):
+        return "THEORY"
+
+
+def _trainer_code(state, args):
+    # getTrainerCode looks the code up in NIDA2.INI and returns "" when the
+    # file has none, which is the case with no INI file.
+    return ""
+
+
 _CALLS = {
+    "gettrainertype": _trainer_type,
+    "gettrainercode": _trainer_code,
     "setupquizex": _setup,
     "clearpool": _clear,
     "addobjectivetopool": _add_pool,
