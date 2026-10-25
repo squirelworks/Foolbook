@@ -154,6 +154,11 @@ def _prepare(state, page_id: str, index: int) -> None:
     label = _shape(page, "Index")
     if label is not None:
         label["text"] = f"Question {index}."
+    # setupQuizPage: PageText says Testing, or the page name when
+    # NIDAREC.INI asks to show page numbers (Show Page Numbers, default 0).
+    shown = _shape(page, "PageText")
+    if shown is not None:
+        shown["text"] = page.id if int(state.variables.get("__quizShowPageNumbers") or 0) else "Testing"
 
 
 def _percent(state) -> int:
