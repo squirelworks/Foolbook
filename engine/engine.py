@@ -377,6 +377,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = groups.OBJECT_SHOW.fullmatch(line)
+        if m:
+            groups.set_object_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of object", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
         m = groups.GROUP_SHOW.fullmatch(line)
         if m:
             groups.set_visible(state, m, m.group("verb").lower() == "show")
@@ -517,6 +524,9 @@ def _eval(expr: str, state: RuntimeState):
     m = groups.GROUP_VISIBLE.fullmatch(expr)
     if m:
         return groups.is_visible(state, m)
+    m = groups.OBJECT_VISIBLE.fullmatch(expr)
+    if m:
+        return groups.object_is_visible(state, m)
     m = groups.IS_OBJECT.fullmatch(expr)
     if m:
         return groups.exists(state, m)
@@ -673,6 +683,10 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     shown = groups.GROUP_VISIBLE.fullmatch(target or "")
     if shown is not None:
         groups.set_visible(state, shown, _flag(value))
+        return
+    shown = groups.OBJECT_VISIBLE.fullmatch(target or "")
+    if shown is not None:
+        groups.set_object_visible(state, shown, _flag(value))
         return
     invert = _INVERT.search(target or "")
     if invert is not None and page is not None:
