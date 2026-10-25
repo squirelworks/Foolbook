@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "cryptography",
     "pillow",
-    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@4b8d77b30ab54960acc075f06109cdb80a9de035",
+    "openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@1466a94f03faf69eb3ca7203db77800b9a480b37",
 ]
 
 [project.urls]
