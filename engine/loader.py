@@ -286,10 +286,10 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 continue
             show_page_number([shape], raw["id"])
             shapes.append(shape)
-            if shape.get("kind") == "text" and shape.get("text"):
+            if shape.get("kind") == "text" and shape.get("text") and not obj.get("hidden"):
                 text.append(shape["text"])
             script = obj.get("script") or ""
-            if script:
+            if script and not obj.get("hidden"):
                 # The script stays on the object. Copying it onto the page
                 # made an empty click run Next, and asked the exit question twice.
                 item = _item_from_script(obj.get("name") or "", script)
@@ -361,7 +361,10 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         "direct": bool(obj.get("direct")),
         # The Correct rectangle is the answer key, so Reader level hides it.
         # A text field of that name is the choice the lesson asks for.
-        "visible": not ((obj.get("name") or "").lower() == "correct" and obj.get("kind") != "text"),
+        "visible": not (
+            obj.get("hidden")
+            or ((obj.get("name") or "").lower() == "correct" and obj.get("kind") != "text")
+        ),
         "layer": obj.get("layer") or "page",
     }
     if obj.get("groups"):
