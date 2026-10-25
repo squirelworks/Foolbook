@@ -16,6 +16,7 @@ from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
+from engine import fields
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -323,6 +324,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         top = found[0] if found else None
         target = click_target(_objects(page), x, y)
         held["press"] = (top, target)
+        if fields.is_field(top):
+            fields.focus(state, top)
+            gfx.focus_set()
+        elif fields.focused(state) is not None:
+            fields.blur(state)
         seen = set()
         for item in (top, target):
             if item is None or id(item) in seen:
@@ -356,6 +362,14 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
                 root.bell()
             except tk.TclError:
                 pass
+
+    def on_key(event):
+        # A typed key goes to the field that was clicked, and to nothing else.
+        if not fields.handle_key(state, event.keysym, event.char):
+            return None
+        if state.variables.pop("__redraw", None):
+            _paint()
+        return "break"
 
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
@@ -398,6 +412,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     gfx.bind("<Configure>", _on_configure)
     gfx.bind("<ButtonPress-1>", on_press)
     gfx.bind("<ButtonRelease-1>", on_release)
+    gfx.bind("<KeyPress>", on_key)
     lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
     show(idx.get())
     try:

@@ -56,7 +56,9 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         return
     shapes = in_front(shapes)
     photos = []
+    caret = None
     for shape in shapes:
+        caret = _flush_caret(canvas, caret)
         kind = (shape.get("kind") or "rect").lower()
         if shape.get("visible") is False:
             continue
@@ -92,6 +94,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                     canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
         elif kind == "text":
             x, y, w, h = _box(shape)
+            if shape.get("focused"):
+                caret = (shape, x, y, w, h, len(canvas.find_all()))
             _field_frame(canvas, x, y, w, h, fill, int(shape.get("border") if shape.get("border") is not None else 1))
             pad_l = int(shape["marginL"]) if shape.get("marginL") is not None else 0
             pad_r = int(shape["marginR"]) if shape.get("marginR") is not None else 0
@@ -165,8 +169,29 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         else:
             x, y, w, h = _box(shape)
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
+    _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _flush_caret(canvas, caret):
+    """Draw the caret of the field that has the keyboard, once its text is down."""
+    if caret is None:
+        return None
+    shape, x, y, w, h, started = caret
+    boxes = [
+        canvas.bbox(item) for item in canvas.find_all()[started:]
+        if canvas.type(item) == "text" and canvas.itemcget(item, "text")
+    ]
+    if boxes:
+        top = min(box[1] for box in boxes)
+        bottom = max(box[3] for box in boxes)
+        at = max(box[2] for box in boxes) + 1
+    else:
+        top, bottom = y + h * 0.15, y + h * 0.85
+        at = x + int(shape.get("marginL") or 0) + 2
+    canvas.create_line(at, top, at, bottom, fill="#000000", width=1)
+    return None
 
 
 def _field_frame(canvas, x, y, w, h, paper, style):
