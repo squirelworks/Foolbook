@@ -66,6 +66,10 @@ _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
 _PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
 _BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
 _NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
+_SET_FOCUS = re.compile(
+    r'set\s+focus\s+to\s+field\s*\(?\s*"([^"]+)"\s*\)?(?:\s+of\s+this\s+page)?$',
+    re.IGNORECASE,
+)
 _INVERT = re.compile(
     r'invert\s+of\s+button\s+"([^"]+)"',
     re.IGNORECASE,
@@ -249,6 +253,14 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if _BEEP.match(low):
             state.variables["__beep"] = True
             actions.append({"kind": "beep"})
+            i += 1
+            continue
+
+        m = _SET_FOCUS.match(line)
+        if m:
+            from engine import fields
+            fields.focus_named(state, m.group(1))
+            actions.append({"kind": "focus", "field": m.group(1)})
             i += 1
             continue
 
