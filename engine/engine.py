@@ -341,6 +341,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                 actions.append({"kind": "goto", "page": page, "book": None})
                 i += 1
                 continue
+            # `get IncorrectEmbedded` is a call with no brackets.
+            if re.fullmatch(r"[A-Za-z_]\w*", call) and _var(state, call) is _MISSING:
+                call += "()"
             value = _eval(call, state)
             if isinstance(value, tuple) and value and value[0] == "goto":
                 actions.append({
