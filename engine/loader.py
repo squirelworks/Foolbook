@@ -367,6 +367,10 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         ),
         "layer": obj.get("layer") or "page",
     }
+    if obj.get("groups"):
+        # Names of the groups this object is in, nearest first. hide group,
+        # show group and visible of group read them.
+        shape["groups"] = list(obj["groups"])
     if obj.get("marginL"):
         shape["marginL"] = to_pixel(int(obj["marginL"]))
     if obj.get("indentRest"):
