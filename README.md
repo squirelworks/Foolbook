@@ -44,19 +44,27 @@ python3 -m foolbook "/path/to/Book.xml"
 ## How it starts
 
 - Passed a path: opens that book on its first page.
-- Started with no path: asks for a file.
-- Launched by a course module: the module passes the book path, and Foolbook opens it.
+- Started with no path: opens Using Foolbook, the picture book that ships with it.
+- Launched by Foolcourse: Foolcourse passes the book path, and Foolbook opens it.
 
 ```bash
 python3 -m foolbook path/to/Book.xml            # a TBX folder, read from Book.xml
-python3 -m foolbook                           # open Using Foolbook, the picture book
-python3 -m foolbook --cli path/to/book        # terminal viewer
+python3 -m foolbook                             # Using Foolbook
+python3 -m foolbook --cli path/to/book          # terminal viewer
+python3 -m foolbook --export path/to/book.tbk   # write an .fbk beside it
+python3 -m foolbook --export path/to/folder     # that folder first, then the folders inside it
 python3 -m foolbook --menu _courses/catalog.json
-python3 -m foolbook --catalog                 # rebuild _courses/catalog.json
+python3 -m foolbook --catalog                   # rebuild _courses/catalog.json
 python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 
-A course module (Foolcourse, when it exists) is the driver. It decides which course, then launches Foolbook with the book path.
+`--export` on an `.sbk` writes an `.fsk`. A file already written is left alone. `--force` writes it again. A file that will not parse is named, and the rest continue.
+
+The window opens across most of the screen. A resize is remembered for the next book. A click redraws once, at that size.
+
+A jump to another book opens the `.tbk` or `.sbk` when that file is there. A settled `.fbk` or `.fsk` beside it is the copy that opens. A stub is not. The books the course names start opening in the background, up to three at a time.
+
+A course module is the driver. Foolcourse decides which course, then launches Foolbook with the book path.
 
 ## Layout
 
@@ -89,7 +97,7 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 
 ## Graphics
 
-A page may carry `shapes`. The window draws them for the page on screen. Coordinates are pixels. A `.tbk` is not drawn from its page stream. The object store is read into these shapes, and the page stream is decoded to handlers.
+A page may carry `shapes`. The window draws the page on screen. The other pictures stay in the file until that page is shown. Coordinates are pixels. A `.tbk` is not drawn from its page stream. The object store is read into these shapes, and the page stream is decoded to handlers.
 
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.8 — 2026-10-25
+
+The 1.0.7 reader, released as 1.0.8.
+
+- A book opens on the page in front of you. The other pictures stay in the file until that page is shown.
+- The window opens large, and a resize is kept for the next course. A click redraws once.
+- A jump uses the `.tbk` when a stub `.fsk` is sitting next to it. A settled export beside the original is what opens.
+- `python3 -m foolbook --export` writes that export. The folder you name is done first. A short file is reported and the rest continue.
+- The books a course names are opened in the background. `--freshstart` reinstalls 1.0.8.
+
 ## 1.0.7r23 — 2026-10-25
 
 - A book opens without drawing every picture in it. The page on the screen is the one that is drawn. `?` was waiting on all of nida81.

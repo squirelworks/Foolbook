@@ -1,6 +1,6 @@
 # Known bugs
 
-Things that are still wrong in 1.0.6.
+Things that are still wrong in 1.0.8.
 
 ## OpenScript
 
@@ -13,7 +13,7 @@ The reader runs the handlers it has decoded for this course: next and previous, 
 ## Paint
 
 - An 8×8 pattern tile is not drawn. A class `0x10` pattern other than solid fill (`0xFE`) is painted as the record's colour.
-- A style run is used when it names a font. A colour-only run is not. Two flag bits in the font entry, `0x10` and `0x40`, are unread, as are the words at `+0x30` and `+0x32`.
+- A style run is used when it names a font or a colour. Two flag bits in the font entry, `0x10` and `0x40`, are unread, as are the words at `+0x30` and `+0x32`.
 
 ## Writing a book back
 

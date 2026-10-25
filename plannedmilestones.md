@@ -8,7 +8,7 @@ The tree is small. A fresh `pip install` of the git URL still feels slow, and `-
 
 - Foolbook depends on `openscript-analysis` from git, so one install clones two repositories.
 - `pyproject.toml` still packages `author*` and `foolbookeditor*` even though the editor is its own repository.
-- `--freshstart` reinstalls the old `v1.0.1r2` tag, not `main`.
+- `--freshstart` reinstalls `v1.0.8`.
 
 Leave the natural cost. Cut the extra clones and the packages that are no longer this program. Then see if install is still slow.
 
@@ -20,7 +20,7 @@ Done:
 
 - Opens `.fbk` and `.tbk`
 - `.fbk` and `.fsk` are a real envelope (compressed or not), not renamed JSON
-- Asks for a file if none is passed; a course module can launch it with a path
+- Opens Using Foolbook when no path is passed; a course module can launch it with a path
 - Decodes OpenScript handlers and follows next / back / goto
 - CLI and GUI viewers
 - Authoring: slide editor with page list, preview, toolbar, text and lists; saves `.fbk` / `.fsk`
