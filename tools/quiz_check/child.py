@@ -294,6 +294,11 @@ class Driver:
                     s = self.shape(name, visible=False)
                     want(f"visible {name} == {flag}", bool(s and s.get("visible") is not False) == flag,
                          None if s is None else s.get("visible"))
+            elif key == "hidden":
+                for name, flag in value.items():
+                    s = self.shape(name, visible=False)
+                    want(f"{name} is loaded and hidden == {flag}", bool(s is not None and s.get("visible") is False) == flag,
+                         None if s is None else s.get("visible"))
             elif key == "group_visible":
                 for name, flag in value.items():
                     mem = [x for x in (self.page.shapes or [])

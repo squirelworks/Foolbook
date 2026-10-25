@@ -207,4 +207,11 @@ SPECS = [
     {"name": "group_final_frame_of_timed_reveal", "type": "group", "book": "93950506",
      "doc": "P2950 shows group 1, 2, 3, 4 in turn with pauses; the picture that stays is group 4",
      "steps": [{"goto": "P2950", "expect": {"group_visible": {"1": False, "2": False, "3": False, "4": True}}}]},
+    # ---- objects the file stores as hidden ------------------------------------------------------------------
+    {"name": "hidden_field_is_loaded", "type": "hidden", "book": "9395N200",
+     "doc": "P2700: the Response field is stored hidden; it has to be among the page's objects, still not shown",
+     "steps": [{"goto": "P2700", "expect": {"hidden": {"response": True}, "visible": {"questionmark": True}}}]},
+    {"name": "hidden_try_again_group_is_loaded", "type": "hidden", "book": "93950207",
+     "doc": "P2750: the TryAgain group is stored hidden; its members are on the page and not shown",
+     "steps": [{"goto": "P2750", "expect": {"group_visible": {"TryAgain": False}}}]},
 ]
