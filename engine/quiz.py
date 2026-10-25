@@ -110,9 +110,9 @@ def _add_pool_ex(state, args):
     return 0
 
 
-def _from_pool(state, words: list[str], count: int) -> int:
+def _from_pool(state, words: list[str], count: int, keep: bool = False) -> int:
     if count > len(words):
-        return -1
+        return 1 if keep else -1
     picked = random.sample(words, count)
     numbers = _numbers(state)
     for word in picked:
@@ -120,6 +120,22 @@ def _from_pool(state, words: list[str], count: int) -> int:
     state.variables["__quizCount"] = len(numbers) - 1
     state.variables["__quizIndex"] = 0
     return 0
+
+
+def _add_questions(state, args):
+    """addQuestions(start, stop, count) as nc81test.sbk writes it (addToRandomSetX).
+
+    `count` different question numbers from start to stop are added after the
+    ones already chosen, and the count of the quiz grows by `count`. It is 1
+    (nothing added) when count is more than the range holds.
+    """
+    if len(args) < 3:
+        return 1
+    start, stop, count = _num(args[0]), _num(args[1]), _num(args[2])
+    if count > stop - start + 1:
+        return 1
+    words = [str(number) for number in range(start, stop + 1)]
+    return _from_pool(state, words, count, keep=True)
 
 
 def _setup_pool(state, _args):
@@ -168,6 +184,11 @@ def _prepare(state, page_id: str, index: int) -> None:
     label = _shape(page, "Index")
     if label is not None:
         label["text"] = f"Question {index}."
+    # setupQuizPage: PageText says Testing, or the page name when
+    # NIDAREC.INI asks to show page numbers (Show Page Numbers, default 0).
+    shown = _shape(page, "PageText")
+    if shown is not None:
+        shown["text"] = page.id if int(state.variables.get("__quizShowPageNumbers") or 0) else "Testing"
 
 
 def _percent(state) -> int:
@@ -192,6 +213,9 @@ def finish(state):
     A starts the critique pass. B goes to the menu only when the score is
     100, and to P10410 otherwise. Neither choice beeps and stays.
     """
+    ended = _strip_end(state)
+    if ended is not None:
+        return ended
     percent = _percent(state)
     _stamp(state.page, percent)
     state.variables["__redraw"] = True
@@ -215,6 +239,40 @@ def finish(state):
             return ("goto", "P900")
         return ("goto", "P10410")
     return 0
+
+
+def _is_strip(state) -> bool:
+    """P10301 and P10302, the "You skipped X question(s)" pages, not the results page."""
+    page = state.page
+    if page is None:
+        return False
+    pages = state.variables.get("__quizPages") or {}
+    if page.id.lower() in (str(pages.get(1) or "").lower(), str(pages.get(2) or "").lower()) and pages.get(1):
+        return True
+    stem = _shape(page, "Stem")
+    return stem is not None and "skipped" in str(stem.get("text") or "").lower()
+
+
+def _strip_end(state):
+    """okClicked of the end-of-test strips, the choice that ends the test.
+
+    P10301 has two choices and P10302 has three. The last one is
+    `go to page "P10303"`. The others start a pass and are not read here.
+    Returns None when this is not a strip or the choice is not the last one.
+    """
+    if not _is_strip(state):
+        return None
+    page = state.page
+    letters = [n for n in _CHOICES if any((s.get("name") or "").upper() == n and s.get("kind") != "text" for s in page.shapes or [])]
+    choice = str(state.variables.get("__choice") or "").upper()
+    if not choice:
+        state.variables["__beep"] = True
+        return 0
+    if letters and choice == letters[-1]:
+        pages = state.variables.get("__quizPages") or {}
+        end = pages.get(3) or "P10303"
+        return ("goto", end)
+    return None
 
 
 def _score(state) -> None:
@@ -279,6 +337,34 @@ def _choose(state, letter: str) -> int:
     return 0
 
 
+def key_letter(state, char: str) -> bool:
+    """handleQuizKey, the letters. True when the key marked an answer.
+
+    The book's keyChar hands every key but F3 to handleQuizKey. In passes 1 to 3
+    a or A to e or E calls manageQuizButtons on that letter when the page has
+    the button: it is checked and the other letters are cleared.
+    """
+    if int(state.variables.get("__quizPass") or 1) > 3 or len(char or "") != 1:
+        return False
+    letter = char.upper()
+    page = state.page
+    if letter not in _CHOICES or page is None:
+        return False
+    if not any((s.get("name") or "").upper() == letter and s.get("kind") != "text" for s in page.shapes or []):
+        return False
+    _choose(state, letter)
+    return True
+
+
+def ok_button(state):
+    """The OK button of the page, the one Return presses (handleQuizKey, key = keyEnter)."""
+    page = state.page
+    for shape in (page.shapes if page is not None else None) or []:
+        if (shape.get("name") or "").upper() == "OK" and shape.get("kind") != "text" and shape.get("visible") is not False:
+            return shape
+    return None
+
+
 def _running(state) -> bool:
     return int(state.variables.get("__quizCount") or 0) > 0
 
@@ -304,6 +390,9 @@ def _click(state, args):
     if name in _CHOICES:
         return _choose(state, name)
     if name == "OK":
+        if _is_strip(state):
+            # okClicked of the page's own script decides, and it stays when it has nothing to do.
+            return 0
         if not _running(state):
             return _neighbor(state, 1)
         if int(state.variables.get("__quizPass") or 1) in (1, 2) and not state.variables.get("__choice"):
@@ -338,12 +427,34 @@ def _click(state, args):
     return 0
 
 
+# nc81trnr.sbk getTrainerType: __trainerType 3 is "130E". initializeTrnr reads
+# [Trainer] Type from NIDAREC.INI and uses 3 when there is no such file.
+_TRAINER_TYPES = {-1: "THEORY", 0: "TD2000", 1: "130C", 2: "130A", 3: "130E"}
+
+
+def _trainer_type(state, args):
+    raw = state.variables.get("__trainerType", 3)
+    try:
+        return _TRAINER_TYPES.get(int(raw), "THEORY")
+    except (TypeError, ValueError):
+        return "THEORY"
+
+
+def _trainer_code(state, args):
+    # getTrainerCode looks the code up in NIDA2.INI and returns "" when the
+    # file has none, which is the case with no INI file.
+    return ""
+
+
 _CALLS = {
+    "gettrainertype": _trainer_type,
+    "gettrainercode": _trainer_code,
     "setupquizex": _setup,
     "clearpool": _clear,
     "addobjectivetopool": _add_pool,
     "addobjectivetopoolex": _add_pool_ex,
     "setuppool": _setup_pool,
+    "addquestions": _add_questions,
     "gotonextquestionex": _next,
     "gotopreviousquestionex": _previous,
     "handlequizclick": _click,
