@@ -42,5 +42,19 @@ class Letters(unittest.TestCase):
         self.assertFalse(quiz.key_letter(state, "a"))
 
 
+class Return(unittest.TestCase):
+    def test_return_finds_the_ok_button(self):
+        state, page = _state()
+        self.assertIsNone(quiz.ok_button(state))
+        page.shapes.append({"name": "OK", "kind": "image"})
+        self.assertIs(quiz.ok_button(state), page.shapes[-1])
+
+    def test_a_hidden_ok_or_a_text_called_ok_is_not_pressed(self):
+        state, page = _state()
+        page.shapes.append({"name": "OK", "kind": "text", "text": "OK"})
+        page.shapes.append({"name": "ok", "kind": "image", "visible": False})
+        self.assertIsNone(quiz.ok_button(state))
+
+
 if __name__ == "__main__":
     unittest.main()

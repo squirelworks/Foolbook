@@ -289,6 +289,15 @@ def key_letter(state, char: str) -> bool:
     return True
 
 
+def ok_button(state):
+    """The OK button of the page, the one Return presses (handleQuizKey, key = keyEnter)."""
+    page = state.page
+    for shape in (page.shapes if page is not None else None) or []:
+        if (shape.get("name") or "").upper() == "OK" and shape.get("kind") != "text" and shape.get("visible") is not False:
+            return shape
+    return None
+
+
 def _running(state) -> bool:
     return int(state.variables.get("__quizCount") or 0) > 0
 
