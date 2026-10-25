@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A page's `enterPage` clears its answer fields at reader level. `forward` runs the next handler at that line, the page's, then the background's, and the lines after it still run, so `get SetupFillInFields ()` is reached. 93950101 P2070 opens with an empty field, not the author's `?`. `SetupFillInFields` and `SetupFormFields` are read as nc81test.sbk writes them. `set textline N of text of field` sets one line, a value the reader cannot work out (a sum, an unknown call) is no longer written into a field, and `rgbfill of field "correct"` after a forward now un-highlights the answer.
 - A field's own keyChar handler decides which keys go in. A numeric answer field takes `0-9 . + -` and Backspace and beeps on anything else. An alphabetic one takes A-Z in either case. A field with no keyChar handler takes every key. `DoNumeric` and `DoAlphabetic` are read as nc81test.sbk writes them, and `forward` is now recorded as an action.
 - A click on an answer field gives it the keyboard. Typed characters and Backspace edit its text, and a caret shows where the next one goes. 93950101 P2070: click the field after `2 + 5 =`, type 7, and 7 is in the field. Return is taken by the field. What the field's own keyChar and keyUp scripts do with it is not run yet.
 

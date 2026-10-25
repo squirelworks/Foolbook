@@ -1,4 +1,4 @@
-"""The part of nc81test that an answer field calls.
+"""The part of nc81test that an answer field and its page call.
 
 DoNumeric and DoAlphabetic are the key filters of the fill-in pages. The
 field's own keyChar handler asks one of them, and forwards the key only when
@@ -40,6 +40,10 @@ def call(state, name: str, args: str):
         return _filter(state, args, NUMERIC)
     if key == "doalphabetic":
         return _filter(state, args, ALPHABETIC)
+    if key == "setupfillinfields":
+        return _setup_fields(state, 25, form=False)
+    if key == "setupformfields":
+        return _setup_fields(state, 12, form=True)
     return _UNKNOWN
 
 
@@ -64,3 +68,28 @@ def allows(code: int, allowed: str) -> bool:
         return False
     # `r is in "a,b,c"` tests the items of the list, so a comma is not one.
     return chr(code).upper() in allowed.split(",")
+
+
+def _setup_fields(state, count: int, form: bool) -> int:
+    """setupFillinFields and setupFormFields, as nc81test.sbk writes them.
+
+    Each looks for the fields "response" and "response 1" to "response N" on
+    this page. At reader level the text is cleared. At author level it is
+    "?", which is what the file stores. setupFormFields also sets the stroke
+    colour of each of them (the text colour here) to yellow.
+    """
+    from engine.engine import _var, set_shape_text
+    page = state.page
+    if page is None:
+        return 0
+    reader = str(_var(state, "sysLevel")).lower() == "reader"
+    text = "" if reader else "?"
+    names = ["response"] + [f"response {n}" for n in range(1, count + 1)]
+    for shape in page.shapes or []:
+        name = (shape.get("name") or "").strip().lower()
+        if (shape.get("kind") or "") != "text" or name not in names:
+            continue
+        set_shape_text(state, shape, text)
+        if form:
+            shape["outline"] = "#ffff00"
+    return 0
