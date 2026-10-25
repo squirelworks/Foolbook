@@ -68,7 +68,7 @@ def main(argv=None):
     specs = select(args)
     if not specs:
         ap.error("no spec chosen: use --all, --type or --spec")
-    root = Path(__file__).resolve().parents[2]
+    root = Path.cwd()   # run from the repository root
     own = None
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(root) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     if not env.get("DISPLAY"):
