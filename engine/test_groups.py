@@ -59,6 +59,14 @@ class GroupVisible(unittest.TestCase):
         run_handler(state, run.source)
         self.assertFalse(state.book.pages[1].shapes[0]["visible"])
 
+    def test_play_animation_ends_with_the_group_shown(self):
+        state, shapes = _state()
+        for s in shapes:
+            s["visible"] = False
+        run = split_handlers('to handle buttonClick\n  send playanimation 1, null, true to group "Review 2"\nend\n')[0]
+        run_handler(state, run.source)
+        self.assertEqual([s["name"] for s in shapes if s["visible"]], ["standard2", "Review 2"])
+
     def test_visible_of_group_reads_back(self):
         state, shapes = _state()
         self.assertIs(_eval('visible of group "Review 1"', state), True)

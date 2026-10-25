@@ -28,6 +28,8 @@ GROUP_TEST = re.compile(
     r'\s*visible\s+of\s+group\s*' + _NAME + _PAGE + r'\s*(?P<op>is\s+not|is|=|<>)\s*(?P<val>true|false)\s*$',
     re.IGNORECASE,
 )
+# send playAnimation [args] to group "X" [of page "Y"]
+PLAY = re.compile(r'\s*send\s+playanimation\b.*?\bto\s+group\s*' + _NAME + _PAGE + r'\s*$', re.IGNORECASE)
 # isObject(group "X")   isObject(group("X" && i))
 IS_OBJECT = re.compile(r'\s*isobject\s*\(\s*group\s*' + _NAME + _PAGE + r'\s*\)\s*$', re.IGNORECASE)
 

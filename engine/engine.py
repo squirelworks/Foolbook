@@ -295,6 +295,14 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             })
             i += 1
             continue
+        m = groups.PLAY.fullmatch(line)
+        if m:
+            # The animation is not drawn. Where it ends is the group shown,
+            # so a group the file keeps hidden is not lost for good.
+            groups.set_visible(state, m, True)
+            actions.append({"kind": "setprop", "target": "visible of group", "value": "playanimation"})
+            i += 1
+            continue
         m = _SEND.search(line)
         if m:
             name = m.group(1)
