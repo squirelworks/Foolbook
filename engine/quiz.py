@@ -78,14 +78,18 @@ def _setup(state, args):
     state.variables["__quizIndex"] = 0
     state.variables["__quizCount"] = 0
     state.variables["__quizNumbers"] = [None]
+    state.variables["__quizTestNo"] = [None]
     state.variables["__choice"] = ""
     state.variables["__pools"] = []
+    state.variables["__poolObjectives"] = []
     return 0
 
 
 def _clear(state, _args):
     state.variables["__pools"] = []
+    state.variables["__poolObjectives"] = []
     state.variables["__quizNumbers"] = [None]
+    state.variables["__quizTestNo"] = [None]
     state.variables["__quizCount"] = 0
     state.variables["__quizIndex"] = 0
     state.variables["__choice"] = ""
@@ -97,7 +101,15 @@ def _add_pool(state, args):
         return 0
     pools = state.variables.setdefault("__pools", [])
     pools.append((_num(args[1]), _num(args[2]), _num(args[3])))
+    _objective(state, len(pools), _num(args[0]))
     return 0
+
+
+def _objective(state, size: int, number: int) -> None:
+    """Which objective the pool just added belongs to, kept beside the pool list."""
+    objectives = state.variables.setdefault("__poolObjectives", [])
+    objectives.extend([0] * (size - 1 - len(objectives)))
+    objectives.append(number)
 
 
 def _add_pool_ex(state, args):
@@ -107,16 +119,29 @@ def _add_pool_ex(state, args):
     words = [word.strip() for word in args[1].split(",") if word.strip()]
     pools = state.variables.setdefault("__pools", [])
     pools.append((words, _num(args[2])))
+    _objective(state, len(pools), _num(args[0]))
     return 0
 
 
-def _from_pool(state, words: list[str], count: int, keep: bool = False) -> int:
+def _test_nos(state) -> list:
+    """__quizTestNo: the objective of each question, in step with __quizNumbers."""
+    found = state.variables.get("__quizTestNo")
+    if not isinstance(found, list) or not found:
+        found = [None]
+        state.variables["__quizTestNo"] = found
+    return found
+
+
+def _from_pool(state, words: list[str], count: int, keep: bool = False, objective: int = 0) -> int:
     if count > len(words):
         return 1 if keep else -1
     picked = random.sample(words, count)
     numbers = _numbers(state)
+    test_nos = _test_nos(state)
+    test_nos.extend([None] * (len(numbers) - len(test_nos)))
     for word in picked:
         numbers.append(_num(word))
+        test_nos.append(objective)
     state.variables["__quizCount"] = len(numbers) - 1
     state.variables["__quizIndex"] = 0
     return 0
@@ -141,16 +166,37 @@ def _add_questions(state, args):
 def _setup_pool(state, _args):
     pools = list(state.variables.get("__pools") or [])
     state.variables["__quizNumbers"] = [None]
+    state.variables["__quizTestNo"] = [None]
     state.variables["__quizCount"] = 0
-    for entry in pools:
+    objectives = list(state.variables.get("__poolObjectives") or [])
+    for at, entry in enumerate(pools):
+        objective = objectives[at] if at < len(objectives) else 0
         if len(entry) == 2:
             words, count = entry
         else:
             start, stop, count = entry
             words = [str(number) for number in range(start, stop + 1)]
-        if _from_pool(state, words, count) < 0:
+        if _from_pool(state, words, count, objective=objective) < 0:
             return -1
     return 0
+
+
+def _objective_score(state, args):
+    """getObjectiveScore(n): the average of __quizScore over the questions whose TestNo is n.
+
+    nc81test.sbk adds the scores of those questions and divides by how many
+    there are (`score div count`), and is 0 when there are none.
+    """
+    from engine.engine import _eval
+    number = _num(str(_eval(args[0], state))) if args else 0
+    scores = state.variables.get("__quizScore") or {}
+    test_nos = _test_nos(state)
+    total = count = 0
+    for index in range(1, int(state.variables.get("__quizCount") or 0) + 1):
+        if index < len(test_nos) and test_nos[index] == number:
+            count += 1
+            total += int(scores.get(index) or 0)
+    return total // count if count else 0
 
 
 def _page_question(page) -> str:
@@ -458,4 +504,5 @@ _CALLS = {
     "gotonextquestionex": _next,
     "gotopreviousquestionex": _previous,
     "handlequizclick": _click,
+    "getobjectivescore": _objective_score,
 }
