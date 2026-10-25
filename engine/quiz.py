@@ -270,6 +270,25 @@ def _choose(state, letter: str) -> int:
     return 0
 
 
+def key_letter(state, char: str) -> bool:
+    """handleQuizKey, the letters. True when the key marked an answer.
+
+    The book's keyChar hands every key but F3 to handleQuizKey. In passes 1 to 3
+    a or A to e or E calls manageQuizButtons on that letter when the page has
+    the button: it is checked and the other letters are cleared.
+    """
+    if int(state.variables.get("__quizPass") or 1) > 3 or len(char or "") != 1:
+        return False
+    letter = char.upper()
+    page = state.page
+    if letter not in _CHOICES or page is None:
+        return False
+    if not any((s.get("name") or "").upper() == letter and s.get("kind") != "text" for s in page.shapes or []):
+        return False
+    _choose(state, letter)
+    return True
+
+
 def _running(state) -> bool:
     return int(state.variables.get("__quizCount") or 0) > 0
 
