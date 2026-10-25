@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7r18 — 2026-10-25
+
+- The greeting keeps one face for the whole line, and the score line wraps inside its field.
+- A coloured letter is pulled back to the ink before it when the book did not store a space there.
+- White that touches the edge of an equipment picture is the page showing through. An unknown book property does not replace the version line.
+
 ## 1.0.7r17 — 2026-10-25
 
 - A coloured letter is drawn once, at the width of the letters before it. A word that was fitted to its field keeps that size.

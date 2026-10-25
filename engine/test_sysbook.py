@@ -251,6 +251,48 @@ forward'''
         enter_page(state)
         self.assertEqual(field["text"], "Hello, this lesson is about:")
 
+    def test_a_face_that_covers_the_old_line_covers_the_new_one(self):
+        from foolbook.model import Handler
+        from engine.engine import enter_page
+        old = "Hello, this lesson is about:"
+        field = {
+            "name": "first", "kind": "text", "text": old, "size": 14,
+            "runs": [{"start": 0, "end": len(old), "font": "Arial", "size": 12, "bold": True, "italic": True}],
+        }
+        source = 'set text of field "First" to "Hello" && getFirst() & ", this lesson is about:"'
+        page = Page(id="P10", handlers=[Handler(name="enterPage", source=source)], shapes=[field])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[page]))
+        state.variables["sysLevel"] = "reader"
+        enter_page(state)
+        self.assertEqual(field["text"], "Hello Student, this lesson is about:")
+        self.assertEqual(field["runs"][0]["end"], len(field["text"]))
+
+    def test_an_unknown_book_property_does_not_wipe_the_version(self):
+        from foolbook.model import Handler
+        from engine.engine import enter_page
+        field = {"name": "version", "kind": "text", "text": "Version: 2.003.0001"}
+        source = 'set text of field "version" to "Version: " & __nidaVersion of this book'
+        page = Page(id="PINFO", handlers=[Handler(name="enterPage", source=source)], shapes=[field])
+        state = RuntimeState(book=Book(path="x", title="t", pages=[page]))
+        enter_page(state)
+        self.assertEqual(field["text"], "Version: 2.003.0001")
+
+    def test_white_touching_the_edge_of_a_picture_is_clear(self):
+        import base64
+        import io
+        from PIL import Image
+        from engine.loader import _png
+        image = Image.new("RGB", (5, 5), (255, 255, 255))
+        for x, y in ((1, 1), (2, 1), (3, 1), (1, 2), (3, 2), (1, 3), (2, 3), (3, 3)):
+            image.putpixel((x, y), (180, 20, 20))
+        image.putpixel((2, 2), (255, 255, 255))
+        raw = io.BytesIO()
+        image.save(raw, "BMP")
+        got = Image.open(io.BytesIO(base64.b64decode(_png(raw.getvalue(), edge=True)))).convert("RGBA")
+        self.assertEqual(got.getpixel((0, 0))[3], 0)
+        self.assertEqual(got.getpixel((2, 1))[3], 255)
+        self.assertEqual(got.getpixel((2, 2))[3], 255)
+
     def test_the_score_line_is_filled_when_the_page_opens(self):
         from engine.engine import enter_page
         line = "The test is complete and your score is XX%.  Do you want to _________"

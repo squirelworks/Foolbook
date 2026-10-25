@@ -325,14 +325,14 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
     elif points:
         shape["points"] = [[to_pixel(x), to_pixel(y)] for x, y in points]
         shape["kind"] = obj["kind"] if obj["kind"] in ("polygon", "line") else "line"
-    picture = _png(obj.get("bmp"), bool(obj.get("transparent")))
+    picture = _png(obj.get("bmp"), bool(obj.get("transparent")), edge=obj.get("kind") == "rect")
     if picture:
         shape["kind"] = "image"
         shape["data"] = picture
     return shape
 
 
-def _png(blob: bytes | None, transparent: bool = False) -> str:
+def _png(blob: bytes | None, transparent: bool = False, edge: bool = False) -> str:
     if not blob or blob[:2] != b"BM":
         return ""
     try:
@@ -347,11 +347,53 @@ def _png(blob: bytes | None, transparent: bool = False) -> str:
                 (red, green, blue, 0 if (red, green, blue) == key else 255)
                 for red, green, blue, _alpha in image.getdata()
             ])
+        elif edge:
+            _clear_edge(image)
         out = io.BytesIO()
         image.save(out, "PNG")
         return base64.b64encode(out.getvalue()).decode("ascii")
     except Exception:
         return ""
+
+
+def _clear_edge(image) -> None:
+    """White that touches the edge of a picture is the page, not the device.
+
+    The computer on nida81 P310 is stored on a white mat. ToolBook draws
+    that mat in the page colour. White shut inside the device stays.
+    """
+    width, height = image.size
+    if width < 2 or height < 2:
+        return
+    pix = image.load()
+
+    def paper(x, y) -> bool:
+        red, green, blue, alpha = pix[x, y]
+        return alpha and red >= 250 and green >= 250 and blue >= 250
+
+    if not any(paper(x, y) for x, y in ((0, 0), (width - 1, 0), (0, height - 1), (width - 1, height - 1))):
+        return
+    seen = bytearray(width * height)
+    stack = [(x, 0) for x in range(width)]
+    stack.extend((x, height - 1) for x in range(width))
+    stack.extend((0, y) for y in range(height))
+    stack.extend((width - 1, y) for y in range(height))
+    while stack:
+        x, y = stack.pop()
+        if x < 0 or y < 0 or x >= width or y >= height:
+            continue
+        mark = y * width + x
+        if seen[mark]:
+            continue
+        seen[mark] = 1
+        if not paper(x, y):
+            continue
+        red, green, blue, _alpha = pix[x, y]
+        pix[x, y] = (red, green, blue, 0)
+        stack.append((x + 1, y))
+        stack.append((x - 1, y))
+        stack.append((x, y + 1))
+        stack.append((x, y - 1))
 
 
 def _load_tbk(path: Path) -> Book:

@@ -525,12 +525,25 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     page = state.page
     if match is None or page is None:
         return
-    name = match.group(1).lower()
     text = "" if value is None else str(value)
+    # __nidaVersion of this book is a property this reader has not
+    # found. Leaving the name in the field wiped "2.003.0001".
+    if "__" in text and "of this book" in text.lower():
+        return
+    name = match.group(1).lower()
     for shape in page.shapes or []:
-        if (shape.get("name") or "").lower() == name:
-            shape["text"] = text
-            state.variables["__redraw"] = True
+        if (shape.get("name") or "").lower() != name:
+            continue
+        old = shape.get("text") or ""
+        runs = shape.get("runs") or []
+        # One run over the whole field is the field's face. A longer
+        # sentence keeps it, or the tail falls back to the record size.
+        if len(runs) == 1:
+            run = runs[0]
+            if int(run.get("start") or 0) <= 0 and int(run.get("end") or 0) >= len(old):
+                run["end"] = len(text)
+        shape["text"] = text
+        state.variables["__redraw"] = True
 
 
 def _cmp(op: str, a, b) -> bool:

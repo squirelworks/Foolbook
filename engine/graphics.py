@@ -99,14 +99,15 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             if rest is not None and int(rest) != pad_l:
                 _hanging(canvas, shape, x, y, w, h, pad_l, int(rest), pad_r, fill, outline)
                 continue
-            if shape.get("runs") and any(run.get("color") for run in shape["runs"]):
+            if shape.get("runs") and not any(run.get("color") for run in shape["runs"]):
+                if _paint_runs(
+                    canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
+                ):
+                    continue
+            if shape.get("runs"):
                 _paint_marked(
                     canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
                 )
-                continue
-            if shape.get("runs") and _paint_runs(
-                canvas, shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8), fill, outline
-            ):
                 continue
             text, size, wrap, anchor, tx, ty = _fit_text(
                 shape, x + pad_l, y + 4, max(1, w - pad_l - pad_r), max(1, h - 8)
@@ -308,23 +309,32 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
             piece = text[i:j]
             face = face_of(font, size, bold, italic)
             measure = tkfont.Font(font=face).measure
-            # One item per colour, placed at the width of the prefix.
-            # Drawing the whole word and then the colour again put the
-            # yellow letter on top of the next one.
+            # Separate items leave a gap where one string would not.
+            # Pull a letter back to the ink before it when no space
+            # belongs in between. A real space is left alone.
+            edge = pen
+            prev = ""
             k = 0
             while k < len(piece):
                 paint = style_at(start + i + k)[4]
                 n = k + 1
                 while n < len(piece) and style_at(start + i + n)[4] == paint:
                     n += 1
-                canvas.create_text(
-                    pen + measure(piece[:k]),
+                chunk = piece[k:n]
+                at = pen + measure(piece[:k])
+                if prev and not prev.endswith(" ") and not chunk.startswith(" ") and at > edge + 1:
+                    at = edge + 1
+                item = canvas.create_text(
+                    at,
                     top + max(0, field_size - size),
-                    text=piece[k:n],
+                    text=chunk,
                     anchor="nw",
                     font=face,
                     fill=paint,
                 )
+                box = canvas.bbox(item)
+                edge = box[2] if box else at + measure(chunk)
+                prev = chunk
                 k = n
             pen += measure(piece)
             i = j
@@ -400,7 +410,8 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
         pieces.append((raw[cursor:], None))
     if not any(run for _text, run in pieces):
         return False
-    at = x
+    prepared = []
+    total = 0
     for text, run in pieces:
         if not text:
             continue
@@ -413,10 +424,23 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
             span["bold"] = bool(run.get("bold"))
             span["italic"] = bool(run.get("italic"))
         face = _typeface(span, span_size)
-        canvas.create_text(at, y + max(0, size - span_size), text=text, anchor="nw", font=face, fill=(run or {}).get("color") or ink)
-        at += tkfont.Font(font=face).measure(text)
-        if at > x + w:
-            break
+        wide = tkfont.Font(font=face).measure(text)
+        prepared.append((text, face, span_size, (run or {}).get("color") or ink, wide))
+        total += wide
+    # A line that does not fit has to wrap. One row is how the score ran off.
+    if total > w + 2:
+        return False
+    at = x
+    edge = x
+    prev = ""
+    for text, face, span_size, paint, wide in prepared:
+        if prev and not prev.endswith(" ") and not text.startswith(" ") and at > edge + 1:
+            at = edge + 1
+        item = canvas.create_text(at, y + max(0, size - span_size), text=text, anchor="nw", font=face, fill=paint)
+        box = canvas.bbox(item)
+        edge = box[2] if box else at + wide
+        at += wide
+        prev = text
     return True
 
 
