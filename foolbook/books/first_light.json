@@ -156,8 +156,10 @@
           "kind": "text",
           "x": 36,
           "y": 120,
+          "w": 360,
+          "h": 44,
           "text": "First light",
-          "fill": "#ffffff",
+          "outline": "#ffffff",
           "size": 32,
           "bold": true
         }
@@ -266,8 +268,10 @@
           "kind": "text",
           "x": 36,
           "y": 28,
+          "w": 420,
+          "h": 32,
           "text": "The sky changes color.",
-          "fill": "#ffffff",
+          "outline": "#ffffff",
           "size": 20,
           "bold": true
         }
@@ -368,8 +372,10 @@
           "kind": "text",
           "x": 36,
           "y": 100,
+          "w": 360,
+          "h": 32,
           "text": "A sail is a polygon.",
-          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
           "size": 20,
           "bold": true
         }

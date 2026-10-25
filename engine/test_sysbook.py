@@ -110,6 +110,33 @@ class ButtonScripts(unittest.TestCase):
         self.assertIsNotNone(found)
         self.assertEqual(found.name, "NIDA81.TBK")
 
+    def test_a_tbk_beats_the_converted_copy_beside_it(self):
+        from engine.loader import find_book
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "nida81.fsk").write_bytes(b"stub")
+            (folder / "nida81.fbk").write_bytes(b"converted")
+            (folder / "nida81.tbk").write_bytes(b"original")
+            found = find_book("nida81.tbk", folder / "lesson.tbk")
+            self.assertEqual(found.name, "nida81.tbk")
+            self.assertEqual(found.read_bytes(), b"original")
+
+    def test_an_export_keeps_the_picture_and_the_answer(self):
+        from foolbook.core import book_record
+        from foolbook.model import Book, Page
+        page = Page(
+            id="P310",
+            raw={"props": {"Answer": "A"}, "size": (624, 442)},
+            shapes=[{"kind": "image", "name": "computer", "data": "abc", "checked": True}],
+        )
+        record = book_record(Book(path="nida81.tbk", title="nida", pages=[page]), "nida81")
+        saved = record["pages"][0]
+        self.assertEqual(saved["props"]["Answer"], "A")
+        self.assertEqual(saved["size"], [624, 442])
+        self.assertEqual(saved["shapes"][0]["data"], "abc")
+        self.assertNotIn("checked", saved["shapes"][0])
+
     def test_a_quiz_opens_on_a_question_and_the_choice_is_not_the_marker(self):
         pages = [Page(id="P10004"), Page(id="P10303")]
         for number in range(110, 130):

@@ -2,7 +2,7 @@
 
 import unittest
 
-from engine.place import clip_to_page, click_target, content_box, fit_view, in_front, place_page, place_window
+from engine.place import clip_to_page, click_target, content_box, fit_view, in_front, opening_size, place_page, place_window
 
 
 class PlaceTests(unittest.TestCase):
@@ -129,6 +129,16 @@ class WindowTests(unittest.TestCase):
         self.assertIn("nida81.tbk", lines[0]["text"])
         self.assertIn("INPUT DEVICE", lines[1]["text"])
         self.assertEqual(blank_book_lines([], "nida81.tbk"), [])
+
+    def test_the_window_opens_large_and_keeps_a_resize(self):
+        wide, high = opening_size(1920, 1080)
+        self.assertGreater(wide, 1200)
+        self.assertGreater(high, 700)
+        again = opening_size(1920, 1080, (1400, 900))
+        self.assertEqual(again, (1400, 900))
+        small = opening_size(800, 600)
+        self.assertLess(small[0], 800)
+        self.assertLess(small[1], 600)
 
 
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.7r20 — 2026-10-25
+
+- A jump to nida81.tbk opens the .tbk when a .fsk or .fbk of that name is sitting next to it. The converted copy was the blank page.
+- `python3 -m foolbook --export book.tbk` writes an .fbk beside the book with the pages, scripts, quiz properties, and pictures. An .sbk writes an .fsk. The original is left where it is.
+- The window opens across most of the screen, and a resize is kept for the next course.
+- A click redraws once, at the size already fitted.
+- The titles in Using Foolbook and First Light stay on one line, in the colour they were given.
+
 ## 1.0.7r19 — 2026-10-25
 
 - Begin on P10004 shows the raised face. Holding it shows the down face, and a chosen quiz letter shows its own checked face instead of a flat block.

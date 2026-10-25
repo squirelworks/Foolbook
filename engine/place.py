@@ -168,6 +168,30 @@ def clip_to_page(shapes, width: float, height: float) -> list[dict]:
     return clipped
 
 
+def opening_size(screen_w: int, screen_h: int, saved: tuple[int, int] | None = None) -> tuple[int, int]:
+    """How big the reader opens.
+
+    The page is about 624 by 442. Stopping the window there made every
+    course a postage stamp. Most of the screen, once, and a resize is
+    remembered for the next book.
+    """
+    screen_w = max(1, int(screen_w))
+    screen_h = max(1, int(screen_h))
+    if saved:
+        width, height = int(saved[0]), int(saved[1])
+        return (
+            max(640, min(width, screen_w - 16)),
+            max(480, min(height, max(480, screen_h - 40))),
+        )
+    width = max(960, min(screen_w - 48, int(screen_w * 0.78)))
+    height = max(640, min(screen_h - 64, int(screen_h * 0.78)))
+    if screen_w < 1100:
+        width = max(640, screen_w - 24)
+    if screen_h < 760:
+        height = max(480, screen_h - 48)
+    return width, height
+
+
 def fit_view(box, width: int, height: int, margin: int = 12):
     """Scale a drawing so it sits inside the window, and center it.
 

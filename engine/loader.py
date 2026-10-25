@@ -37,8 +37,10 @@ def find_book(name: str, near: str | Path) -> Path | None:
     """Find a book named by a jump.
 
     Looks beside the loaded file, then one directory up, then core/.
-    A .fsk is the working copy of a system book, so it is tried in every
-    directory before any .sbk. The raw .sbk is the fallback.
+    The script names a file. That suffix is tried in every directory
+    before a converted copy. A nida81.fsk beside nida81.tbk used to win,
+    and the pages were the stub. tb80r.sbk still opens core/tb80r.fsk
+    when no .sbk is on the path.
     """
     stem = Path(name).stem
     near = Path(near)
@@ -64,12 +66,15 @@ def find_book(name: str, near: str | Path) -> Path | None:
         for child in children[:40]:
             add(child)
     add(root / "core")
-    suffixes = (".fsk", ".sbk", ".fbk", ".tbk", ".json")
-    # Beside the book, then the folder above it, then Foolbook's own core.
-    # A stub in core/ must not hide the .tbk sitting next to the course.
-    for d in dirs:
-        for suf in suffixes:
-            found = _named(d, stem, suf)
+    asked = Path(name).suffix.lower()
+    order = []
+    for suf in (asked, ".tbk", ".sbk", ".fsk", ".fbk", ".json"):
+        if suf in (".tbk", ".sbk", ".fsk", ".fbk", ".json") and suf not in order:
+            order.append(suf)
+    # The original file, in any of these directories, before a .fsk or .fbk.
+    for suf in order:
+        for directory in dirs:
+            found = _named(directory, stem, suf)
             if found is not None:
                 return found
     return None

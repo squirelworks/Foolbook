@@ -6,13 +6,14 @@ No server. No browser.
 
 from __future__ import annotations
 
+import json
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 
 from engine.loader import load
 from engine.graphics import bottom, draw, extract
-from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines
+from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
@@ -50,14 +51,22 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     root.title(book.title or Path(path).name)
     screen_w = root.winfo_screenwidth()
     screen_h = root.winfo_screenheight()
-    page_size = ((book.pages[0].raw or {}).get("size") if book.pages else None) or (624, 442)
-    page_w = int(page_size[0] or 624)
-    page_h = int(page_size[1] or 442)
-    # The page is 624 by 442. Opening at the size of the monitor scales
-    # that page up until the type is enormous and the edge runs off.
-    win_w = min(max(800, screen_w - 24), 160 + page_w + 24)
-    win_h = min(max(600, screen_h - 80), page_h + 48)
+    win_w, win_h = opening_size(screen_w, screen_h, _saved_window())
     root.geometry(f"{win_w}x{win_h}")
+    root.minsize(640, 480)
+
+    def _keep_window(event=None):
+        if event is not None and event.widget is not root:
+            return
+        width, height = root.winfo_width(), root.winfo_height()
+        if width < 400 or height < 300:
+            return
+        try:
+            _window_path().write_text(json.dumps({"w": width, "h": height}))
+        except OSError:
+            pass
+
+    root.bind("<Configure>", _keep_window)
 
     pages = book.pages
     last = progress.last_page(course_id)
@@ -220,7 +229,12 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         draw(gfx, shown, base=base)
 
     def _paint():
-        _redraw()
+        # One draw, at the size already fitted. Drawing the raw page and
+        # then fitting it again is the flash on a click.
+        scale = view.get("scale") or 0
+        if scale:
+            _redraw((scale, view["x0"], view["y0"], view["ox"] - view["x0"], view["oy"] - view["y0"]))
+            return
         _schedule_fit()
 
     def _schedule_fit():
@@ -384,6 +398,21 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     show(idx.get())
     root.mainloop()
     return 0
+
+
+def _window_path() -> Path:
+    return _progress_path().with_name("window.json")
+
+
+def _saved_window():
+    path = _window_path()
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return int(data["w"]), int(data["h"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 
 def _progress_path() -> Path:

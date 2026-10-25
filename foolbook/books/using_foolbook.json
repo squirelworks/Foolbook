@@ -63,8 +63,10 @@
           "kind": "text",
           "x": 44,
           "y": 78,
+          "w": 420,
+          "h": 56,
           "text": "Foolbook",
-          "fill": "#ffffff",
+          "outline": "#ffffff",
           "size": 42,
           "bold": true
         },
@@ -72,8 +74,10 @@
           "kind": "text",
           "x": 48,
           "y": 138,
+          "w": 420,
+          "h": 28,
           "text": "A book that draws.",
-          "fill": "#e6b325",
+          "outline": "#e6b325",
           "size": 18
         },
         {
@@ -257,8 +261,10 @@
           "kind": "text",
           "x": 300,
           "y": 196,
+          "w": 360,
+          "h": 28,
           "text": "Rects, ellipses, polygons.",
-          "fill": "#ffffff",
+          "outline": "#ffffff",
           "size": 16,
           "bold": true
         }

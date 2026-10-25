@@ -560,7 +560,11 @@ def _fit_text(shape, x, y, w, h):
     """
     raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
     recorded = int(shape.get("size") or 0)
-    size = _fit_words(shape, recorded or 12, w, raw)
+    size = recorded or 12
+    # A title stored with no field. Wrapping it at one pixel stacks the letters.
+    if w <= 1:
+        return raw, size, 0, "nw", x, y
+    size = _fit_words(shape, size, w, raw)
     pieces = raw.split("\n")
     widest = max((_text_width(shape, size, line) for line in pieces), default=0)
     if len(pieces) > 1 or widest > max(1, w):

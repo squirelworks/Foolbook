@@ -37,28 +37,47 @@ def read(path: str | Path) -> dict:
     if len(book.pages) == 1 and book.pages[0].id == "(unloadable)":
         detail = book.pages[0].text[0] if book.pages[0].text else src.name
         raise ValueError(detail)
+    return book_record(book, src.stem)
+
+
+def book_record(book, stem: str) -> dict:
+    """The loaded book, including the pictures and the quiz properties.
+
+    An older export kept the words and dropped the shapes. That file
+    then won over the .tbk and the page was blank.
+    """
 
     def handlers(items):
         return [{"name": h.name, "source": h.source} for h in items if h.name or h.source]
 
+    pages = []
+    for page in book.pages:
+        raw = page.raw or {}
+        size = raw.get("size")
+        pages.append({
+            "id": page.id,
+            "text": list(page.text),
+            "items": list(page.items),
+            "jumps": list(page.jumps),
+            "quiz": page.quiz,
+            "handlers": handlers(page.handlers),
+            "shapes": [_kept_shape(shape) for shape in page.shapes or []],
+            "props": dict(raw.get("props") or {}),
+            "size": [size[0], size[1]] if size and len(size) >= 2 else None,
+            "settled": True,
+        })
     return {
-        "title": book.title or src.stem,
-        "id": src.stem,
+        "title": book.title or stem,
+        "id": stem,
         "handlers": handlers(book.handlers),
-        "pages": [
-            {
-                "id": page.id,
-                "text": list(page.text),
-                "items": list(page.items),
-                "jumps": list(page.jumps),
-                "quiz": page.quiz,
-                "handlers": handlers(page.handlers),
-                "shapes": list(page.shapes),
-                "settled": True,
-            }
-            for page in book.pages
-        ],
+        "pages": pages,
     }
+
+
+def _kept_shape(shape: dict) -> dict:
+    """Drop the faces a click turns on at runtime. The pictures stay."""
+    skip = {"invert", "checked"}
+    return {key: value for key, value in shape.items() if key not in skip}
 
 
 def save_book(path: str | Path, book: dict, compress: bool = True) -> Path:
