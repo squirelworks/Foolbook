@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.8r1 — 2026-10-25
+
+- The reader depends on the openscript-analysis page-index fix (squirelworks/openscript_analysis#1, commit b5e6726). Every page table of a book is listed. 93950101 shows 301 pages, not 151, and P900 item 3 opens P3001. 9395B302 shows 423 pages, not 0. 93953402 and five other books open instead of showing "(unloadable)".
+- The pin is a commit until that change is merged and tagged as 1.0.1r8.
+
 ## 1.0.8 — 2026-10-25
 
 The 1.0.7 reader, released as 1.0.8.
