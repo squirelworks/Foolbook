@@ -178,6 +178,9 @@ def finish(state):
     A starts the critique pass. B goes to the menu only when the score is
     100, and to P10410 otherwise. Neither choice beeps and stays.
     """
+    ended = _strip_end(state)
+    if ended is not None:
+        return ended
     percent = _percent(state)
     _stamp(state.page, percent)
     state.variables["__redraw"] = True
@@ -201,6 +204,40 @@ def finish(state):
             return ("goto", "P900")
         return ("goto", "P10410")
     return 0
+
+
+def _is_strip(state) -> bool:
+    """P10301 and P10302, the "You skipped X question(s)" pages, not the results page."""
+    page = state.page
+    if page is None:
+        return False
+    pages = state.variables.get("__quizPages") or {}
+    if page.id.lower() in (str(pages.get(1) or "").lower(), str(pages.get(2) or "").lower()) and pages.get(1):
+        return True
+    stem = _shape(page, "Stem")
+    return stem is not None and "skipped" in str(stem.get("text") or "").lower()
+
+
+def _strip_end(state):
+    """okClicked of the end-of-test strips, the choice that ends the test.
+
+    P10301 has two choices and P10302 has three. The last one is
+    `go to page "P10303"`. The others start a pass and are not read here.
+    Returns None when this is not a strip or the choice is not the last one.
+    """
+    if not _is_strip(state):
+        return None
+    page = state.page
+    letters = [n for n in _CHOICES if any((s.get("name") or "").upper() == n and s.get("kind") != "text" for s in page.shapes or [])]
+    choice = str(state.variables.get("__choice") or "").upper()
+    if not choice:
+        state.variables["__beep"] = True
+        return 0
+    if letters and choice == letters[-1]:
+        pages = state.variables.get("__quizPages") or {}
+        end = pages.get(3) or "P10303"
+        return ("goto", end)
+    return None
 
 
 def _score(state) -> None:
@@ -290,6 +327,9 @@ def _click(state, args):
     if name in _CHOICES:
         return _choose(state, name)
     if name == "OK":
+        if _is_strip(state):
+            # okClicked of the page's own script decides, and it stays when it has nothing to do.
+            return 0
         if not _running(state):
             return _neighbor(state, 1)
         if int(state.variables.get("__quizPass") or 1) in (1, 2) and not state.variables.get("__choice"):
