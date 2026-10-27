@@ -84,9 +84,9 @@ def _kept_shape(shape: dict) -> dict:
     return {key: value for key, value in shape.items() if key not in skip}
 
 
-def save_book(path: str | Path, book: dict, compress: bool = True) -> Path:
-    """Write the .json working copy and the sibling .fbk."""
-    return _formats().save_book(Path(path), book, compress=compress)
+def save_book(path: str | Path, book: dict, compress: bool = True, json_copy: bool = False) -> Path:
+    """Write an .fbk. A .json is written only when the path is .json, or when asked."""
+    return _formats().save_book(Path(path), book, compress=compress, json_copy=json_copy)
 
 
 def save_system(path: str | Path, system: dict, compress: bool = True) -> Path:
@@ -121,7 +121,7 @@ def save_fsc(path: str | Path, book: dict, compress: bool = True) -> Path:
     return _formats().save_fsc(Path(path), book, compress=compress)
 
 
-def export_book(path: str | Path, book: dict, compile_script=None) -> Path:
+def export_book(path: str | Path, book: dict, compile_script=None, json_copy: bool = False) -> Path:
     """Save a book as whatever the suffix asks for.
 
     .fbk .fsk .fsc .tbk .sbk .tbx .pdf .ppt .pptx .doc .docx .odt
@@ -143,7 +143,7 @@ def export_book(path: str | Path, book: dict, compile_script=None) -> Path:
     if suffix == ".fsc":
         return save_fsc(path, book)
     if suffix in (".fbk", ".json"):
-        return save_book(path, book)
+        return save_book(path, book, json_copy=json_copy)
     if _office().is_office(path):
         return write_office(path, book)
     raise ValueError(f"cannot save {path.suffix}")

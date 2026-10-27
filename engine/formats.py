@@ -2,7 +2,7 @@
 
 .fbk is the Foolbook book format. It is the standard.
 .fsk is the Foolbook system-book format. It is the standard.
-.json is the working copy.
+.json is written only when the path is .json, or when an export is asked for one.
 
 .fbk and .fsk are not renamed JSON. They are a small binary envelope:
 
@@ -221,20 +221,24 @@ def load(path: Path) -> dict:
     return data
 
 
-def save_book(path: Path, book: dict, compress: bool = True) -> Path:
-    """Write a .json working copy and a sibling .fbk."""
+def save_book(path: Path, book: dict, compress: bool = True, json_copy: bool = False) -> Path:
+    """Write the book. A .json is written only when that is the path, or when asked."""
     path = Path(path)
-    if path.suffix.lower() != ".json":
-        path = path.with_suffix(".json")
+    suffix = path.suffix.lower()
     book = dict(book)
     book.pop("format", None)
     book.pop("will_become", None)
     book["format_version"] = FORMAT_VERSION
-    path.write_text(json.dumps({**book, "format": "json"}, indent=2) + "\n", encoding="utf-8")
-
-    fbk = path.with_suffix(".fbk")
+    if suffix == ".json":
+        path.write_text(json.dumps({**book, "format": "json"}, indent=2) + "\n", encoding="utf-8")
+        return path
+    fbk = path if suffix == ".fbk" else path.with_suffix(".fbk")
     fbk.write_bytes(pack({**book, "format": FBK}, FBK, compress=compress))
-    return path
+    if json_copy:
+        fbk.with_suffix(".json").write_text(
+            json.dumps({**book, "format": "json"}, indent=2) + "\n", encoding="utf-8"
+        )
+    return fbk
 
 
 def save_system(path: Path, system: dict, compress: bool = True) -> Path:

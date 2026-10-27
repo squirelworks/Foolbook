@@ -65,7 +65,10 @@ def main() -> int:
         force = "--force" in rest
         if force:
             rest.remove("--force")
-        return _export([normalize_path(item) for item in rest], force=force)
+        json_copy = "--json" in rest
+        if json_copy:
+            rest.remove("--json")
+        return _export([normalize_path(item) for item in rest], force=force, json_copy=json_copy)
     if not args:
         # Default book ships with Foolbook
         default = Path(__file__).resolve().parent / "books" / "using_foolbook.json"
@@ -139,7 +142,7 @@ def _books_under(path: Path) -> list[Path]:
     return found
 
 
-def _export(paths: list[Path], force: bool = False) -> int:
+def _export(paths: list[Path], force: bool = False, json_copy: bool = False) -> int:
     """Write an .fbk or .fsk beside each ToolBook file.
 
     The copy is the book the reader already drew: pages, scripts, quiz
@@ -165,7 +168,7 @@ def _export(paths: list[Path], force: bool = False) -> int:
             continue
         try:
             record = read(src)
-            export_book(dest, record)
+            export_book(dest, record, json_copy=json_copy)
         except Exception as exc:
             failed += 1
             print(f"fail {src.name}: {exc}")
