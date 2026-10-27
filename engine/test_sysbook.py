@@ -413,6 +413,34 @@ forward'''
         self.assertEqual(field["text"], line)
 
 
+class QuesterTest(unittest.TestCase):
+    def test_a_pretest_opens_on_question_150_not_the_score(self):
+        from engine.engine import enter_page, follow, run_handler
+        from engine.quiz import _percent, call
+        end = Page(id="P10303", shapes=[{"name": "Stem", "kind": "text", "text": "The test is complete and your score is XX%."}])
+        first = Page(id="P01150", raw={"props": {"QuestionNo": "110", "Answer": "A", "TestNo": "0"}},
+                     shapes=[{"name": "Stem", "kind": "text", "text": "What is 2 + 2?"}])
+        second = Page(id="P01151", raw={"props": {"QuestionNo": "115", "Answer": "C", "TestNo": "0"}})
+        menu = Page(id="P10004", shapes=[{"name": "selection1", "kind": "button", "script": "get addQuesterQuestions(1)\nget gotoNextQuestionEx()"}])
+        book = Book(path="pre.tbk", title="pre", pages=[menu, first, second, end])
+        book.props = {"__questerQuestionCount(1)": 2, "__questerSequence": 0, "__questerTestCount": 60}
+        state = RuntimeState(book=book, index=0)
+        state.variables["sysLevel"] = "reader"
+        actions = run_handler(state, menu.shapes[0]["script"])
+        self.assertTrue(follow(state, actions))
+        enter_page(state)
+        self.assertEqual(state.page.id, "P01150")
+        self.assertEqual(_percent(state), 0)
+        self.assertNotIn("100", state.page.shapes[0]["text"])
+        # A number the book does not have is skipped. It does not finish the test.
+        state.variables["__quizNumbers"] = [None, 150, 999, 151]
+        state.variables["__quizCount"] = 3
+        state.variables["__quizIndex"] = 1
+        moved = call(state, "gotoNextQuestionEx", "")
+        self.assertEqual(moved, ("goto", "P01151"))
+        self.assertEqual(_percent(state), 0)
+
+
 class FaceTests(unittest.TestCase):
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):
         from openscript_analysis.formats.tbk.store import apply_faces

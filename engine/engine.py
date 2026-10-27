@@ -65,6 +65,7 @@ _TEXT_OF_FIELD = re.compile(
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
 _PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
+_OF_BOOK = re.compile(r'(.+?)\s+of\s+this\s+book$', re.IGNORECASE)
 _BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
 _NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
 _SET_FOCUS = re.compile(
@@ -525,6 +526,11 @@ def _eval(expr: str, state: RuntimeState):
     m = _PROP_OF_PAGE.fullmatch(expr)
     if m:
         return _page_property(state, m.group(1))
+    m = _OF_BOOK.fullmatch(expr)
+    if m:
+        value = _book_property(state, m.group(1).strip())
+        if value is not _NO_BOOK_PROP:
+            return value
     m = groups.GROUP_TEST.fullmatch(expr)
     if m:
         same = groups.is_visible(state, m) == (m.group("val").lower() == "true")
@@ -819,6 +825,51 @@ def _page_property(state: RuntimeState, name: str):
             text = str(value)
             return int(text) if re.fullmatch(r"-?\d+", text) else text
     return ""
+
+
+def _book_property(state: RuntimeState, name: str):
+    """`__questerTestCount of this book` and `__questerQuestionCount[1] of this book`.
+
+    A name this book does not store is left unread. Putting "" there wiped
+    a version line the field already had.
+    """
+    raw = getattr(state.book, "props", None) or {}
+    if not isinstance(raw, dict):
+        raw = {}
+    want = name.strip()
+    index = ""
+    bracket = re.fullmatch(r"(.+?)\[(.+)\]", want)
+    if bracket:
+        want, index = bracket.group(1), bracket.group(2).strip()
+    found = None
+    for key, value in raw.items():
+        if index and str(key).lower() == f"{want.lower()}({index})":
+            found = value
+            break
+        if not index and str(key).lower() == want.lower():
+            found = value
+            break
+    if str(want).lower() == "__questertestcount":
+        try:
+            number = int(found)
+        except (TypeError, ValueError):
+            number = 0
+        # The shell stores 60, which is none of the six menus. The pages
+        # say which tests exist. Use that, and stay inside the menus.
+        if number not in range(1, 7):
+            seen = set()
+            for page in state.book.pages if state.book is not None else []:
+                match = re.fullmatch(r"[Pp](\d{2})(\d{3})", page.id or "")
+                if match and int(match.group(2)) >= 150:
+                    seen.add(int(match.group(1)))
+            if seen:
+                return min(6, len(seen))
+    if found is None:
+        return _NO_BOOK_PROP
+    return found
+
+
+_NO_BOOK_PROP = object()
 
 
 def _number(value):

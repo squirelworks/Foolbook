@@ -74,6 +74,7 @@ def book_record(book, stem: str) -> dict:
         "id": stem,
         "settled": True,
         "handlers": handlers(book.handlers),
+        "props": dict(getattr(book, "props", None) or {}),
         "pages": pages,
     }
 

@@ -9,6 +9,7 @@ level leaves it hidden, which is why the page must not draw it.
 from __future__ import annotations
 
 import random
+import re
 
 _UNKNOWN = object()
 _CHOICES = ("A", "B", "C", "D", "E")
@@ -203,11 +204,53 @@ def _page_question(page) -> str:
     return str(((page.raw or {}).get("props") or {}).get("QuestionNo") or "")
 
 
-def _find_page(state, number: int):
+def _page_test(page) -> str:
+    return str(((page.raw or {}).get("props") or {}).get("TestNo") or "")
+
+
+def _encoded(page_id: str):
+    """P01150 is test 1, question 150. A lesson page such as P10218 is not."""
+    match = re.fullmatch(r"[Pp](\d{2})(\d{3})", page_id or "")
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2))
+
+
+def _test_ok(page, test) -> bool:
+    if test is None:
+        return True
+    try:
+        wanted = int(test)
+    except (TypeError, ValueError):
+        return True
+    prop = _page_test(page)
+    if prop.lstrip("-").isdigit() and int(prop) > 0:
+        return int(prop) == wanted
+    encoded = _encoded(page.id)
+    if encoded:
+        return encoded[0] == wanted
+    return True
+
+
+def _find_page(state, number, test=None):
+    try:
+        number = int(number)
+    except (TypeError, ValueError):
+        return ""
+    by_id = ""
     for page in state.book.pages:
+        if not _test_ok(page, test):
+            continue
         if _page_question(page) == str(number):
             return page.id
-    return ""
+        encoded = _encoded(page.id)
+        # The exported property is the bank the question was copied from.
+        # The id is the number addQuesterQuestions actually asks for.
+        if encoded and encoded[1] == number and number >= 100 and not by_id:
+            prop = _page_question(page)
+            if not (prop.lstrip("-").isdigit() and int(prop) == number):
+                by_id = page.id
+    return by_id
 
 
 def _shape(page, name: str):
@@ -238,10 +281,21 @@ def _prepare(state, page_id: str, index: int) -> None:
 
 
 def _percent(state) -> int:
+    """The average of every question, as getQuizScore divides.
+
+    A question that was never answered counts as 0. An empty quiz is 0,
+    not 100. 100 is every question answered and right.
+    """
     scores = state.variables.get("__quizScore") or {}
-    count = int(state.variables.get("__quizCount") or 0) or len(scores)
-    total = sum(int(value) for value in scores.values())
-    return round(total / count) if count else 0
+    if not isinstance(scores, dict):
+        scores = {}
+    count = int(state.variables.get("__quizCount") or 0)
+    if count <= 0:
+        return 0
+    total = 0
+    for index in range(1, count + 1):
+        total += int(scores.get(index) or 0)
+    return total // count
 
 
 def _stamp(page, percent: int) -> None:
@@ -337,36 +391,52 @@ def _next(state, _args):
     if index > 0:
         _score(state)
     count = int(state.variables.get("__quizCount") or 0)
+    # Nothing was built. That is not a finished test.
+    if count <= 0:
+        return 0
     pages = state.variables.get("__quizPages") or {}
     end = pages.get(3) or pages.get("3") or ""
-    if index >= count:
-        state.variables["__choice"] = ""
-        if end:
-            destination = next((item for item in state.book.pages if item.id == end), None)
-            _stamp(destination, _percent(state))
-        return ("goto", end) if end else 0
-    index += 1
-    state.variables["__quizIndex"] = index
-    number = _numbers(state)[index]
-    page_id = _find_page(state, number)
-    if not page_id:
-        return ("goto", end) if end else 0
-    _prepare(state, page_id, index)
-    return ("goto", page_id)
+    test = None
+    if int(state.variables.get("__quizCheckTestAndQuestion") or 0) == 1:
+        test = state.variables.get("__quizCheckTestNo")
+    numbers = _numbers(state)
+    while index < count:
+        index += 1
+        state.variables["__quizIndex"] = index
+        number = numbers[index] if index < len(numbers) else None
+        page_id = _find_page(state, number, test)
+        if page_id:
+            _prepare(state, page_id, index)
+            return ("goto", page_id)
+    # Every number was missing. Do not tell the learner the test is over.
+    if not any(_find_page(state, numbers[i], test) for i in range(1, min(count + 1, len(numbers)))):
+        state.variables["__quizIndex"] = 0
+        return 0
+    state.variables["__choice"] = ""
+    if end:
+        destination = next((item for item in state.book.pages if item.id == end), None)
+        _stamp(destination, _percent(state))
+        return ("goto", end)
+    return 0
 
 
 def _previous(state, _args):
     index = int(state.variables.get("__quizIndex") or 0)
     if index <= 1:
         return 0
-    index -= 1
-    state.variables["__quizIndex"] = index
-    number = _numbers(state)[index]
-    page_id = _find_page(state, number)
-    if not page_id:
-        return 0
-    _prepare(state, page_id, index)
-    return ("goto", page_id)
+    test = None
+    if int(state.variables.get("__quizCheckTestAndQuestion") or 0) == 1:
+        test = state.variables.get("__quizCheckTestNo")
+    numbers = _numbers(state)
+    while index > 1:
+        index -= 1
+        state.variables["__quizIndex"] = index
+        number = numbers[index] if index < len(numbers) else None
+        page_id = _find_page(state, number, test)
+        if page_id:
+            _prepare(state, page_id, index)
+            return ("goto", page_id)
+    return 0
 
 
 def _choose(state, letter: str) -> int:
@@ -492,6 +562,114 @@ def _trainer_code(state, args):
     return ""
 
 
+def _book_props(state) -> dict:
+    raw = getattr(state.book, "props", None) or {}
+    if not isinstance(raw, dict):
+        return {}
+    return {str(key): value for key, value in raw.items()}
+
+
+def _book_prop(props: dict, name: str, default=None):
+    want = name.lower()
+    for key, value in props.items():
+        if str(key).lower() == want:
+            return value
+    return default
+
+
+def _override(state, props, source: str, dest: str) -> None:
+    """Copy a quester setting when the book stored one. -1 means leave it."""
+    value = _book_prop(props, source, None)
+    if value is None:
+        return
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return
+    if number != -1:
+        state.variables[dest] = number
+
+
+def _quester_numbers(state, testno: int, start: int, count: int) -> list[int]:
+    if count > 0:
+        return list(range(start, start + count))
+    found = []
+    for page in state.book.pages:
+        encoded = _encoded(page.id)
+        if encoded and encoded[0] == testno and encoded[1] >= start:
+            found.append(encoded[1])
+    return sorted(set(found))
+
+
+def _install_numbers(state, numbers: list[int], testno: int) -> None:
+    state.variables["__quizNumbers"] = [None, *numbers]
+    state.variables["__quizCount"] = len(numbers)
+    state.variables["__quizIndex"] = 0
+    if testno:
+        state.variables["__quizTestNo"] = [None, *([testno] * len(numbers))]
+
+
+def _add_quester(state, args):
+    """addQuesterQuestions(testno), as nc81test.sbk writes it.
+
+    Question numbers start at 150 (or 4001 when the style is 2). A test
+    count of 1 walks every category. Anything else is the one test the
+    button named, in order unless the book asked for a shuffled sequence.
+    """
+    testno = _num(args[0], 1) if args else 1
+    if testno <= 0:
+        testno = 1
+    props = _book_props(state)
+    start = 4001 if _num(_book_prop(props, "__questerStyle", 0)) == 2 else 150
+    sequence = _num(_book_prop(props, "__questerSequence", 0))
+    _setup(state, ["Quiz", "1", "P10301", "P10302", "P10303"])
+    _override(state, props, "__questerTimed", "__quizTimed")
+    _override(state, props, "__questerTimeType", "__quizTimeType")
+    _override(state, props, "__questerTimeLimit", "__quizTimeLimit")
+    _override(state, props, "__questerCritiqueMode", "__quizCritique")
+    _override(state, props, "__questerObjectiveLevel", "__quizObjectiveLevel")
+    mode = _book_prop(props, "__questerQuizMode", None)
+    if mode is not None and _num(mode, -1) != -1:
+        state.variables["__quizReview"] = _num(mode)
+    whole = _book_prop(props, "__questerTestCount", None)
+    if whole is not None and _num(whole) == 1:
+        state.variables["__quizCheckTestAndQuestion"] = 0
+        categories = _num(_book_prop(props, "__questerCategoryCount", 0))
+        if categories <= 0:
+            categories = 9
+        numbers = []
+        total = 0
+        for index in range(1, categories + 1):
+            count = _num(_book_prop(props, f"__questerQuestionCount({index})", 0))
+            if count <= 0:
+                continue
+            numbers.extend(range(start + total, start + total + count))
+            total += count
+        test_for_rows = 0
+    else:
+        state.variables["__quizCheckTestAndQuestion"] = 1
+        state.variables["__quizCheckTestNo"] = testno
+        count = _num(_book_prop(props, f"__questerQuestionCount({testno})", 0))
+        numbers = _quester_numbers(state, testno, start, count)
+        test_for_rows = testno
+    if sequence and numbers:
+        numbers = random.sample(numbers, len(numbers))
+    _install_numbers(state, numbers, test_for_rows)
+    return 0
+
+
+def _quiz_score(state, _args):
+    return _percent(state)
+
+
+def _skipped(state, _args):
+    count = int(state.variables.get("__quizCount") or 0)
+    scores = state.variables.get("__quizScore") or {}
+    if not isinstance(scores, dict):
+        scores = {}
+    return sum(1 for index in range(1, count + 1) if index not in scores)
+
+
 _CALLS = {
     "gettrainertype": _trainer_type,
     "gettrainercode": _trainer_code,
@@ -501,6 +679,9 @@ _CALLS = {
     "addobjectivetopoolex": _add_pool_ex,
     "setuppool": _setup_pool,
     "addquestions": _add_questions,
+    "addquesterquestions": _add_quester,
+    "getquizscore": _quiz_score,
+    "getskippedcount": _skipped,
     "gotonextquestionex": _next,
     "gotopreviousquestionex": _previous,
     "handlequizclick": _click,

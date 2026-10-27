@@ -217,6 +217,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         pages=pages,
         shells=list(data.get("shells") or []),
         handlers=_handlers_of(data),
+        props=dict(data.get("props") or {}),
     )
 
 
@@ -315,7 +316,38 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 "size": page_size,
             },
         ))
-    return Book(path=str(path), title=path.stem, pages=pages, handlers=_book_scripts(file_bytes, keywords, pages))
+    book = Book(path=str(path), title=path.stem, pages=pages, handlers=_book_scripts(file_bytes, keywords, pages))
+    book.props = _quester_props(file_bytes)
+    return book
+
+
+def _quester_props(data: bytes) -> dict:
+    """__questerQuestionCount and the other book settings beside it.
+
+    The value follows the name: a short header, then ``06 00 02 00``, a
+    signed int16, and ``00 08``. A value that is not in that shape is left
+    unread rather than guessed.
+    """
+    import re
+    import struct
+
+    anchor = data.find(b"__questerQuestionCount(1)\x00")
+    if anchor < 0:
+        return {}
+    blob = data[max(0, anchor - 2500):anchor + 4000]
+    found = {}
+    for match in re.finditer(rb"__[A-Za-z0-9_()]+\x00", blob):
+        name = match.group()[:-1].decode("latin-1")
+        if not name.lower().startswith("__quester"):
+            continue
+        after = blob[match.end():match.end() + 14]
+        at = after.find(b"\x06\x00\x02\x00")
+        if at < 0 or at > 8 or at + 8 > len(after):
+            continue
+        if after[at + 6:at + 8] != b"\x00\x08":
+            continue
+        found[name] = struct.unpack_from("<h", after, at + 4)[0]
+    return found
 
 
 def _book_scripts(data: bytes, keywords, pages) -> list:
