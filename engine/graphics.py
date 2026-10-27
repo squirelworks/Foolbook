@@ -499,6 +499,7 @@ def _draw_font(font: str, char: str, fallback: str) -> str:
     if char and ord(char) > 255:
         return fallback or font
     return font
+_FONTS = {}
 _FACTOR = None
 # Liberation Sans Bold at 16px, the Arial metrics ToolBook uses.
 # "INTRODUCTION" advances 123 pixels there. A desktop face that draws
