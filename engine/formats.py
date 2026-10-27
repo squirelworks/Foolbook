@@ -46,9 +46,17 @@ def kind_of(path: Path) -> str:
 
 
 def pack(data: dict, kind: str = FBK, compress: bool = True) -> bytes:
-    """Build an .fbk or .fsk byte string."""
+    """Build an .fbk or .fsk byte string.
+
+    ``fbk`` is the Foolbook book generation. ``foolbook`` is the reader
+    this file was written for. Neither one is a ToolBook rule.
+    """
+    from foolbook import __version__
+    stamped = dict(data)
+    stamped["fbk"] = FORMAT_VERSION
+    stamped["foolbook"] = __version__
     magic = MAGIC.get(kind, MAGIC[FBK])
-    payload = json.dumps(_share_pictures(data), separators=(",", ":")).encode("utf-8")
+    payload = json.dumps(_share_pictures(stamped), separators=(",", ":")).encode("utf-8")
     flags = 0
     if compress:
         payload = zlib.compress(payload, 9)

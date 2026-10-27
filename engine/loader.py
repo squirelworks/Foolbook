@@ -155,6 +155,11 @@ def load(path: str | Path) -> Book:
         core = Path(__file__).resolve().parents[1] / "core" / path.name
         if core.exists():
             path = core
+    if path.is_file():
+        from toolbook.format import is_toolbook
+        if is_toolbook(path):
+            from toolbook.open import open_book
+            return open_book(path)
     if path.suffix.lower() == ".json":
         return _load_json(path)
     if path.suffix.lower() in (".fbk", ".fsk", ".fsc"):

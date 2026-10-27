@@ -19,7 +19,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["foolbook*", "engine*", "viewer*", "author*", "menu*", "progress*", "foolbookeditor*", "modules*"]
+include = ["foolbook*", "engine*", "viewer*", "author*", "menu*", "progress*", "foolbookeditor*", "modules*", "toolbook*"]
 
 [tool.setuptools.package-data]
 foolbook = ["books/*"]
