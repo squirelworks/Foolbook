@@ -214,20 +214,21 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             lb.delete(0, "end")
             for _index, label in rows:
                 lb.insert("end", label)
-        shown = 0
+        shown_row = 0
         for row, index in enumerate(marks):
             if index <= state.index:
-                shown = row
+                shown_row = row
             else:
                 break
+        held["row"] = shown_row
         held["lock"] = True
         try:
             lb.selection_clear(0, "end")
             if lb.size():
-                lb.selection_set(shown)
-                lb.see(shown)
+                lb.selection_set(shown_row)
+                lb.see(shown_row)
         finally:
-            held["lock"] = False
+            root.after_idle(lambda: held.__setitem__("lock", False))
         root.title(state.book.title or Path(state.book.path).name)
         gfx.delete("all")
         objects = _objects(p)
@@ -472,8 +473,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         row = lb.curselection()[0]
         marks = held.get("outline") or []
-        if row >= len(marks):
+        if row >= len(marks) or row == held.get("row"):
             return
+        held["row"] = row
         show(marks[row])
 
     lb.bind("<<ListboxSelect>>", _on_pick)
