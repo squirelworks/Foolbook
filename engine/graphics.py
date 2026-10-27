@@ -147,6 +147,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                     drawn = True
                 except tk.TclError:
                     drawn = False
+            if not drawn and shape.get("data"):
+                photo = _photo(canvas, shape, base)
+                if photo is not None:
+                    photos.append(photo)
+                    canvas.create_image(x, y, image=photo, anchor="nw")
+                    drawn = True
             if not drawn:
                 canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "", outline=outline or "black")
                 if shape.get("text"):
