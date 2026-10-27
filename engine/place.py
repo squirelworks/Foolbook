@@ -122,7 +122,7 @@ def blank_book_lines(lines, book_name: str = "") -> list[dict]:
             "y": y,
             "w": 640,
             "h": 36,
-            "text": "nida81.tbk is not beside the lesson. This page has the words only.",
+            "text": "nida81.fbk is not beside the lesson. This page has the words only.",
             "size": 12,
         })
         y = 56

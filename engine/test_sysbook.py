@@ -138,6 +138,43 @@ class ButtonScripts(unittest.TestCase):
             found = find_book("nida81.tbk", folder / "lesson.tbk")
             self.assertEqual(found.name, "nida81.fbk")
 
+    def test_the_shell_one_directory_up_is_the_fbk(self):
+        from engine.formats import pack
+        from engine.loader import find_book
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            courses = root / "courses"
+            courses.mkdir()
+            (courses / "93950101.fbk").write_bytes(b"lesson")
+            (courses / "nida81.fsk").write_bytes(b"stub")
+            blob = pack(
+                {"pages": [{"id": "P20001", "settled": True, "shapes": [{"kind": "text", "text": "shell"}]}]},
+                "fbk",
+                compress=True,
+            )
+            (root / "nida81.fbk").write_bytes(blob)
+            found = find_book("nida81.tbk", courses / "93950101.fbk")
+            self.assertEqual(found, root / "nida81.fbk")
+
+    def test_a_system_book_is_the_fsk(self):
+        from engine.formats import pack
+        from engine.loader import find_book
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            courses = root / "courses"
+            courses.mkdir()
+            (courses / "93950101.fbk").write_bytes(b"lesson")
+            blob = pack(
+                {"pages": [{"id": "P1", "settled": True, "shapes": []}]},
+                "fsk",
+                compress=True,
+            )
+            (root / "nc81test.fsk").write_bytes(blob)
+            found = find_book("nc81test.sbk", courses / "93950101.fbk")
+            self.assertEqual(found, root / "nc81test.fsk")
+
     def test_a_course_names_the_other_books_it_opens(self):
         from engine.preload import referenced
         from foolbook.model import Handler

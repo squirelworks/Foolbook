@@ -7,6 +7,7 @@ No server. No browser.
 from __future__ import annotations
 
 import json
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -109,9 +110,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
 
+    show_index = os.environ.get("FOOLBOOK_INDEX") == "1"
     sidebar = ttk.Frame(root, width=160)
-    sidebar.pack(side="left", fill="y")
-    sidebar.pack_propagate(False)
+    if show_index:
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
     held = {"course": course_id}
 
     def choose():
@@ -142,9 +145,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         open_ahead(opened)
         show(0)
 
-    ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
+    if show_index:
+        ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
     lb = tk.Listbox(sidebar)
-    lb.pack(fill="both", expand=True)
+    if show_index:
+        lb.pack(fill="both", expand=True)
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)

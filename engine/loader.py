@@ -37,10 +37,9 @@ def find_book(name: str, near: str | Path) -> Path | None:
     """Find a book named by a jump.
 
     Looks beside the loaded file, then one directory up, then core/.
-    The script names a file. That suffix is tried in every directory
-    before a converted copy. A nida81.fsk beside nida81.tbk used to win,
-    and the pages were the stub. tb80r.sbk still opens core/tb80r.fsk
-    when no .sbk is on the path.
+    A lesson names nida81.tbk and the system books as .sbk. The course
+    ships those as .fbk and .fsk. A settled export is taken before the
+    original file and before the stub in core/.
     """
     stem = Path(name).stem
     near = Path(near)
@@ -67,9 +66,17 @@ def find_book(name: str, near: str | Path) -> Path | None:
             add(child)
     add(root / "core")
     asked = Path(name).suffix.lower()
+    # The shell is an .fbk. A system book is an .fsk. Either one, once
+    # it is a real export, wins over a .tbk, a .sbk, and the core stub.
+    exports = (".fsk", ".fbk") if asked == ".sbk" else (".fbk", ".fsk")
+    for suf in exports:
+        for directory in dirs:
+            found = _named(directory, stem, suf)
+            if found is not None and _usable_export(found):
+                return found
     order = []
-    for suf in (asked, ".tbk", ".sbk", ".fsk", ".fbk", ".json"):
-        if suf in (".tbk", ".sbk", ".fsk", ".fbk", ".json") and suf not in order:
+    for suf in (asked, ".fbk", ".fsk", ".tbk", ".sbk", ".json"):
+        if suf and suf not in order:
             order.append(suf)
     # The original file, in any of these directories, before a stub.
     # A settled export beside that file is the same book, already drawn.

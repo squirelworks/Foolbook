@@ -126,7 +126,7 @@ class WindowTests(unittest.TestCase):
             ["INPUT DEVICE - Use your mouse to make selections."],
             "core/nida81.fsk",
         )
-        self.assertIn("nida81.tbk", lines[0]["text"])
+        self.assertIn("nida81.fbk", lines[0]["text"])
         self.assertIn("INPUT DEVICE", lines[1]["text"])
         self.assertEqual(blank_book_lines([], "nida81.tbk"), [])
 
