@@ -104,6 +104,111 @@ def click_target(shapes, x: float, y: float):
     return top
 
 
+def plain_page(text, items=None, quiz=None) -> list[dict]:
+    """A book that stored words and buttons, not ToolBook shapes.
+
+    The page paints its own paper, so the previous page does not stay
+    on the window. The words are a title and a body. The buttons sit
+    under the words.
+    """
+    lines = [str(line).strip() for line in text or [] if str(line).strip()]
+    title = lines[0] if lines else ""
+    body = lines[1:]
+    width = 760
+    margin = 28
+    inner = width - margin * 2
+    y = 28
+    shapes = []
+    if title:
+        shapes.append(_words(title, margin, y, inner, 40, 18))
+        y += 48
+    if body:
+        block = "\n\n".join(body)
+        rows = 0
+        for line in body:
+            rows += max(1, (len(line) + 64) // 65) + 1
+        height = max(56, rows * 20)
+        shapes.append(_words(block, margin, y, inner, height, 13))
+        y += height + 18
+    quiz = quiz or {}
+    for choice in quiz.get("choices") or []:
+        label = str(choice.get("label") or "").strip()
+        if not label:
+            continue
+        rows = max(1, (len(label) + 54) // 55)
+        height = max(36, rows * 18 + 14)
+        target = quiz.get("next") if choice.get("correct") else quiz.get("again")
+        shapes.append({
+            "kind": "button",
+            "name": label,
+            "text": label,
+            "x": margin,
+            "y": y,
+            "w": inner,
+            "h": height,
+            "fill": "#f3f3f3",
+            "outline": "#222222",
+            "item": {"label": label, "page": target or "", "correct": bool(choice.get("correct"))},
+            "visible": True,
+        })
+        y += height + 10
+    if shapes and (items or []):
+        y += 8
+    x = margin
+    row_h = 34
+    for item in items or []:
+        label = str(item.get("label") or item.get("page") or "Go")
+        wide = max(96, min(inner, 8 * len(label) + 28))
+        if x > margin and x + wide > width - margin:
+            x = margin
+            y += row_h + 8
+        shapes.append({
+            "kind": "button",
+            "name": label,
+            "text": label,
+            "x": x,
+            "y": y,
+            "w": wide,
+            "h": row_h,
+            "fill": "#f7f7f7",
+            "outline": "#222222",
+            "item": item,
+            "visible": True,
+        })
+        x += wide + 12
+    if items:
+        y += row_h
+    height = max(560, y + 28)
+    paper = {
+        "kind": "rect",
+        "name": "paper",
+        "x": 0,
+        "y": 0,
+        "w": width,
+        "h": height,
+        "fill": "#ffffff",
+        "outline": "",
+        "visible": True,
+    }
+    return [paper, *shapes]
+
+
+def _words(text, x, y, w, h, size) -> dict:
+    return {
+        "kind": "text",
+        "x": x,
+        "y": y,
+        "w": w,
+        "h": h,
+        "text": text,
+        "size": size,
+        "border": 1,
+        "fill": "",
+        "outline": "#1a1a1a",
+        "visible": True,
+    }
+
+
 def blank_book_lines(lines, book_name: str = "") -> list[dict]:
     """Words for a page that stored text and no shapes.
 

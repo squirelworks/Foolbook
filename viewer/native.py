@@ -15,7 +15,7 @@ from engine.loader import load, realize
 from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
-from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
+from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
 from engine.window import arrive, visible
@@ -176,6 +176,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return stored
         objects = list(extract(page))
         objects = [shape for shape in objects if not _corner_stub(shape, objects)]
+        if not objects:
+            return plain_page(getattr(page, "text", None), page.items, page.quiz)
         y = bottom(objects) + 16
         named = {(shape.get("name") or "").lower() for shape in objects}
         have = {
@@ -455,6 +457,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             _paint()
             return
         item = (obj or {}).get("item") or {}
+        if "correct" in item and state.page is not None:
+            progress.record_answer(held["course"], state.page.id, bool(item.get("correct")))
         if item.get("page") or item.get("book") or item.get("label"):
             on_button(item.get("label") or (obj or {}).get("text") or "", item.get("page") or "", item.get("book") or "")
 

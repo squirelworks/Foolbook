@@ -150,7 +150,16 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             if not drawn:
                 canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "", outline=outline or "black")
                 if shape.get("text"):
-                    canvas.create_text(x + 4, y + 2, text=str(shape.get("text")), anchor="nw", fill=fill or "black")
+                    ink = "black"
+                    if fill and not _pale(fill):
+                        ink = "white"
+                    canvas.create_text(
+                        x + 8, y + h / 2,
+                        text=str(shape.get("text")),
+                        anchor="w",
+                        fill=ink,
+                        width=max(1, int(w) - 16),
+                    )
         elif kind == "image":
             shown = shape
             face = ""

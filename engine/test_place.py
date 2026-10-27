@@ -2,7 +2,8 @@
 
 import unittest
 
-from engine.place import clip_to_page, click_target, content_box, fit_view, in_front, opening_size, place_page, place_window
+from engine.place import clip_to_page, click_target, content_box, fit_view, in_front, opening_size, place_page, place_window, plain_page
+from engine.window import arrive, paints_paper, visible
 
 
 class PlaceTests(unittest.TestCase):
@@ -139,6 +140,25 @@ class WindowTests(unittest.TestCase):
         small = opening_size(800, 600)
         self.assertLess(small[0], 800)
         self.assertLess(small[1], 600)
+
+    def test_a_plain_page_covers_the_one_before_it(self):
+        first = plain_page(
+            ["Filing taxes for 2026", "This book is the 2026 return."],
+            [{"label": "Next", "page": "P10"}, {"label": "Menu", "page": "P10"}],
+        )
+        second = plain_page(
+            ["Check", "Must you file?"],
+            [],
+            {"choices": [{"label": "No.", "correct": True}], "again": "P0", "next": "P20"},
+        )
+        self.assertTrue(paints_paper(first))
+        self.assertEqual(first[1]["text"], "Filing taxes for 2026")
+        window = arrive([], 0, first)
+        window = arrive(window, 1, second)
+        shown = " ".join(item.get("text") or "" for item in visible(window))
+        self.assertIn("Must you file?", shown)
+        self.assertNotIn("Filing taxes for 2026", shown)
+        self.assertNotIn("Next", shown)
 
 
 
