@@ -735,22 +735,16 @@ def _points(shape: dict) -> list[int]:
     return flat
 
 
-def _fit_image(raw: bytes, width: int, height: int) -> bytes:
-    """Stretch a picture to the button. The page scale is applied later, to everything."""
-    if width < 2 or height < 2:
-        return raw
+def _nearest():
+    """Pillow renamed the filter in 9.1. A missing name was dropping the picture."""
     try:
-        import io
         from PIL import Image
-        image = Image.open(io.BytesIO(raw))
-        if image.size == (width, height):
-            return raw
-        image = image.resize((width, height), Image.Resampling.NEAREST)
-        out = io.BytesIO()
-        image.save(out, "PNG")
-        return out.getvalue()
     except Exception:
-        return raw
+        return 0
+    resampling = getattr(Image, "Resampling", None)
+    if resampling is not None:
+        return resampling.NEAREST
+    return getattr(Image, "NEAREST", 0)
 
 
 def _photo(canvas, shape: dict, base: str | Path | None):
@@ -775,9 +769,13 @@ def _photo(canvas, shape: dict, base: str | Path | None):
         elif shape.get("edge"):
             from engine.loader import _clear_edge
             _clear_edge(image)
+        else:
+            flat = Image.new("RGB", image.size, "white")
+            flat.paste(image, mask=image.split()[-1])
+            image = flat
         width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
         if width > 1 and height > 1 and image.size != (width, height):
-            image = image.resize((width, height), Image.Resampling.NEAREST)
+            image = image.resize((width, height), _nearest())
         return ImageTk.PhotoImage(image, master=canvas)
     except Exception:
         return None
