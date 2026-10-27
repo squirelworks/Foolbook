@@ -15,6 +15,7 @@ from engine.loader import load, realize
 from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
+from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
 from engine.window import arrive, visible
