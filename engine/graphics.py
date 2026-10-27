@@ -7,7 +7,7 @@ stream is decoded to handler source and the engine runs it.
   rect, ellipse   x, y, w, h, fill, outline
   line, polygon   points: [[x, y], ...]
   text            x, y, text
-  image           x, y, and src (a file beside the book) or data (base64 PNG or GIF)
+  image           x, y, and src (a file beside the book) or data (base64 BMP, PNG, or GIF)
 
 bounds, when present, is [x, y, w, h] and stands in for x, y, w, h.
 """
@@ -728,6 +728,12 @@ def _photo(canvas, shape: dict, base: str | Path | None):
                 return None
             image = Image.open(io.BytesIO(base64.b64decode(data)))
         image = image.convert("RGBA")
+        if shape.get("transparent"):
+            from engine.loader import _matte
+            _matte(image)
+        elif shape.get("edge"):
+            from engine.loader import _clear_edge
+            _clear_edge(image)
         width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
         if width > 1 and height > 1 and image.size != (width, height):
             image = image.resize((width, height), Image.Resampling.NEAREST)

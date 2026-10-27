@@ -382,14 +382,17 @@ forward'''
         import base64
         import io
         from PIL import Image
-        from engine.loader import _png
+        from engine.loader import _clear_edge, _png
         image = Image.new("RGB", (5, 5), (255, 255, 255))
         for x, y in ((1, 1), (2, 1), (3, 1), (1, 2), (3, 2), (1, 3), (2, 3), (3, 3)):
             image.putpixel((x, y), (180, 20, 20))
         image.putpixel((2, 2), (255, 255, 255))
         raw = io.BytesIO()
         image.save(raw, "BMP")
-        got = Image.open(io.BytesIO(base64.b64decode(_png(raw.getvalue(), edge=True)))).convert("RGBA")
+        stored = raw.getvalue()
+        self.assertEqual(base64.b64decode(_png(stored, edge=True)), stored)
+        got = Image.open(io.BytesIO(stored)).convert("RGBA")
+        _clear_edge(got)
         self.assertEqual(got.getpixel((0, 0))[3], 0)
         self.assertEqual(got.getpixel((2, 1))[3], 255)
         self.assertEqual(got.getpixel((2, 2))[3], 255)

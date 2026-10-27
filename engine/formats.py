@@ -48,7 +48,7 @@ def kind_of(path: Path) -> str:
 def pack(data: dict, kind: str = FBK, compress: bool = True) -> bytes:
     """Build an .fbk or .fsk byte string."""
     magic = MAGIC.get(kind, MAGIC[FBK])
-    payload = json.dumps(data, separators=(",", ":")).encode("utf-8")
+    payload = json.dumps(_share_pictures(data), separators=(",", ":")).encode("utf-8")
     flags = 0
     if compress:
         payload = zlib.compress(payload, 9)
@@ -59,14 +59,155 @@ def pack(data: dict, kind: str = FBK, compress: bool = True) -> bytes:
 def unpack(blob: bytes) -> dict:
     """Read an .fbk/.fsk envelope. Plain JSON is accepted so older files still open."""
     if blob[:1] in (b"{", b"["):
-        return json.loads(blob.decode("utf-8"))
+        return _restore_pictures(json.loads(blob.decode("utf-8")))
     if len(blob) < 5 or blob[:4] not in MAGIC.values():
         raise ValueError("not an .fbk or .fsk")
     flags = blob[4]
     payload = blob[5:]
     if flags & FLAG_COMPRESSED:
         payload = zlib.decompress(payload)
-    return json.loads(payload.decode("utf-8"))
+    return _restore_pictures(json.loads(payload.decode("utf-8")))
+
+
+_PICTURE_KEYS = ("data", "invert_data", "checked_data")
+
+
+def _share_pictures(data: dict) -> dict:
+    """One copy of each bitmap. A repeated face is a #N token.
+
+    The same button picture is drawn on most pages. Written out each
+    time, it is larger than a zlib window, so the envelope could not
+    fold the copies. The token is shorter than that window.
+    """
+    images: list[str] = []
+    index: dict[str, int] = {}
+
+    def token(value: str) -> str:
+        if len(value) < 64:
+            return value
+        found = index.get(value)
+        if found is None:
+            found = len(images)
+            index[value] = found
+            images.append(value)
+        return f"#{found}"
+
+    def shapes(items: list) -> list:
+        out = []
+        changed = False
+        for shape in items:
+            if not isinstance(shape, dict):
+                out.append(shape)
+                continue
+            copy = None
+            for key in _PICTURE_KEYS:
+                value = shape.get(key)
+                if isinstance(value, str) and len(value) >= 64:
+                    if copy is None:
+                        copy = dict(shape)
+                    copy[key] = token(value)
+            if copy is None:
+                out.append(shape)
+            else:
+                out.append(copy)
+                changed = True
+        return out if changed else items
+
+    def walk(node):
+        if isinstance(node, dict):
+            out = node
+            for key, value in node.items():
+                if key == "images":
+                    continue
+                if key == "shapes" and isinstance(value, list):
+                    nxt = shapes(value)
+                elif isinstance(value, (dict, list)):
+                    nxt = walk(value)
+                else:
+                    continue
+                if nxt is not value:
+                    if out is node:
+                        out = dict(node)
+                    out[key] = nxt
+            return out
+        if isinstance(node, list):
+            out = node
+            for i, item in enumerate(node):
+                nxt = walk(item)
+                if nxt is not item:
+                    if out is node:
+                        out = list(node)
+                    out[i] = nxt
+            return out
+        return node
+
+    shared = walk(data)
+    if not images:
+        return data
+    if shared is data:
+        shared = dict(data)
+    shared["images"] = images
+    return shared
+
+
+def _restore_pictures(data: dict) -> dict:
+    images = data.get("images") if isinstance(data, dict) else None
+    if not isinstance(images, list) or not images:
+        return data
+
+    def restore(shape: dict) -> dict:
+        copy = None
+        for key in _PICTURE_KEYS:
+            value = shape.get(key)
+            if not isinstance(value, str) or len(value) < 2 or value[0] != "#":
+                continue
+            if not value[1:].isdigit():
+                continue
+            number = int(value[1:])
+            if number >= len(images):
+                continue
+            if copy is None:
+                copy = dict(shape)
+            copy[key] = images[number]
+        return copy or shape
+
+    def walk(node):
+        if isinstance(node, dict):
+            out = node
+            for key, value in node.items():
+                if key == "images":
+                    continue
+                if key == "shapes" and isinstance(value, list):
+                    nxt = [restore(item) if isinstance(item, dict) else item for item in value]
+                    if nxt != value:
+                        if out is node:
+                            out = dict(node)
+                        out[key] = nxt
+                elif isinstance(value, (dict, list)):
+                    nxt = walk(value)
+                    if nxt is not value:
+                        if out is node:
+                            out = dict(node)
+                        out[key] = nxt
+            return out
+        if isinstance(node, list):
+            out = node
+            for i, item in enumerate(node):
+                nxt = walk(item)
+                if nxt is not item:
+                    if out is node:
+                        out = list(node)
+                    out[i] = nxt
+            return out
+        return node
+
+    restored = walk(data)
+    if restored is data:
+        restored = dict(data)
+    else:
+        restored = dict(restored)
+    restored.pop("images", None)
+    return restored
 
 
 def load(path: Path) -> dict:

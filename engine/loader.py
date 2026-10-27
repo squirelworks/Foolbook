@@ -430,14 +430,18 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         shape["transparent"] = bool(obj.get("transparent"))
         shape["edge"] = obj.get("kind") == "rect"
         return shape
-    picture = _png(obj.get("bmp"), bool(obj.get("transparent")), edge=obj.get("kind") == "rect")
+    picture = _png(obj.get("bmp"))
     if picture:
         shape["kind"] = "image"
         shape["data"] = picture
-    invert = _png(obj.get("invert_bmp"), bool(obj.get("transparent")))
+        if obj.get("transparent"):
+            shape["transparent"] = True
+        elif obj.get("kind") == "rect":
+            shape["edge"] = True
+    invert = _png(obj.get("invert_bmp"))
     if invert:
         shape["invert_data"] = invert
-    chosen = _png(obj.get("checked_bmp"), bool(obj.get("transparent")))
+    chosen = _png(obj.get("checked_bmp"))
     if chosen:
         # The face a choice turns on. The page does not start on it.
         shape["checked_data"] = chosen
@@ -445,27 +449,17 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
 
 
 def _png(blob: bytes | None, transparent: bool = False, edge: bool = False) -> str:
+    """The bitmap as it is stored in the book, not a 32-bit PNG.
+
+    A transparent button and a white mat are marked on the shape. The
+    viewer applies them when the page is drawn. Baking either one into
+    a PNG made a 2 MB book into a 20 MB book.
+    """
+    del transparent, edge
     if not blob or blob[:2] != b"BM":
         return ""
-    try:
-        import base64
-        import io
-        from PIL import Image
-        image = Image.open(io.BytesIO(blob)).convert("RGBA")
-        # A transparent button's top-left pixel is the matte, not the header.
-        if transparent:
-            key = image.getpixel((0, 0))[:3]
-            image.putdata([
-                (red, green, blue, 0 if (red, green, blue) == key else 255)
-                for red, green, blue, _alpha in image.getdata()
-            ])
-        elif edge:
-            _clear_edge(image)
-        out = io.BytesIO()
-        image.save(out, "PNG")
-        return base64.b64encode(out.getvalue()).decode("ascii")
-    except Exception:
-        return ""
+    import base64
+    return base64.b64encode(blob).decode("ascii")
 
 
 _drawn: dict = {}
@@ -488,11 +482,10 @@ def realize(path: str | Path, shapes: list[dict]) -> None:
         cached = _drawn.get((key, later))
         if cached is None:
             bmp, invert, checked = _later_bmps(store, later)
-            transparent = bool(shape.get("transparent"))
             cached = (
-                _png(bmp, transparent, edge=bool(shape.get("edge"))),
-                _png(invert, transparent),
-                _png(checked, transparent),
+                _png(bmp),
+                _png(invert),
+                _png(checked),
             )
             _drawn[(key, later)] = cached
         picture, invert, checked = cached
@@ -552,6 +545,15 @@ def _later_bmps(store, later: tuple):
     if words and words["style"] in (5, 6, 8, 9):
         checked = store._button_face(seg, rec, 0x4B)
     return store._button_bmp(seg, rec), invert, checked
+
+
+def _matte(image) -> None:
+    """A transparent button's top-left pixel is the matte, not the header."""
+    key = image.getpixel((0, 0))[:3]
+    image.putdata([
+        (red, green, blue, 0 if (red, green, blue) == key else 255)
+        for red, green, blue, _alpha in image.getdata()
+    ])
 
 
 def _clear_edge(image) -> None:
