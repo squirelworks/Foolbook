@@ -14,7 +14,7 @@ from pathlib import Path
 from engine.loader import load, realize
 from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
-from engine.outline import outline
+from engine.outline import every_page, outline
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
 from engine.window import arrive, visible
@@ -206,11 +206,12 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if p is None:
             return
         progress.mark_page(held["course"], p.id)
-        rows = outline(pages)
+        dev = _developer(state)
+        rows = every_page(pages) if dev else outline(pages)
         marks = tuple(index for index, _label in rows)
-        if held.get("outline_for") != state.book.path or held.get("outline") != list(marks) or tuple(lb.get(0, "end")) != tuple(label for _index, label in rows):
+        if held.get("outline_for") != (state.book.path, dev) or held.get("outline") != list(marks) or tuple(lb.get(0, "end")) != tuple(label for _index, label in rows):
             held["outline"] = list(marks)
-            held["outline_for"] = state.book.path
+            held["outline_for"] = (state.book.path, dev)
             lb.delete(0, "end")
             for _index, label in rows:
                 lb.insert("end", label)
@@ -485,6 +486,15 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     finally:
         stop_ahead()
     return 0
+
+
+def _developer(state) -> bool:
+    """Page ids are for someone working on the book, not for a reader."""
+    from engine.loader import _KEEP_DECODED
+    if _KEEP_DECODED:
+        return True
+    level = str(state.variables.get("sysLevel") or "reader").lower()
+    return level not in ("", "reader")
 
 
 def _window_path() -> Path:
