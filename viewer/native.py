@@ -7,7 +7,6 @@ No server. No browser.
 from __future__ import annotations
 
 import json
-import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
@@ -15,7 +14,7 @@ from pathlib import Path
 from engine.loader import load, realize
 from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
-from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size
+from engine.outline import outline
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
 from engine.window import arrive, visible
@@ -110,12 +109,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     state.variables.setdefault("__import", True)
     state.variables.setdefault("sysLevel", "reader")
 
-    show_index = os.environ.get("FOOLBOOK_INDEX") == "1"
-    sidebar = ttk.Frame(root, width=160)
-    if show_index:
-        sidebar.pack(side="left", fill="y")
-        sidebar.pack_propagate(False)
-    held = {"course": course_id}
+    sidebar = ttk.Frame(root, width=240)
+    sidebar.pack(side="left", fill="y")
+    sidebar.pack_propagate(False)
+    held = {"course": course_id, "outline": [], "outline_for": None}
 
     def choose():
         path = filedialog.askopenfilename(
@@ -145,11 +142,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         open_ahead(opened)
         show(0)
 
-    if show_index:
-        ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
+    ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
     lb = tk.Listbox(sidebar)
-    if show_index:
-        lb.pack(fill="both", expand=True)
+    lb.pack(fill="both", expand=True)
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)
@@ -211,17 +206,26 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if p is None:
             return
         progress.mark_page(held["course"], p.id)
-        ids = tuple(page.id for page in pages)
-        if tuple(lb.get(0, "end")) != ids:
+        rows = outline(pages)
+        marks = tuple(index for index, _label in rows)
+        if held.get("outline_for") != state.book.path or held.get("outline") != list(marks) or tuple(lb.get(0, "end")) != tuple(label for _index, label in rows):
+            held["outline"] = list(marks)
+            held["outline_for"] = state.book.path
             lb.delete(0, "end")
-            for page_id in ids:
-                lb.insert("end", page_id)
-        idx.set(state.index)
+            for _index, label in rows:
+                lb.insert("end", label)
+        shown = 0
+        for row, index in enumerate(marks):
+            if index <= state.index:
+                shown = row
+            else:
+                break
         held["lock"] = True
         try:
             lb.selection_clear(0, "end")
-            lb.selection_set(state.index)
-            lb.see(state.index)
+            if lb.size():
+                lb.selection_set(shown)
+                lb.see(shown)
         finally:
             held["lock"] = False
         root.title(state.book.title or Path(state.book.path).name)
@@ -463,7 +467,16 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     gfx.bind("<ButtonRelease-1>", on_release)
     gfx.bind("<KeyPress>", on_key)
     gfx.bind("<KeyRelease>", on_key_up)
-    lb.bind("<<ListboxSelect>>", lambda e: show(lb.curselection()[0]) if lb.curselection() and not held.get("lock") else None)
+    def _on_pick(_event=None):
+        if held.get("lock") or not lb.curselection():
+            return
+        row = lb.curselection()[0]
+        marks = held.get("outline") or []
+        if row >= len(marks):
+            return
+        show(marks[row])
+
+    lb.bind("<<ListboxSelect>>", _on_pick)
     show(idx.get())
     try:
         root.mainloop()
