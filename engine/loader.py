@@ -315,7 +315,45 @@ def _load_store(path: Path, file_bytes: bytes) -> Book:
                 "size": page_size,
             },
         ))
-    return Book(path=str(path), title=path.stem, pages=pages, handlers=_book_keyup(file_bytes, keywords))
+    return Book(path=str(path), title=path.stem, pages=pages, handlers=_book_scripts(file_bytes, keywords, pages))
+
+
+def _book_scripts(data: bytes, keywords, pages) -> list:
+    """Handlers the page list does not already hold.
+
+    A system book keeps its procedures in the file, not on the one
+    title page. The export is the book, so those scripts stay.
+    """
+    try:
+        from openscript_analysis.formats.tbk.expand import read_handlers
+    except ImportError:
+        return []
+    from foolbook.model import Handler
+    have = []
+    for page in pages:
+        for handler in page.handlers or []:
+            text = " ".join((handler.source or "").split())
+            if text:
+                have.append(text)
+        for shape in page.shapes or []:
+            for key in ("script", "group_script"):
+                text = " ".join((shape.get(key) or "").split())
+                if text:
+                    have.append(text)
+    known = set(have)
+    found = []
+    seen = set()
+    for item in read_handlers(data, keywords or None):
+        source = item.get("source") or ""
+        name = item.get("name") or ""
+        key = " ".join(source.split())
+        if not name or not key or key in known or key in seen:
+            continue
+        if any(key in script or script in key for script in have):
+            continue
+        seen.add(key)
+        found.append(Handler(name=name, source=source, offset=item.get("offset") or 0))
+    return found
 
 
 def _book_keyup(data: bytes, keywords) -> list:
