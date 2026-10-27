@@ -181,6 +181,18 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 photos.append(photo)
                 x, y, _w, _h = _box(shape)
                 canvas.create_image(x, y, image=photo, anchor="nw")
+            elif shape.get("caption"):
+                # A sample page names its picture. A ToolBook picture has no caption,
+                # so a book that loads is drawn exactly as before.
+                x, y, w, h = _box(shape)
+                canvas.create_rectangle(x, y, x + w, y + h, outline="#1f3a5f")
+                canvas.create_text(
+                    x + 8, y + 8,
+                    text=str(shape.get("caption")),
+                    anchor="nw",
+                    fill="#1a1a1a",
+                    width=max(1, int(w) - 16),
+                )
         else:
             x, y, w, h = _box(shape)
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
@@ -735,16 +747,22 @@ def _points(shape: dict) -> list[int]:
     return flat
 
 
-def _nearest():
-    """Pillow renamed the filter in 9.1. A missing name was dropping the picture."""
+def _fit_image(raw: bytes, width: int, height: int) -> bytes:
+    """Stretch a picture to the button. The page scale is applied later, to everything."""
+    if width < 2 or height < 2:
+        return raw
     try:
+        import io
         from PIL import Image
+        image = Image.open(io.BytesIO(raw))
+        if image.size == (width, height):
+            return raw
+        image = image.resize((width, height), Image.Resampling.NEAREST)
+        out = io.BytesIO()
+        image.save(out, "PNG")
+        return out.getvalue()
     except Exception:
-        return 0
-    resampling = getattr(Image, "Resampling", None)
-    if resampling is not None:
-        return resampling.NEAREST
-    return getattr(Image, "NEAREST", 0)
+        return raw
 
 
 def _photo(canvas, shape: dict, base: str | Path | None):
@@ -769,13 +787,9 @@ def _photo(canvas, shape: dict, base: str | Path | None):
         elif shape.get("edge"):
             from engine.loader import _clear_edge
             _clear_edge(image)
-        else:
-            flat = Image.new("RGB", image.size, "white")
-            flat.paste(image, mask=image.split()[-1])
-            image = flat
         width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
         if width > 1 and height > 1 and image.size != (width, height):
-            image = image.resize((width, height), _nearest())
+            image = image.resize((width, height), Image.Resampling.NEAREST)
         return ImageTk.PhotoImage(image, master=canvas)
     except Exception:
         return None
