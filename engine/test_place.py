@@ -121,6 +121,19 @@ class WindowTests(unittest.TestCase):
         letter = {"kind": "image", "name": "C", "x": 160, "y": 80, "w": 20, "h": 20}
         self.assertIs(click_target([letter, word], 220, 85), word)
 
+    def test_a_label_on_a_foolbook_button_clicks_the_button(self):
+        button = {
+            "kind": "button", "name": "Next", "text": "",
+            "x": 28, "y": 452, "w": 156, "h": 44, "fill": "#1f3a5f",
+            "item": {"label": "Next", "page": "P10"},
+        }
+        label = {
+            "kind": "text", "x": 40, "y": 460, "w": 132, "h": 30,
+            "text": "Next", "outline": "#ffffff",
+        }
+        self.assertIs(click_target([button, label], 50, 470), button)
+        self.assertEqual(click_target([button, label], 50, 470)["item"]["page"], "P10")
+
     def test_a_blank_stub_page_keeps_its_words(self):
         from engine.place import blank_book_lines
         lines = blank_book_lines(

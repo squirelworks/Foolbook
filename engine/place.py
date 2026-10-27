@@ -98,9 +98,17 @@ def click_target(shapes, x: float, y: float):
     top = found[0]
     script = top.get("script") or ""
     if (top.get("kind") or "") == "text" and "buttonclick" not in script.lower():
+        # The words drawn on a Foolbook button are not the control. The
+        # button under them is. A ToolBook word stays, unless a buttonClick
+        # is what the click was for.
+        button = None
         for shape in found[1:]:
             if "buttonclick" in (shape.get("script") or "").lower():
                 return shape
+            if button is None and shape.get("item") and (shape.get("kind") or "") == "button":
+                button = shape
+        if button is not None:
+            return button
     return top
 
 
