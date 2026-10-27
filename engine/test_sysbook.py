@@ -479,6 +479,15 @@ class QuesterTest(unittest.TestCase):
 
 
 class FaceTests(unittest.TestCase):
+    def test_a_unicode_bullet_is_not_drawn_in_wingdings(self):
+        import sys
+        import types
+        sys.modules.setdefault("tkinter", types.ModuleType("tkinter"))
+        from engine.graphics import _draw_font
+        self.assertEqual(_draw_font("Wingdings", "\u2022", "Arial"), "Arial")
+        self.assertEqual(_draw_font("Wingdings", "\x8d", "Arial"), "Wingdings")
+        self.assertEqual(_draw_font("Arial", "A", "Arial"), "Arial")
+
     def test_a_wingdings_w_is_a_bullet_and_a_letter_is_not(self):
         from openscript_analysis.formats.tbk.store import apply_faces
         text, face = apply_faces("w Describe", [(0, "Wingdings"), (1, "Arial")])

@@ -299,6 +299,12 @@ def _paint_marked(canvas, shape, x, y, w, h, fill, outline):
                 size = int(run.get("size") or size)
                 bold = bool(run.get("bold"))
                 italic = bool(run.get("italic"))
+            ch = raw[index] if 0 <= index < len(raw) else ""
+            if _draw_font(font, ch, shape.get("font") or "") != font:
+                font = shape.get("font") or "TkDefaultFont"
+                size = field_size
+                bold = bool(shape.get("bold"))
+                italic = bool(shape.get("italic"))
             if run.get("color"):
                 color = run["color"]
         return font, size, bold, italic, color
@@ -452,6 +458,12 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
             span["size"] = span_size
             span["bold"] = bool(run.get("bold"))
             span["italic"] = bool(run.get("italic"))
+            if text and _draw_font(span["font"], text[0], shape.get("font") or "") != span["font"]:
+                span["font"] = shape.get("font") or span["font"]
+                span_size = size
+                span["size"] = span_size
+                span["bold"] = bool(shape.get("bold"))
+                span["italic"] = bool(shape.get("italic"))
         face = _typeface(span, span_size)
         wide = tkfont.Font(font=face).measure(text)
         prepared.append((text, face, span_size, (run or {}).get("color") or ink, wide))
@@ -473,7 +485,20 @@ def _paint_runs(canvas, shape, x, y, w, h, fill, outline) -> bool:
     return True
 
 
-_FONTS = {}
+_SYMBOL_FONTS = {"wingdings", "wingdings 2", "wingdings 3", "webdings", "symbol"}
+
+
+def _draw_font(font: str, char: str, fallback: str) -> str:
+    """A symbol face cannot draw a character that is already Unicode.
+
+    The export stores the bullet as • and leaves the face as Wingdings.
+    Wingdings has no such character, so the window draws the wrong mark.
+    """
+    if (font or "").strip().lower() not in _SYMBOL_FONTS:
+        return font
+    if char and ord(char) > 255:
+        return fallback or font
+    return font
 _FACTOR = None
 # Liberation Sans Bold at 16px, the Arial metrics ToolBook uses.
 # "INTRODUCTION" advances 123 pixels there. A desktop face that draws
