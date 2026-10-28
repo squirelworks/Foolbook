@@ -8,7 +8,7 @@ can launch it with a path; if none is given, Foolbook asks for one.
   python3 -m foolbook --student _student/alex.json book.fbk
   python3 -m foolbook                      # ask for a file, then open the GUI
   python3 -m foolbook --cli path/to/book   # terminal viewer
-  python3 -m foolbook --catalog            # rebuild _courses/catalog.json
+  python3 -m foolbook --catalog            # rebuild _books/catalog.json
   python3 -m foolbook --debug              # files and checksums
 """
 
@@ -71,7 +71,7 @@ def main() -> int:
         return _export([normalize_path(item) for item in rest], force=force, json_copy=json_copy)
     if not args:
         # Default book ships with Foolbook
-        default = Path(__file__).resolve().parent / "books" / "using_foolbook.json"
+        default = Path(__file__).resolve().parents[1] / "_books" / "using_foolbook" / "using_foolbook.json"
         if default.exists():
             args = [str(default)]
         else:
@@ -88,7 +88,7 @@ def main() -> int:
     if args[0] in ("--gui", "-g"):
         args = args[1:]
     if args and args[0] == "--catalog":
-        from _courses.catalog import main as catalog_main
+        from _books.catalog import main as catalog_main
         return catalog_main(args[1:])
     if args:
         args = [str(normalize_path(args[0]))] + args[1:]

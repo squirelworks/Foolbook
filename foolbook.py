@@ -4,7 +4,7 @@
   python3 foolbook.py path/to/book.fbk     # open in the GUI
   python3 foolbook.py                      # ask for a file, then open the GUI
   python3 foolbook.py --cli path/to/book   # terminal viewer
-  python3 foolbook.py --menu _courses/catalog.json
+  python3 foolbook.py --menu _books/catalog.json
   python3 foolbook.py --catalog             # rebuild catalog
   python3 foolbook.py --debug               # files and checksums
 

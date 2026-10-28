@@ -53,8 +53,8 @@ python3 -m foolbook                             # Using Foolbook
 python3 -m foolbook --cli path/to/book          # terminal viewer
 python3 -m foolbook --export path/to/book.tbk   # write an .fbk beside it
 python3 -m foolbook --export path/to/folder     # that folder first, then the folders inside it
-python3 -m foolbook --menu _courses/catalog.json
-python3 -m foolbook --catalog                   # rebuild _courses/catalog.json
+python3 -m foolbook --menu _books/catalog.json
+python3 -m foolbook --catalog                   # rebuild _books/catalog.json
 python3 -m foolbook --bin path/to/res.bin book.tbk   # override keyword table for .tbk/.sbk
 ```
 
@@ -76,7 +76,7 @@ Foolbook/
   menu/                     # course menu
   progress/                 # progression tracking (scaffold)
   core/                     # system books (.fsk standard, .sbk compatible)
-  _courses/                 # sample courses and catalog
+  _books/                   # the books that ship with Foolbook, and the catalog
   _debug/                   # debug package (only with --debug)
   knownbugs.md
   CHANGELOG.md
@@ -108,7 +108,7 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 
 A field named Page# shows the page that is open. A text field named `correct` is the practice answer and stays on the page. The Correct rectangle is the answer key and stays hidden.
 
-A new install opens `using_foolbook`. Its First Light button opens the other example, `first_light`, which is shipped in the same folder.
+A new install opens `using_foolbook`. Its First Light button opens `first_light`. Both are folders under `_books/`.
 
 ## Design notes
 

@@ -1,4 +1,4 @@
-"""Rebuild _courses/catalog.json from the books on disk.
+"""Rebuild _books/catalog.json from the books on disk.
 
   python3 -m foolbook --catalog
 """
@@ -23,7 +23,7 @@ def _read_book(path: Path) -> dict:
 
 
 def scan(root: Path | None = None) -> dict:
-    """Return a catalog built from every .fbk under _courses/."""
+    """Return a catalog built from every .fbk under _books/."""
     root = root or HERE
     # subject -> module -> list of course dicts
     tree: dict[str, dict[str, list[dict]]] = {}
@@ -32,7 +32,7 @@ def scan(root: Path | None = None) -> dict:
         rel = fbk.relative_to(root.parent)
         course_id = data.get("id") or fbk.stem
         title = data.get("title") or fbk.stem
-        # folder layout: _courses/<module>/<book>.fbk
+        # folder layout: _books/<book>/<book>.fbk
         # optional subject/module keys in the book override
         parent = fbk.parent.name
         subject = data.get("subject") or "Courses"

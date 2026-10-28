@@ -1,0 +1,45 @@
+{
+  "title": "Foolbook",
+  "subjects": [
+    {
+      "name": "Foolbook",
+      "modules": [
+        {
+          "name": "Examples",
+          "courses": [
+            {
+              "id": "first_light",
+              "title": "First Light",
+              "path": "_books/first_light/first_light.fbk"
+            }
+          ]
+        },
+        {
+          "name": "Start here",
+          "courses": [
+            {
+              "id": "using_foolbook",
+              "title": "Using Foolbook",
+              "path": "_books/using_foolbook/using_foolbook.fbk"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Getting started",
+      "modules": [
+        {
+          "name": "AI assistants",
+          "courses": [
+            {
+              "id": "using_grok",
+              "title": "Using Grok AI",
+              "path": "_books/using_grok/using_grok.fbk"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
