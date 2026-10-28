@@ -54,7 +54,8 @@
           "text": "Using Grok AI",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -188,7 +189,8 @@
           "text": "What Grok is",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -330,7 +332,8 @@
           "text": "Ask a specific question",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -484,7 +487,8 @@
           "text": "Give context and constraints",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -625,7 +629,8 @@
           "text": "Use tools when the answer is not in the model",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -775,7 +780,8 @@
           "text": "Iterate",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -916,7 +922,8 @@
           "text": "Check the work",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
@@ -1061,7 +1068,8 @@
           "text": "Done",
           "outline": "#ffffff",
           "size": 28,
-          "bold": true
+          "bold": true,
+          "name": "title"
         },
         {
           "kind": "text",
