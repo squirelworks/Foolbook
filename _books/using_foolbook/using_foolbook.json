@@ -7,17 +7,16 @@
     {
       "id": "P0",
       "text": [
-        "You opened Foolbook.",
-        "The picture is part of the book. It is not a separate file.",
-        "Next is another page. First Light is a second book."
+        "Using Foolbook",
+        "How to open a book, move through it, and use what is on the page."
       ],
       "items": [
         {
-          "label": "Next",
-          "page": "P100"
+          "label": "Start",
+          "page": "P10"
         },
         {
-          "label": "First Light",
+          "label": "Open First Light",
           "page": "P0",
           "book": "first_light"
         }
@@ -27,8 +26,17 @@
           "kind": "rect",
           "x": 0,
           "y": 0,
-          "w": 700,
-          "h": 280,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
           "fill": "#0b1c3d",
           "outline": "#0b1c3d"
         },
@@ -36,65 +44,77 @@
           "kind": "rect",
           "x": 0,
           "y": 0,
-          "w": 14,
-          "h": 280,
+          "w": 10,
+          "h": 500,
           "fill": "#e6b325",
           "outline": "#e6b325"
-        },
-        {
-          "kind": "ellipse",
-          "x": 520,
-          "y": 36,
-          "w": 150,
-          "h": 150,
-          "fill": "#e6b325",
-          "outline": "#e6b325"
-        },
-        {
-          "kind": "ellipse",
-          "x": 558,
-          "y": 24,
-          "w": 130,
-          "h": 130,
-          "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
         },
         {
           "kind": "text",
-          "x": 44,
-          "y": 78,
-          "w": 420,
-          "h": 56,
-          "text": "Foolbook",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Using Foolbook",
           "outline": "#ffffff",
-          "size": 42,
+          "size": 22,
           "bold": true
         },
         {
           "kind": "text",
-          "x": 48,
-          "y": 138,
-          "w": 420,
-          "h": 28,
-          "text": "A book that draws.",
-          "outline": "#e6b325",
-          "size": 18
+          "x": 28,
+          "y": 90,
+          "w": 460,
+          "h": 70,
+          "text": "Using Foolbook",
+          "outline": "#0b1c3d",
+          "size": 40,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 168,
+          "w": 460,
+          "h": 40,
+          "text": "How to open a book, move through it,\nand use what is on the page.",
+          "outline": "#3d4a5c",
+          "size": 18,
+          "bold": false
+        },
+        {
+          "kind": "ellipse",
+          "x": 500,
+          "y": 100,
+          "w": 170,
+          "h": 170,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 528,
+          "y": 78,
+          "w": 150,
+          "h": 150,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
         },
         {
           "kind": "rect",
-          "x": 48,
-          "y": 188,
-          "w": 36,
-          "h": 36,
+          "x": 548,
+          "y": 200,
+          "w": 28,
+          "h": 28,
           "fill": "#e36b4a",
           "outline": "#e36b4a"
         },
         {
           "kind": "ellipse",
-          "x": 100,
-          "y": 188,
-          "w": 36,
-          "h": 36,
+          "x": 590,
+          "y": 200,
+          "w": 28,
+          "h": 28,
           "fill": "#ffffff",
           "outline": "#ffffff"
         },
@@ -102,36 +122,982 @@
           "kind": "polygon",
           "points": [
             [
-              152,
-              224
+              640,
+              228
             ],
             [
-              170,
-              188
+              654,
+              200
             ],
             [
-              188,
-              224
+              668,
+              228
             ]
           ],
           "fill": "#e6b325",
           "outline": "#e6b325"
+        },
+        {
+          "kind": "button",
+          "name": "Start",
+          "text": "Start",
+          "x": 28,
+          "y": 250,
+          "w": 160,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Start",
+            "page": "P10"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Open First Light",
+          "text": "Open First Light",
+          "x": 204,
+          "y": 250,
+          "w": 200,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Open First Light",
+            "page": "P0",
+            "book": "first_light"
+          }
         }
       ]
     },
     {
-      "id": "P100",
+      "id": "P10",
       "text": [
-        "A page can be a picture.",
-        "This one is rectangles, ellipses, and polygons. The words underneath are the page text."
+        "Contents",
+        "Pick a part."
       ],
       "items": [
+        {
+          "label": "What a book is",
+          "page": "P20"
+        },
+        {
+          "label": "The window",
+          "page": "P30"
+        },
+        {
+          "label": "The shelf",
+          "page": "P40"
+        },
+        {
+          "label": "Open a file",
+          "page": "P50"
+        },
+        {
+          "label": "Pages",
+          "page": "P60"
+        },
+        {
+          "label": "Next and Back",
+          "page": "P70"
+        },
+        {
+          "label": "A click",
+          "page": "P80"
+        },
+        {
+          "label": "Words",
+          "page": "P90"
+        },
+        {
+          "label": "Pictures",
+          "page": "P100"
+        },
+        {
+          "label": "Shapes",
+          "page": "P110"
+        },
+        {
+          "label": "Another book",
+          "page": "P120"
+        },
+        {
+          "label": "ToolBook files",
+          "page": "P130"
+        },
+        {
+          "label": "Foolcourse",
+          "page": "P140"
+        },
+        {
+          "label": "When a picture is missing",
+          "page": "P150"
+        },
+        {
+          "label": "Check yourself",
+          "page": "P160"
+        },
+        {
+          "label": "Cover",
+          "page": "P0"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Contents",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 74,
+          "w": 640,
+          "h": 28,
+          "text": "Pick a part. Next walks the book in order.",
+          "outline": "#3d4a5c",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "What a book is",
+          "text": "What a book is",
+          "x": 28,
+          "y": 118,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "What a book is",
+            "page": "P20"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "The window",
+          "text": "The window",
+          "x": 368,
+          "y": 118,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "The window",
+            "page": "P30"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "The shelf",
+          "text": "The shelf",
+          "x": 28,
+          "y": 164,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "The shelf",
+            "page": "P40"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Open a file",
+          "text": "Open a file",
+          "x": 368,
+          "y": 164,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Open a file",
+            "page": "P50"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Pages",
+          "text": "Pages",
+          "x": 28,
+          "y": 210,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Pages",
+            "page": "P60"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Next and Back",
+          "text": "Next and Back",
+          "x": 368,
+          "y": 210,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Next and Back",
+            "page": "P70"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "A click",
+          "text": "A click",
+          "x": 28,
+          "y": 256,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "A click",
+            "page": "P80"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Words",
+          "text": "Words",
+          "x": 368,
+          "y": 256,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Words",
+            "page": "P90"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Pictures",
+          "text": "Pictures",
+          "x": 28,
+          "y": 302,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Pictures",
+            "page": "P100"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Shapes",
+          "text": "Shapes",
+          "x": 368,
+          "y": 302,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Shapes",
+            "page": "P110"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Another book",
+          "text": "Another book",
+          "x": 28,
+          "y": 348,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Another book",
+            "page": "P120"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "ToolBook files",
+          "text": "ToolBook files",
+          "x": 368,
+          "y": 348,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "ToolBook files",
+            "page": "P130"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Foolcourse",
+          "text": "Foolcourse",
+          "x": 28,
+          "y": 394,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Foolcourse",
+            "page": "P140"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "When a picture is missing",
+          "text": "When a picture is missing",
+          "x": 368,
+          "y": 394,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "When a picture is missing",
+            "page": "P150"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Check yourself",
+          "text": "Check yourself",
+          "x": 28,
+          "y": 440,
+          "w": 310,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Check yourself",
+            "page": "P160"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P20",
+      "text": [
+        "What a book is",
+        "A Foolbook book is a file. The usual name ends in .fbk. Open it and you get pages. A page is a picture made of words, boxes, and buttons."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
         {
           "label": "Back",
           "page": "P0"
         },
         {
-          "label": "First Light",
+          "label": "Next",
+          "page": "P30"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "What a book is",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "A Foolbook book is a file. The usual name ends in .fbk. Open it and\nyou get pages. A page is a picture made of words, boxes, and\nbuttons.\n\nThis book is one of those files. It is here so the program has\nsomething to show on a new install. First Light is the smaller one\nbeside it.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P30",
+      "text": [
+        "The window",
+        "The window has three jobs. The shelf is the row of books you can open without hunting for a file. The list on the left is the pages of the book that is open. The large area is the page itself."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P20"
+        },
+        {
+          "label": "Next",
+          "page": "P40"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "The window",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 150,
+          "text": "The window has three jobs. The shelf is the row of books you can\nopen without hunting for a file. The list on the left is the pages\nof the book that is open. The large area is the page itself.\n\nPrev and Next sit above the page. They move one page at a time. A\nbutton drawn on the page can jump farther than that.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 40,
+          "y": 250,
+          "w": 150,
+          "h": 70,
+          "fill": "#d9d3c5",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "text",
+          "x": 48,
+          "y": 258,
+          "w": 134,
+          "h": 20,
+          "text": "Shelf",
+          "outline": "#0b1c3d",
+          "size": 14,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 48,
+          "y": 280,
+          "w": 134,
+          "h": 30,
+          "text": "books you can open",
+          "outline": "#3d4a5c",
+          "size": 12,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 210,
+          "y": 250,
+          "w": 120,
+          "h": 160,
+          "fill": "#f7f4ee",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "text",
+          "x": 218,
+          "y": 258,
+          "w": 104,
+          "h": 20,
+          "text": "Pages",
+          "outline": "#0b1c3d",
+          "size": 14,
+          "bold": true
+        },
+        {
+          "kind": "rect",
+          "x": 218,
+          "y": 286,
+          "w": 104,
+          "h": 16,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 218,
+          "y": 308,
+          "w": 104,
+          "h": 16,
+          "fill": "#e7e1d6",
+          "outline": "#e7e1d6"
+        },
+        {
+          "kind": "rect",
+          "x": 218,
+          "y": 330,
+          "w": 104,
+          "h": 16,
+          "fill": "#e7e1d6",
+          "outline": "#e7e1d6"
+        },
+        {
+          "kind": "rect",
+          "x": 348,
+          "y": 250,
+          "w": 330,
+          "h": 160,
+          "fill": "#ffffff",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "text",
+          "x": 360,
+          "y": 262,
+          "w": 300,
+          "h": 22,
+          "text": "The page",
+          "outline": "#0b1c3d",
+          "size": 16,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 360,
+          "y": 292,
+          "w": 300,
+          "h": 80,
+          "text": "Words and pictures\nland here.",
+          "outline": "#1a1a1a",
+          "size": 15,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P40",
+      "text": [
+        "The shelf",
+        "The shelf is a convenience, not the library. First Light, Using Foolbook, and Using Grok ship with Foolbook. The tax lessons and the phone lesson come from Foolcourse."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P30"
+        },
+        {
+          "label": "Next",
+          "page": "P50"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "The shelf",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "The shelf is a convenience, not the library. First Light, Using\nFoolbook, and Using Grok ship with Foolbook. The tax lessons and the\nphone lesson come from Foolcourse.\n\nClicking a name opens that book from its published file. Your own\nfile is not on the shelf until you use Open a book.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P50",
+      "text": [
+        "Open a file",
+        "Open a book reads a file from your computer. It does not upload it anywhere. Foolbook accepts .fbk and .fsk. A ToolBook .tbk or .sbk is opened with the ToolBook reader. An .fbk that is really a ToolBook file is still read as ToolBook."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P40"
+        },
+        {
+          "label": "Next",
+          "page": "P60"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Open a file",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Open a book reads a file from your computer. It does not upload it\nanywhere. Foolbook accepts .fbk and .fsk. A ToolBook .tbk or .sbk is\nopened with the ToolBook reader. An .fbk that is really a ToolBook\nfile is still read as ToolBook.\n\nIf the program cannot read the file, the status line under the\nbuttons says so. The page you had open stays put.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P60",
+      "text": [
+        "Pages",
+        "Every page has an id, such as P0 or P10. The list on the left shows that id and the first line of words on the page, so you can tell them apart."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P50"
+        },
+        {
+          "label": "Next",
+          "page": "P70"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Pages",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Every page has an id, such as P0 or P10. The list on the left shows\nthat id and the first line of words on the page, so you can tell\nthem apart.\n\nThe order in the list is the order of the book. Next follows that\norder. A button may skip ahead. The id is the name a button uses. It\nis not a page number printed for a student.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P70",
+      "text": [
+        "Next and Back",
+        "Next goes to the following page in the list. Back goes to the one before it. On the last page, Next stays there. On the first page, Back stays there."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P60"
+        },
+        {
+          "label": "Next",
+          "page": "P80"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Next and Back",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Next goes to the following page in the list. Back goes to the one\nbefore it. On the last page, Next stays there. On the first page,\nBack stays there.\n\nThe buttons above the page do the same job. Use those when the page\nitself has no Next of its own. This book puts Next on the pages so\nyou can stay inside the page.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P80",
+      "text": [
+        "A click",
+        "A button is a click that names a page. If the page is in this book, you go there. If the name is another book, Foolbook looks on the shelf. First Light, on the cover of this book, is that kind of click."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P70"
+        },
+        {
+          "label": "Next",
+          "page": "P90"
+        },
+        {
+          "label": "Open First Light",
           "page": "P0",
           "book": "first_light"
         }
@@ -141,17 +1107,282 @@
           "kind": "rect",
           "x": 0,
           "y": 0,
-          "w": 700,
-          "h": 168,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "A click",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "A button is a click that names a page. If the page is in this book,\nyou go there. If the name is another book, Foolbook looks on the\nshelf. First Light, on the cover of this book, is that kind of\nclick.\n\nIf the book is not on the shelf, the status line tells you the name.\nOpen that file yourself. The website viewer can also ask the page\naround it, which is how Foolcourse hands over a lesson.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P90",
+      "text": [
+        "Words",
+        "Words are a text shape. They have a place, a width, a size, and a color. A line break in the text is a new line. The box clips anything that does not fit, so a short box hides the end of a sentence."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P80"
+        },
+        {
+          "label": "Next",
+          "page": "P100"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Words",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Words are a text shape. They have a place, a width, a size, and a\ncolor. A line break in the text is a new line. The box clips\nanything that does not fit, so a short box hides the end of a\nsentence.\n\nColor is the ink. On a dark header the ink is white. On the paper it\nis near black. If both the ink and the fill are pale, the viewer\ndarkens the ink so the line can be read.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P100",
+      "text": [
+        "Pictures",
+        "A picture in a Foolbook file is stored with the page and drawn in its box. A ToolBook picture is read from the file when the page opens and turned into a PNG, because a browser will not reliably draw the original bitmap."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P90"
+        },
+        {
+          "label": "Next",
+          "page": "P110"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Pictures",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "A picture in a Foolbook file is stored with the page and drawn in\nits box. A ToolBook picture is read from the file when the page\nopens and turned into a PNG, because a browser will not reliably\ndraw the original bitmap.\n\nA button face is a picture with a click. If the face is missing, the\nbutton is still a button: the words on it are the click.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P110",
+      "text": [
+        "Shapes",
+        "A page is built from a few kinds of shape. A rect is a box. An ellipse is a round. A polygon is a run of points, used here as a roof. Text is words. A button is a rect that goes somewhere."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P100"
+        },
+        {
+          "label": "Next",
+          "page": "P120"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Shapes",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 150,
+          "text": "A page is built from a few kinds of shape. A rect is a box. An\nellipse is a round. A polygon is a run of points, used here as a\nroof. Text is words. A button is a rect that goes somewhere.\n\nNothing on this page is a photograph. It is the same drawing the\nfirst short book used, kept so you can see the pieces.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 40,
+          "y": 268,
+          "w": 200,
+          "h": 150,
           "fill": "#8ecae6",
           "outline": "#8ecae6"
         },
         {
           "kind": "ellipse",
           "x": 560,
-          "y": 22,
-          "w": 72,
-          "h": 72,
+          "y": 250,
+          "w": 64,
+          "h": 64,
           "fill": "#ffb703",
           "outline": "#ffb703"
         },
@@ -159,55 +1390,27 @@
           "kind": "polygon",
           "points": [
             [
-              0,
-              168
+              40,
+              340
             ],
             [
-              160,
-              96
+              140,
+              268
             ],
             [
-              320,
-              168
+              240,
+              340
             ]
           ],
           "fill": "#2a9d8f",
           "outline": "#2a9d8f"
         },
         {
-          "kind": "polygon",
-          "points": [
-            [
-              220,
-              168
-            ],
-            [
-              420,
-              72
-            ],
-            [
-              640,
-              168
-            ]
-          ],
-          "fill": "#1b6b5a",
-          "outline": "#1b6b5a"
-        },
-        {
           "kind": "rect",
-          "x": 0,
-          "y": 168,
-          "w": 700,
-          "h": 112,
-          "fill": "#40916c",
-          "outline": "#40916c"
-        },
-        {
-          "kind": "rect",
-          "x": 86,
-          "y": 150,
-          "w": 150,
-          "h": 88,
+          "x": 100,
+          "y": 340,
+          "w": 70,
+          "h": 78,
           "fill": "#f6f1e7",
           "outline": "#c4b8a4"
         },
@@ -215,16 +1418,16 @@
           "kind": "polygon",
           "points": [
             [
-              72,
-              152
+              86,
+              342
             ],
             [
-              161,
-              86
+              135,
+              292
             ],
             [
-              250,
-              152
+              184,
+              342
             ]
           ],
           "fill": "#e36b4a",
@@ -232,41 +1435,884 @@
         },
         {
           "kind": "rect",
-          "x": 140,
-          "y": 184,
-          "w": 34,
-          "h": 54,
+          "x": 124,
+          "y": 372,
+          "w": 22,
+          "h": 46,
           "fill": "#6b3a2a",
           "outline": "#6b3a2a"
         },
         {
+          "kind": "text",
+          "x": 270,
+          "y": 300,
+          "w": 270,
+          "h": 80,
+          "text": "Rect, ellipse, polygon.\nThe house is three of each.",
+          "outline": "#0b1c3d",
+          "size": 16,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "P120",
+      "text": [
+        "Another book",
+        "Some clicks leave the book. The cover of this one opens First Light at its first page. Foolcourse does the same thing when you pick a lesson: it tells the viewer the address of that .fbk."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P110"
+        },
+        {
+          "label": "Next",
+          "page": "P130"
+        }
+      ],
+      "shapes": [
+        {
           "kind": "rect",
-          "x": 104,
-          "y": 168,
-          "w": 28,
-          "h": 24,
-          "fill": "#ffd166",
-          "outline": "#ffffff"
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
         },
         {
           "kind": "rect",
-          "x": 186,
-          "y": 168,
-          "w": 28,
-          "h": 24,
-          "fill": "#ffd166",
-          "outline": "#ffffff"
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
         },
         {
           "kind": "text",
-          "x": 300,
-          "y": 196,
-          "w": 360,
-          "h": 28,
-          "text": "Rects, ellipses, polygons.",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Another book",
           "outline": "#ffffff",
-          "size": 16,
+          "size": 22,
           "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Some clicks leave the book. The cover of this one opens First Light\nat its first page. Foolcourse does the same thing when you pick a\nlesson: it tells the viewer the address of that .fbk.\n\nThe viewer does not keep a private copy of every course. It opens\nthe file it was given. That is why a lesson can live in another\nrepository and still show up here.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P130",
+      "text": [
+        "ToolBook files",
+        "ToolBook books end in .tbk. The matching system books end in .sbk. Foolbook reads those formats. Pages, fields, buttons, and the pictures it knows how to pull out are drawn. A click that says go to a page follows that page."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P120"
+        },
+        {
+          "label": "Next",
+          "page": "P140"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "ToolBook files",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "ToolBook books end in .tbk. The matching system books end in .sbk.\nFoolbook reads those formats. Pages, fields, buttons, and the\npictures it knows how to pull out are drawn. A click that says go to\na page follows that page.\n\nA click that names a page in a different ToolBook file is reported,\nnot invented. You open the other file. The website does not store\nthose files.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P140",
+      "text": [
+        "Foolcourse",
+        "Foolcourse is the shelf of a curriculum. It lists subjects, modules, and lessons. Foolbook is the window a lesson opens in. On the website, Foolcourse puts Foolbook in a frame and sends it the lesson."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P130"
+        },
+        {
+          "label": "Next",
+          "page": "P150"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Foolcourse",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Foolcourse is the shelf of a curriculum. It lists subjects, modules,\nand lessons. Foolbook is the window a lesson opens in. On the\nwebsite, Foolcourse puts Foolbook in a frame and sends it the\nlesson.\n\nA lesson listed with no file stays in the list and says the book is\nnot in the folder. That is a missing file, not a broken viewer.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P150",
+      "text": [
+        "When a picture is missing",
+        "If a picture does not load, the words and the buttons are still there. Use the words. A blank rectangle with a name is a picture the file named and the viewer could not draw."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P140"
+        },
+        {
+          "label": "Next",
+          "page": "P160"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "When a picture is missing",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "If a picture does not load, the words and the buttons are still\nthere. Use the words. A blank rectangle with a name is a picture the\nfile named and the viewer could not draw.\n\nButtons at the bottom of a page were added because the page named a\ndestination and did not draw the button itself. They are real\nclicks. They are not a second copy of a button you can already see.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P160",
+      "text": [
+        "Check yourself",
+        "Next, on a page of this book, goes where?"
+      ],
+      "items": [
+        {
+          "label": "It stays on this page.",
+          "page": "P161"
+        },
+        {
+          "label": "It opens the next page in the list.",
+          "page": "P162"
+        },
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P150"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Check yourself",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 80,
+          "w": 660,
+          "h": 80,
+          "text": "Next, on a page of this book, goes where?",
+          "outline": "#1a1a1a",
+          "size": 18,
+          "bold": true
+        },
+        {
+          "kind": "button",
+          "name": "It stays on this page.",
+          "text": "It stays on this page.",
+          "x": 28,
+          "y": 180,
+          "w": 520,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "It stays on this page.",
+            "page": "P161"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "It opens the next page in the list.",
+          "text": "It opens the next page in the list.",
+          "x": 28,
+          "y": 228,
+          "w": 520,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "It opens the next page in the list.",
+            "page": "P162"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P161",
+      "text": [
+        "Not that one",
+        "Next follows the list. It does not stay put unless you are already on the last page. Go back and pick the other answer."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P160"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Not that one",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Next follows the list. It does not stay put unless you are already\non the last page. Go back and pick the other answer.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P162",
+      "text": [
+        "That is the one",
+        "Next is the next page in the book. A button on the page may jump somewhere else, but Next itself does not."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P160"
+        },
+        {
+          "label": "Next",
+          "page": "P170"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "That is the one",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Next is the next page in the book. A button on the page may jump\nsomewhere else, but Next itself does not.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P170",
+      "text": [
+        "One more",
+        "You open a .tbk file. What should Foolbook do?"
+      ],
+      "items": [
+        {
+          "label": "Refuse it, because it is not an .fbk.",
+          "page": "P171"
+        },
+        {
+          "label": "Read it as a ToolBook book.",
+          "page": "P172"
+        },
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P162"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "One more",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 80,
+          "w": 660,
+          "h": 80,
+          "text": "You open a .tbk file. What should Foolbook do?",
+          "outline": "#1a1a1a",
+          "size": 18,
+          "bold": true
+        },
+        {
+          "kind": "button",
+          "name": "Refuse it, because it is not an .fbk.",
+          "text": "Refuse it, because it is not an .fbk.",
+          "x": 28,
+          "y": 180,
+          "w": 520,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Refuse it, because it is not an .fbk.",
+            "page": "P171"
+          }
+        },
+        {
+          "kind": "button",
+          "name": "Read it as a ToolBook book.",
+          "text": "Read it as a ToolBook book.",
+          "x": 28,
+          "y": 228,
+          "w": 520,
+          "h": 36,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "size": 15,
+          "item": {
+            "label": "Read it as a ToolBook book.",
+            "page": "P172"
+          }
+        }
+      ]
+    },
+    {
+      "id": "P171",
+      "text": [
+        "Not that one",
+        "The ending tells the reader which rules to use. .tbk and .sbk are ToolBook. An .fbk that still has a ToolBook header is read as ToolBook too."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P170"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "Not that one",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "The ending tells the reader which rules to use. .tbk and .sbk are\nToolBook. An .fbk that still has a ToolBook header is read as\nToolBook too.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P172",
+      "text": [
+        "That is the one",
+        "ToolBook files open in the same window. Pictures the reader can pull out are drawn. A page that lives in a different file is named, and you open that file."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P170"
+        },
+        {
+          "label": "Next",
+          "page": "P180"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "That is the one",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "ToolBook files open in the same window. Pictures the reader can pull\nout are drawn. A page that lives in a different file is named, and\nyou open that file.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": "P180",
+      "text": [
+        "You can read a book",
+        "Open a file, or pick one from the shelf. Use the list when you know the page. Use Next when you do not. Click the thing that says where it goes."
+      ],
+      "items": [
+        {
+          "label": "Contents",
+          "page": "P10"
+        },
+        {
+          "label": "Back",
+          "page": "P172"
+        },
+        {
+          "label": "Cover",
+          "page": "P0"
+        },
+        {
+          "label": "Open First Light",
+          "page": "P0",
+          "book": "first_light"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 500,
+          "fill": "#f4f0e6",
+          "outline": "#f4f0e6"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 720,
+          "h": 58,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 10,
+          "h": 500,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 14,
+          "w": 560,
+          "h": 34,
+          "text": "You can read a book",
+          "outline": "#ffffff",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 28,
+          "y": 78,
+          "w": 660,
+          "h": 280,
+          "text": "Open a file, or pick one from the shelf. Use the list when you know\nthe page. Use Next when you do not. Click the thing that says where\nit goes.\n\nIf you are writing a book, the pages you just saw are the pieces: a\npaper, a header, words, a few shapes, and a button with a page id.\nFirst Light is the short version of the same idea.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
         }
       ]
     }
