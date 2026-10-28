@@ -16,6 +16,122 @@
           "label": "Begin",
           "page": "P100"
         }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Using Grok AI",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "A short course on getting useful answers from Grok.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "ellipse",
+          "x": 470,
+          "y": 36,
+          "w": 180,
+          "h": 100,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 492,
+          "y": 52,
+          "w": 140,
+          "h": 68,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              520,
+              124
+            ],
+            [
+              500,
+              160
+            ],
+            [
+              560,
+              128
+            ]
+          ],
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 520,
+          "y": 68,
+          "w": 90,
+          "h": 36,
+          "text": "Ask",
+          "outline": "#e6b325",
+          "size": 22,
+          "bold": true
+        },
+        {
+          "kind": "button",
+          "name": "Begin",
+          "text": "Begin",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Begin",
+            "page": "P100"
+          },
+          "visible": true,
+          "size": 16
+        }
       ]
     },
     {
@@ -33,6 +149,129 @@
         {
           "label": "Back",
           "page": "P0"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "What Grok is",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Grok is an AI assistant built by xAI. It answers questions, writes code, searches the web, and can run tools on your behalf.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "ellipse",
+          "x": 500,
+          "y": 40,
+          "w": 70,
+          "h": 70,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 575,
+          "y": 70,
+          "w": 70,
+          "h": 70,
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "ellipse",
+          "x": 530,
+          "y": 100,
+          "w": 70,
+          "h": 50,
+          "fill": "#ffffff",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "It is not a search engine and not a calculator. It is a conversation.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P200"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P0"
+          },
+          "visible": true,
+          "size": 16
         }
       ]
     },
@@ -53,6 +292,142 @@
           "label": "Back",
           "page": "P100"
         }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Ask a specific question",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Vague prompts get vague answers. Tell Grok what you want, who it is for, and what done looks like.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 470,
+          "y": 40,
+          "w": 90,
+          "h": 110,
+          "fill": "#16325c",
+          "outline": "#16325c"
+        },
+        {
+          "kind": "rect",
+          "x": 575,
+          "y": 40,
+          "w": 90,
+          "h": 110,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 486,
+          "y": 78,
+          "w": 60,
+          "h": 28,
+          "text": "weak",
+          "outline": "#ffffff",
+          "size": 14,
+          "bold": false
+        },
+        {
+          "kind": "text",
+          "x": 586,
+          "y": 78,
+          "w": 70,
+          "h": 28,
+          "text": "better",
+          "outline": "#0b1c3d",
+          "size": 14,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "Weak: 'Tell me about Python.'\n\nBetter: 'Write a 10-line Python function that reads a CSV and prints the sum of the second column.'",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P300"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P100"
+          },
+          "visible": true,
+          "size": 16
+        }
       ]
     },
     {
@@ -70,6 +445,129 @@
         {
           "label": "Back",
           "page": "P200"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Give context and constraints",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Include the pieces Grok cannot guess: your language, your file format, the error you saw, the length you want.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 480,
+          "y": 44,
+          "w": 160,
+          "h": 22,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "rect",
+          "x": 500,
+          "y": 76,
+          "w": 140,
+          "h": 22,
+          "fill": "#ffffff",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "rect",
+          "x": 520,
+          "y": 108,
+          "w": 120,
+          "h": 22,
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "If you have a file, say so. If you want a table, say so. If you want code that runs, say so.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P400"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P200"
+          },
+          "visible": true,
+          "size": 16
         }
       ]
     },
@@ -89,6 +587,138 @@
           "label": "Back",
           "page": "P300"
         }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Use tools when the answer is not in the model",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Grok can search the web, open pages, run code, and talk to services you connect.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 470,
+          "y": 48,
+          "w": 44,
+          "h": 44,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "rect",
+          "x": 526,
+          "y": 48,
+          "w": 44,
+          "h": 44,
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "rect",
+          "x": 582,
+          "y": 48,
+          "w": 44,
+          "h": 44,
+          "fill": "#ffffff",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "rect",
+          "x": 526,
+          "y": 104,
+          "w": 44,
+          "h": 44,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "Ask it to check a current fact, run a snippet, or look at a file you point it at. Do not ask it to invent numbers it can look up.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P500"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P300"
+          },
+          "visible": true,
+          "size": 16
+        }
       ]
     },
     {
@@ -106,6 +736,129 @@
         {
           "label": "Back",
           "page": "P400"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Iterate",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "The first answer is a draft. Tell Grok what is wrong or missing and ask for a revision.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "rect",
+          "x": 480,
+          "y": 120,
+          "w": 170,
+          "h": 16,
+          "fill": "#16325c",
+          "outline": "#16325c"
+        },
+        {
+          "kind": "rect",
+          "x": 480,
+          "y": 92,
+          "w": 120,
+          "h": 16,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "rect",
+          "x": 480,
+          "y": 64,
+          "w": 70,
+          "h": 16,
+          "fill": "#ffffff",
+          "outline": "#ffffff"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "Short corrections work: 'Make it shorter', 'Use the existing function names', 'That number is from 2022, check again.'",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P600"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P400"
+          },
+          "visible": true,
+          "size": 16
         }
       ]
     },
@@ -125,6 +878,133 @@
           "label": "Back",
           "page": "P500"
         }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Check the work",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Grok can be wrong. For anything that matters, verify the output yourself or ask Grok to show its source.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "polygon",
+          "points": [
+            [
+              500,
+              110
+            ],
+            [
+              540,
+              150
+            ],
+            [
+              640,
+              50
+            ],
+            [
+              616,
+              40
+            ],
+            [
+              540,
+              120
+            ],
+            [
+              516,
+              96
+            ]
+          ],
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "Code should be run. Numbers should be checked. Quotes should be traced.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Next",
+          "text": "Next",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Next",
+            "page": "P900"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P500"
+          },
+          "visible": true,
+          "size": 16
+        }
       ]
     },
     {
@@ -142,6 +1022,147 @@
         {
           "label": "Back",
           "page": "P600"
+        }
+      ],
+      "shapes": [
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 480,
+          "fill": "#f7f4ee",
+          "outline": "#f7f4ee"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 700,
+          "h": 188,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d"
+        },
+        {
+          "kind": "rect",
+          "x": 0,
+          "y": 0,
+          "w": 14,
+          "h": 188,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 28,
+          "w": 400,
+          "h": 48,
+          "text": "Done",
+          "outline": "#ffffff",
+          "size": 28,
+          "bold": true
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 84,
+          "w": 400,
+          "h": 72,
+          "text": "Ask clearly, give context, use tools, iterate, and check.",
+          "outline": "#e6b325",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "ellipse",
+          "x": 470,
+          "y": 70,
+          "w": 28,
+          "h": 28,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 514,
+          "y": 70,
+          "w": 28,
+          "h": 28,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 558,
+          "y": 70,
+          "w": 28,
+          "h": 28,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 602,
+          "y": 70,
+          "w": 28,
+          "h": 28,
+          "fill": "#e6b325",
+          "outline": "#e6b325"
+        },
+        {
+          "kind": "ellipse",
+          "x": 646,
+          "y": 70,
+          "w": 28,
+          "h": 28,
+          "fill": "#e36b4a",
+          "outline": "#e36b4a"
+        },
+        {
+          "kind": "text",
+          "x": 40,
+          "y": 214,
+          "w": 620,
+          "h": 180,
+          "text": "That is the whole course.",
+          "outline": "#1a1a1a",
+          "size": 16,
+          "bold": false
+        },
+        {
+          "kind": "button",
+          "name": "Menu",
+          "text": "Menu",
+          "x": 28,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Menu",
+            "page": "P0"
+          },
+          "visible": true,
+          "size": 16
+        },
+        {
+          "kind": "button",
+          "name": "Back",
+          "text": "Back",
+          "x": 168,
+          "y": 418,
+          "w": 128,
+          "h": 40,
+          "fill": "#0b1c3d",
+          "outline": "#0b1c3d",
+          "item": {
+            "label": "Back",
+            "page": "P600"
+          },
+          "visible": true,
+          "size": 16
         }
       ]
     }
