@@ -1,4 +1,4 @@
-"""The first viewer on a book says which buttons the reader shows."""
+"""A book's `viewers` records are kept by the loader, in file order."""
 
 import tempfile
 import unittest
@@ -6,7 +6,6 @@ from pathlib import Path
 
 from engine.formats import pack
 from engine.loader import load
-from engine.viewers import chrome, first_viewer, page_number, step
 
 
 def _open(data: dict):
@@ -24,31 +23,21 @@ def _book(viewers=None) -> dict:
 
 
 class Viewers(unittest.TestCase):
-    def test_the_first_viewer_is_read(self):
+    def test_the_viewers_are_kept_in_order(self):
         book = _open(_book([
             {"name": "Main", "size": [640, 480], "buttons": ["next", "page"]},
             {"name": "Other", "buttons": ["previous"]},
         ]))
-        viewer = first_viewer(book)
-        self.assertEqual(viewer["name"], "Main")
-        self.assertEqual(viewer["size"], [640, 480])
-        self.assertEqual(chrome(viewer), ["next", "page"])
+        self.assertEqual([v["name"] for v in book.viewers], ["Main", "Other"])
+        self.assertEqual(book.viewers[0]["size"], [640, 480])
+        self.assertEqual(book.viewers[0]["buttons"], ["next", "page"])
 
-    def test_no_viewer_shows_no_buttons(self):
-        book = _open(_book())
-        self.assertIsNone(first_viewer(book))
-        self.assertEqual(chrome(None), [])
+    def test_a_book_with_no_viewers_has_none(self):
+        self.assertEqual(_open(_book()).viewers, [])
 
-    def test_an_unknown_button_is_left_out_and_order_is_fixed(self):
-        self.assertEqual(chrome({"buttons": ["page", "zoom", "previous", "next", "next"]}), ["previous", "next", "page"])
-
-    def test_previous_and_next_stop_at_the_ends(self):
-        self.assertEqual(step(0, 3, -1), 0)
-        self.assertEqual(step(0, 3, 1), 1)
-        self.assertEqual(step(2, 3, 1), 2)
-
-    def test_the_page_number_counts_from_one(self):
-        self.assertEqual(page_number(1, 3), "2 of 3")
+    def test_a_record_that_is_not_a_dict_is_left_out(self):
+        book = _open(_book(["Main", {"name": "Real"}, None]))
+        self.assertEqual(book.viewers, [{"name": "Real"}])
 
 
 if __name__ == "__main__":
