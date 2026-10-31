@@ -209,7 +209,7 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
     """
     obj = obj or {}
     start = (id(state.book), state.index)
-    if "choice" in obj:
+    if "choice" in obj and not is_toolbook(state.book):
         from engine import choice
         choice.grade(state, obj)
     script = click_script(obj, state.book)

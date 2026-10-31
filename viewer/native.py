@@ -18,6 +18,7 @@ from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
+from engine.origin import is_toolbook
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -422,7 +423,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
         picked = ((obj or {}).get("name") or "").upper()
-        if "choice" in (obj or {}):
+        if "choice" in (obj or {}) and not is_toolbook(state.book):
             from engine import choice
             choice.grade(state, obj)
         if picked in ("A", "B", "C", "D", "E"):
