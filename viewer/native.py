@@ -16,7 +16,7 @@ from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
-from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
+from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler, follow_item
 from engine import fields
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
@@ -460,7 +460,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if "correct" in item and state.page is not None:
             progress.record_answer(held["course"], state.page.id, bool(item.get("correct")))
         if item.get("page") or item.get("book") or item.get("label"):
-            on_button(item.get("label") or (obj or {}).get("text") or "", item.get("page") or "", item.get("book") or "")
+            follow_item(state, item)
+            show(state.index)
 
     def on_button(label: str, target: str, book_name: str = ""):
         if book_name and open_other(state, book_name, target or ""):

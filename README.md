@@ -110,6 +110,10 @@ A field named Page# shows the page that is open. A text field named `correct` is
 
 A new install opens `using_foolbook`. Its First Light button opens `first_light`. Both are folders under `_books/`.
 
+## A click on a button
+
+The button's script runs first. A script with no `to handle` line is read as the click. When the script is empty, the click is the button's `item` (a page, a book, or the Next or Back label). When both are set, the item runs only if the script did not change the page. `engine.engine.click` is that order, and `engine/test_click_order.py` tests it.
+
 ## Design notes
 
 - Foolbook is the viewer. A course module drives which book it opens.
