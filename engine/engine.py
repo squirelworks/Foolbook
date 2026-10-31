@@ -781,13 +781,16 @@ def _eval(expr: str, state: RuntimeState):
         left, negate, right = found_in
         inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
         return inside != negate
-    is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
-    if is_at:
-        left = _eval(expr[:is_at.start()], state)
-        named = re.search(r'"([^"]+)"', expr[is_at.end():])
+    split = _split_is(expr)
+    if split is not None:
+        left, negate, right = split
+        named = _NAMED_OBJECT.match(right)
         if named:
-            return str(left).strip().lower() == named.group(1).lower()
-        return False
+            # `target is button "OK" of parent of this page`: the same object, by name.
+            same = _object_name(_eval(left, state)).lower() == named.group(2).lower()
+        else:
+            same = _cmp("=", _is_side(_eval(left, state)), _is_side(_eval(right, state)))
+        return same != negate
     # comparisons. OpenScript does not need spaces round the operator.
     split = _split_compare(expr)
     if split is not None:
@@ -1089,6 +1092,39 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is(expr: str):
+    """(left, negated, right) for `a is b` and `a is not b`, at an `is` outside quotes."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    return None
+
+
+_NAMED_OBJECT = re.compile(
+    r'\s*(' + "|".join(sorted(groups._CLASSES, key=len, reverse=True)) + r'|page|group)\s*"([^"]*)"',
+    re.IGNORECASE,
+)
+
+
+def _object_name(value) -> str:
+    """The name in an object reference such as `button "OK"`, or the value itself."""
+    text = "" if value is None or value is _UNRESOLVED else str(value)
+    named = _NAMED_OBJECT.match(text)
+    return named.group(2) if named else text.strip()
+
+
+def _is_side(value):
+    """One side of `is`. A flag is the word, null is blank, and a value not worked out is blank."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is _UNRESOLVED or value is None:
+        return ""
+    if isinstance(value, str) and value.strip().lower() == "null":
+        return ""
+    return value
 
 
 def _split_is_in(expr: str):
