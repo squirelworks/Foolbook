@@ -227,7 +227,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         path=str(path),
         title=data.get("title") or path.stem,
         pages=pages,
-        shells=list(data.get("shells") or []),
+        shells=list(data.get("shells") or []) or ([str(data["system"])] if data.get("system") else []),
         handlers=_handlers_of(data),
         props=dict(data.get("props") or {}),
     )

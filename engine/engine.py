@@ -324,6 +324,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                         actions.append({"kind": "goto", "page": page, "book": book})
                 i += 1
                 continue
+            from engine import systembook
+            if systembook.has(state, name):
+                actions.extend(systembook.run(state, name)[0])
+                i += 1
+                continue
             actions.append({"kind": "send", "name": name})
             i += 1
             continue
@@ -927,6 +932,15 @@ def _call_value(expr: str, state: RuntimeState):
         found = _var(state, "__studentFirst")
         text = "" if found is _MISSING or found is None else str(found).strip()
         return text or "Student"
+    from engine import systembook
+    if systembook.has(state, match.group(1)):
+        from engine.fillin import _args
+        args = [_eval(a, state) for a in _args(match.group(2)) if a]
+        actions, value = systembook.run(state, match.group(1), args)
+        for action in actions:
+            if action.get("kind") == "goto" and action.get("page"):
+                return ("goto", action["page"], action.get("book"))
+        return value
     from engine.menu import call as menu_call
     from engine.menu import _UNKNOWN as menu_unknown
     hit = menu_call(state, match.group(1), match.group(2))
