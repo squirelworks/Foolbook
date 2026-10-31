@@ -650,6 +650,11 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
+    found_in = _split_is_in(expr)
+    if found_in is not None:
+        left, negate, right = found_in
+        inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
+        return inside != negate
     is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
     if is_at:
         left = _eval(expr[:is_at.start()], state)
@@ -921,6 +926,18 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is_in(expr: str):
+    """(left, negated, right) for `a is in b`, `a is not in b` and `b contains a`."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?in\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    m = re.search(r"\s+contains\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[m.end():].strip(), False, expr[:m.start()].strip()
+    return None
 
 
 def _split_compare(expr: str):
