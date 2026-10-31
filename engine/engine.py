@@ -24,6 +24,7 @@ import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
 from engine import groups
+from engine.origin import is_toolbook
 
 
 _GOTO = re.compile(
@@ -594,6 +595,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             groups.set_object_visible(state, m, m.group("verb").lower() == "show")
             actions.append({"kind": "setprop", "target": "visible of object", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
+        m = groups.NAMED_SHOW.fullmatch(line)
+        if m and not is_toolbook(state.book):
+            groups.set_named_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of shape", "value": m.group("verb").lower()})
             i += 1
             continue
 
