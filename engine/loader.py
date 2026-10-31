@@ -220,13 +220,31 @@ def _backgrounds(data: dict) -> dict:
     for raw in data.get("pages") or []:
         if not raw.get("background"):
             continue
-        shapes = [shape for shape in raw.get("shapes") or [] if isinstance(shape, dict)]
+        shapes = [shape for shape in flatten_groups(raw.get("shapes") or []) if isinstance(shape, dict)]
         for shape in shapes:
             shape.setdefault("layer", "background")
         name = str(raw.get("id") or "").lower()
         if name:
             found[name] = shapes
     return found
+
+
+def flatten_groups(shapes: list) -> list:
+    """A ``group`` shape from the editor becomes its children, in its place.
+
+    The editor stores a group as ``{"kind": "group", "name": ..., "children": [...]}``
+    with each child's bounds already on the page. The reader paints and clicks
+    single shapes, so the children take the group's place in paint order and
+    nested groups open the same way. Every other shape is passed through as it
+    is. The stored book keeps the group; only the list the reader runs is flat.
+    """
+    out = []
+    for shape in shapes or []:
+        if isinstance(shape, dict) and (shape.get("kind") or "").lower() == "group":
+            out.extend(flatten_groups(shape.get("children") or []))
+        else:
+            out.append(shape)
+    return out
 
 
 def _book_from_dict(path: Path, data: dict) -> Book:
@@ -243,7 +261,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
             jumps=list(raw.get("jumps") or []),
             quiz=raw.get("quiz"),
             handlers=_handlers_of(raw),
-            shapes=under + list(raw.get("shapes") or []),
+            shapes=under + flatten_groups(raw.get("shapes") or []),
             raw=raw,
         ))
     return Book(
