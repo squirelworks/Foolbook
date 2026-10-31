@@ -29,6 +29,10 @@ class SubsetTests(unittest.TestCase):
             actions = run_handler(state, f"send {message}")
             self.assertEqual(actions[0], {"kind": "send", "name": message})
 
+    def test_foolbook_core_gives_the_editor_the_same_answer(self):
+        from foolbook import core
+        self.assertEqual(core.unknown_words("flash"), [(1, "flash")])
+
     def test_every_command_is_a_word(self):
         for word in COMMANDS:
             self.assertTrue(word.isalpha() and word.islower(), word)
