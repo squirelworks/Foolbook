@@ -12,6 +12,7 @@ The reader runs the handlers it has decoded for this course: next and previous, 
 
 ## Paint
 
+- A `curve` from an `.fbk` is drawn as straight segments through its points. It is not smoothed.
 - An 8×8 pattern tile is not drawn. A class `0x10` pattern other than solid fill (`0xFE`) is painted as the record's colour.
 - A style run is used when it names a font or a colour. Two flag bits in the font entry, `0x10` and `0x40`, are unread, as are the words at `+0x30` and `+0x32`.
 

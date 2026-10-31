@@ -76,13 +76,25 @@ class ToolBookFormTests(unittest.TestCase):
     def test_go_to_previous_page_of_this_book(self):
         self.assertEqual(check("go to previous page of this book"), [])
 
+    def test_go_to_an_expression(self):
+        self.assertEqual(check("go to __pageStack[__pageIndex]"), [])
 
-def _whole(name, body):
-    """A stored handler is its body. Check it as the handler it came from."""
-    text = body.replace("\r", "")
-    if re.match(r"(?is)\s*to\s+(handle|get|set)\b", text):
-        return [text]
-    return [f"to handle {name}\n{text}", f"to handle {name}\n{text}\nend"]
+    def test_while_and_linkdll32_blocks(self):
+        script = ('to get f\n  linkDLL32 "kernel32.dll"\n    WORD GlobalFree(WORD)\n  end linkDLL32\n'
+                  '  while n < 3\n    increment(n)\n  end while\nend\n')
+        self.assertEqual(check(script), [])
+
+    def test_a_stored_body_ends_with_its_handler_name(self):
+        self.assertEqual(check("get setSection(\"Intro\")\nforward\nend enterPage\n"), [])
+
+    def test_a_quote_may_run_onto_the_next_line(self):
+        self.assertEqual(check('text = "one line\nand the next"\n'), [])
+
+    def test_the_end_of_the_script_closes_a_handler(self):
+        self.assertEqual(check("to handle reader\n--  forward\n--end\n"), [])
+
+    def test_an_if_left_open_in_a_handler_is_still_an_error(self):
+        self.assertEqual(check("to handle x\n  if n = 1 then\n    beep\nend x\n"), [(2, "if is not closed with end"), (4, "end x closes if")])
 
 
 class NidaCheckTests(unittest.TestCase):
@@ -93,7 +105,7 @@ class NidaCheckTests(unittest.TestCase):
         book = load(path)
         handlers = [("book", h) for h in book.handlers] + [(p.id, h) for p in book.pages for h in p.handlers]
         for where, h in handlers:
-            self.assertEqual(min((check(t) for t in _whole(h.name, h.source)), key=len), [], (where, h.name))
+            self.assertEqual(check(h.source or ""), [], (where, h.name))
         for page in book.pages:
             for shape in page.shapes:
                 self.assertEqual(check(shape.get("script") or ""), [], (page.id, shape.get("name")))

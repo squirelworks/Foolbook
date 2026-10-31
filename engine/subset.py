@@ -60,10 +60,9 @@ def unknown_words(source: str) -> list[tuple[int, str]]:
     return out
 
 
-_GO = re.compile(
-    r'go\s+to\s+(?:(?:next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$|page\s*(?:"[^"]*"|\(.+\)|[A-Za-z_]\w*))',
-    re.IGNORECASE,
-)
+
+
+_BLOCKS = {"if", "step", "conditions", "while", "linkdll", "linkdll32", "do"}
 
 
 def check(source: str) -> list[tuple[int, str]]:
@@ -73,20 +72,36 @@ def check(source: str) -> list[tuple[int, str]]:
     stop short: a quote left open, a block left open or closed twice, a
     ``go to`` with no page, an ``if`` with no condition. Words the reader
     does not run are warnings, from ``unknown_words``, not errors.
+
+    A script with no ``to handle`` line is one handler's body, the way the
+    reader runs it, so a last ``end`` or ``end NAME`` closes it. A quote may
+    run onto the next line; it is an error only if the script ends inside it.
     """
     errors: list[tuple[int, str]] = []
     # (kind, line, name). A handler's name is what `end NAME` may close it with.
     open_blocks: list[tuple[str, int, str]] = []
+    implicit = False
+    quote_line = 0
     for number, raw in enumerate((source or "").replace("\r", "").split("\n"), 1):
         line = raw.strip()
+        if quote_line:
+            if line.count('"') % 2:
+                quote_line = 0
+                line = line.split('"', 1)[1].strip()
+            else:
+                continue
         if not line or line.startswith("--"):
             continue
-        if line.count('"') % 2:
-            errors.append((number, "a quote is not closed"))
-            continue
+        opened_quote = bool(line.count('"') % 2)
+        if opened_quote:
+            quote_line = number
+            line = line.rsplit('"', 1)[0]
         low = re.sub(r"\s+", " ", line.lower())
         first = low.split(" ", 1)[0]
         header = re.match(r"(?:to (?:handle|get|set)|notifybefore|notifyafter) ([a-z_]\w*)", low)
+        if not header and not open_blocks and not implicit:
+            implicit = True
+            open_blocks.append(("handler", number, ""))
         if header:
             open_blocks.append(("handler", number, header.group(1)))
         elif first == "if":
@@ -100,8 +115,13 @@ def check(source: str) -> list[tuple[int, str]]:
             if not re.match(r"step [a-z_]\w* from .+ to .+", low):
                 errors.append((number, "step needs NAME from A to B"))
             open_blocks.append(("step", number, "step"))
-        elif first == "conditions":
-            open_blocks.append(("conditions", number, "conditions"))
+        elif first in ("conditions", "while", "linkdll", "linkdll32", "do"):
+            open_blocks.append((first, number, first))
+        elif first == "until":
+            if open_blocks and open_blocks[-1][0] == "do":
+                open_blocks.pop()
+            else:
+                errors.append((number, "until with no do"))
         elif first == "else":
             if not open_blocks or open_blocks[-1][0] not in ("if", "conditions"):
                 errors.append((number, "else is not inside an if or conditions"))
@@ -111,13 +131,22 @@ def check(source: str) -> list[tuple[int, str]]:
                 errors.append((number, "end with nothing open"))
                 continue
             kind, _, name = open_blocks[-1]
-            if want is not None and want not in (kind, name):
+            if kind == "handler" and not name and want in _BLOCKS:
+                errors.append((number, "end with nothing open"))
+                continue
+            if want is not None and want not in (kind, name) and not (kind == "handler" and not name):
                 errors.append((number, f"end {want} closes {kind}"))
                 continue
             open_blocks.pop()
-        elif first == "go" and not _GO.match(line):
+        elif first == "go" and not opened_quote and not re.match(r"go\s+to\s+\S", line, re.IGNORECASE):
             errors.append((number, "go to needs a page"))
-    for kind, number, _ in reversed(open_blocks):
+    if quote_line:
+        errors.append((quote_line, "a quote is not closed"))
+    for kind, number, name in reversed(open_blocks):
+        if kind == "handler":
+            # The script's end closes a handler. NIDA books shipped with handlers
+            # whose `end` was commented out (nc81trnr getWinPointer, nida81 reader).
+            continue
         errors.append((number, f"{kind} is not closed with end"))
     errors.sort(key=lambda error: error[0])
     return errors
