@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A media clip plays audio through what the machine already has: winsound for a `.wav` on Windows, `afplay` on a Mac, and `paplay`, `pw-play`, or `aplay` (a `.wav` only) on Linux when they are on the PATH. The clip says `Playing <name>`. Video, or a machine with none of these, still says `Cannot play here`. `engine/test_media_audio.py`.
 - A `media` shape shows a play mark and its `src`. A click tries to play it. This reader has no player yet, so the clip says `Cannot play here: <path>`, or `Not found: <path>` when the file is missing, on the page, instead of doing nothing. `engine/test_media.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
