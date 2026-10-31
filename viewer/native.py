@@ -367,6 +367,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             _run_named(item, "buttonUp")
         point = _page_xy(event)
         still = shapes_at(_objects(page), *point) if point else []
+        if listbox.close_combos(_objects(page), target if target in still else None):
+            # A click away from an open combo box only closes it, as a list
+            # that drops down does.
+            _paint()
+            return
         if target is None or target not in still:
             if state.variables.pop("__redraw", None):
                 _paint()

@@ -90,3 +90,15 @@ def combo_click(shape: dict, px: float, py: float) -> None:
         if top <= py < top + ROW:
             shape["value"] = index
             return
+
+
+def close_combos(shapes, keep=None) -> bool:
+    """Close every open combo box but `keep`. True when one was open."""
+    closed = False
+    for shape in shapes or []:
+        if shape is keep or not isinstance(shape, dict):
+            continue
+        if (shape.get("kind") or "") == "combo" and shape.get("open"):
+            shape["open"] = False
+            closed = True
+    return closed
