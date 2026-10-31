@@ -444,6 +444,14 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             revealed = any(a.get("kind") == "setprop" and str(a.get("target") or "").startswith("visible of")
                            for a in actions)
             moved = follow(state, actions)
+        else:
+            from engine import actionlist
+            todo = actionlist.to_run(obj)
+            if todo:
+                base = Path(state.book.path).parent if state.book is not None and state.book.path else None
+                done = actionlist.run(state, todo, base)
+                revealed = any(a.get("kind") == "setprop" for a in done)
+                moved = follow(state, done)
         if not moved:
             moved = follow(state, run_page_handlers(state, "buttonclick"))
         if not moved and not revealed and picked in ("OK", "NEXT", "SKIP", "BACK", "HELP"):
