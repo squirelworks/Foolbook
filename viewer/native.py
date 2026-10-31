@@ -426,7 +426,14 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
         picked = ((obj or {}).get("name") or "").upper()
-        if picked in ("A", "B", "C", "D", "E"):
+        from engine import choice
+        graded = choice.grade(state, obj)
+        if graded is not None:
+            target = choice.after(state, graded)
+            if target and not click_script(obj) and goto(state, target):
+                show(state.index)
+                return
+        elif picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
             call(state, "handleQuizClick", f'"{picked}"')
         script = click_script(obj)

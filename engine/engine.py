@@ -172,12 +172,23 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
     The button's script runs first. When the script is empty, the click is
     the button's item. When both are set, the item runs only if the script
-    did not change the page.
+    did not change the page. A quiz answer (a ``choice`` index) is graded
+    before the script, and the quiz's ``next`` or ``again`` page is the
+    last thing tried.
     """
+    from engine import choice
+    graded = choice.grade(state, obj)
     script = click_script(obj)
     if script and follow(state, run_handler(state, script)):
         return True
-    return follow_item(state, (obj or {}).get("item"))
+    if follow_item(state, (obj or {}).get("item")):
+        return True
+    if graded is not None:
+        target = choice.after(state, graded)
+        if target:
+            start = state.index
+            return goto(state, target) and state.index != start
+    return False
 
 
 class _Break(Exception):
