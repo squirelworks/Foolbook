@@ -43,6 +43,9 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
+_END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
+_UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
@@ -264,6 +267,23 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if name and name not in state.variables:
                 blank = 0 if parts[-2].lower() in _NUMBER_TYPES else ""
                 state.variables[name] = _Array(blank) if "[" in parts[-1] else blank
+            i += 1
+            continue
+
+        m = _LINK_DLL.match(line)
+        if m:
+            from engine import dll
+            stop = i + 1
+            while stop < end and not _END_LINK.match(lines[stop]):
+                stop += 1
+            dll.link(state, m.group(1), lines[i + 1:stop])
+            i = stop + 1
+            continue
+
+        m = _UNLINK_DLL.match(line)
+        if m:
+            from engine import dll
+            dll.unlink(state, m.group(1))
             i += 1
             continue
 
@@ -773,6 +793,9 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "syslinkeddlls":
+        from engine import dll
+        return dll.linked_names(state)
     if low == "sysbooks":
         return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
@@ -1091,6 +1114,12 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    from engine import dll
+    linked = dll.find(state, match.group(1))
+    if linked is not None:
+        parts = _call_args(match.group(2))
+        refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
+        return linked[1](state, [_eval(part, state) for part in parts], refs)
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `linkDLL32 "kernel32.dll"` ... `end linkDLL32` declares DLL functions, `unlinkDLL` drops them, and `sysLinkedDLLs` lists the DLLs. A declared function with a shim in `engine/dlls/` answers. The first shim is kernel32's private profile calls: `GetPrivateProfileIntA` and `GetPrivateProfileStringA` read the INI beside the book and give the script's default when the key is not there, and `WritePrivateProfileStringA` keeps the value for the session without writing a file.
 - `local int count`, `local string temp`, `local numbers[5]` and `local a, b` start each name blank when the line runs: 0 for a number type, empty otherwise, an empty array with brackets. A called handler counts from zero every time, and the caller's variable of the same name is left alone.
 - Sums are worked out: `+`, `-`, `*`, `/`, `div` and `mod`, times before plus, left to right, brackets first, on variables, numbers, calls and array elements. `score div count` is a whole number. A side that is not a number still leaves the sum unknown, so nothing is written from it.
 - OpenScript arrays. `system int __menuFlags[10]` declares an array, `__menuFlags[index] = 2` sets an element, and `__menuFlags[3]` reads it. An element never set is 0 for a number type and empty for text. A system array keeps its elements when a called handler ends. A variable the reader already keeps in its own form is not written over.
