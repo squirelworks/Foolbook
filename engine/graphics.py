@@ -220,6 +220,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 )
         else:
             x, y, w, h = _box(shape)
+            tiled = _tiled(canvas, shape, w, h, fill, outline)
+            if tiled is not None:
+                photos.append(tiled)
+                canvas.create_image(x, y, image=tiled, anchor="nw")
+                fill = ""
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
@@ -823,6 +828,19 @@ def _points(shape: dict) -> list[int]:
         if len(pt) >= 2:
             flat.extend((int(pt[0]), int(pt[1])))
     return flat
+
+
+def _tiled(canvas, shape: dict, w: int, h: int, fill: str, outline: str):
+    """The shape's 8 by 8 pattern, repeated to its size. None when it has none."""
+    from engine import patterns
+    grid = patterns.pixels(shape.get("tile"), outline or "#000000", fill or "#ffffff", shape.get("cell") or 1)
+    if not grid or w < 1 or h < 1:
+        return None
+    tile = tk.PhotoImage(master=canvas, width=len(grid[0]), height=len(grid))
+    tile.put(" ".join("{" + " ".join(line) + "}" for line in grid))
+    photo = tk.PhotoImage(master=canvas, width=int(w), height=int(h))
+    photo.tk.call(photo, "copy", tile, "-to", 0, 0, int(w), int(h))
+    return photo
 
 
 def _fit_image(raw: bytes, width: int, height: int) -> bytes:
