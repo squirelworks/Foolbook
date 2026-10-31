@@ -43,6 +43,7 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _FILL = re.compile(
@@ -284,6 +285,12 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if ask is not None:
                 answer = ask(m.group(1)) or "No"
             state.variables["it"] = answer
+            i += 1
+            continue
+
+        m = _PUSH_SYSBOOKS.match(line)
+        if m:
+            push_sysbook(state, _as_text(_eval(m.group(1), state)))
             i += 1
             continue
 
@@ -609,6 +616,8 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "sysbooks":
+        return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
         return 13
     if low == "keyback":
@@ -1050,6 +1059,26 @@ def _builtin_page(state: RuntimeState, call: str) -> str | None:
         page = "P10003" if _lesson_mode(state) == 1 else "P10004"
         return page if _has_page(state, page) else "P900"
     return None
+
+
+def push_sysbook(state: RuntimeState, name: str) -> None:
+    """`push "x.sbk" onto sysBooks`. The system book is opened from beside the book.
+
+    A push puts the name first, and the first is searched first. A book
+    that is not found keeps its name in the list.
+    """
+    name = (name or "").strip()
+    if not name:
+        return
+    from engine.loader import load, find_book
+    book = None
+    found = find_book(name, state.book.path) if state.book is not None else None
+    if found:
+        book = load(found)
+        state.note(f"sysbook {Path(found).name}")
+    else:
+        state.note(f"missing sysbook {name}")
+    state.sysbooks.insert(0, (name, book))
 
 
 def leave_page(state: RuntimeState) -> None:
