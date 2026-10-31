@@ -1,10 +1,8 @@
-"""Checkbox and radio: the reader draws them and a click toggles them."""
+"""Checkbox and radio: the reader draws the mark, the caption, and the state."""
 
 from __future__ import annotations
 
 import unittest
-
-from engine import choices
 
 try:
     from engine import graphics
@@ -40,32 +38,6 @@ def _radio(name, group="size", **extra):
     return shape
 
 
-class Toggle(unittest.TestCase):
-    def test_a_click_flips_a_checkbox(self):
-        box = _check()
-        choices.toggle([box], box)
-        self.assertIs(box["value"], True)
-        choices.toggle([box], box)
-        self.assertIs(box["value"], False)
-
-    def test_a_radio_turns_off_the_others_in_its_group(self):
-        small, large, other = _radio("Small", value=True), _radio("Large"), _radio("Red", group="colour", value=True)
-        shapes = [small, large, other]
-        choices.toggle(shapes, large)
-        self.assertEqual([s.get("value") for s in shapes], [False, True, True])
-
-    def test_a_second_click_on_a_radio_leaves_it_on(self):
-        small = _radio("Small", value=True)
-        choices.toggle([small], small)
-        self.assertIs(small["value"], True)
-
-    def test_only_checkboxes_and_radios_are_choices(self):
-        self.assertTrue(choices.is_choice(_check()))
-        self.assertTrue(choices.is_choice(_radio("A")))
-        self.assertFalse(choices.is_choice({"kind": "button"}))
-        self.assertFalse(choices.is_choice(None))
-
-
 @unittest.skipIf(graphics is None, "tkinter is not installed")
 class Draw(unittest.TestCase):
     def _drawn(self, shape):
@@ -88,6 +60,20 @@ class Draw(unittest.TestCase):
         self.assertEqual(names.count("create_oval"), 1)
         names, _canvas = self._drawn(_radio("Small", value=True))
         self.assertEqual(names.count("create_oval"), 2)
+
+
+@unittest.skipIf(graphics is None, "tkinter is not installed")
+class NidaStrip(unittest.TestCase):
+    """The NIDA A/B choice strip is ToolBook buttons with a `checked_data` face, not
+    `check` or `radio` shapes. Synthetic .tbk-loader-shaped input; NIDA books are not here."""
+
+    def test_a_strip_button_draws_no_tick_and_no_circle(self):
+        canvas = _Canvas()
+        graphics.draw(canvas, [{"kind": "button", "name": "A", "text": "A", "checked": True,
+                                "x": 10, "y": 10, "w": 30, "h": 20}])
+        names = [name for name, _args, _kwargs in canvas.calls]
+        self.assertNotIn("create_line", names)
+        self.assertNotIn("create_oval", names)
 
 
 if __name__ == "__main__":
