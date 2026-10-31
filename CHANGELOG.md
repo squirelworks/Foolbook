@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- A `group` shape in an `.fbk` (what FoolbookEditor writes: `kind: group`, `children`) is replaced, for the reader, by its children in its place, so they are drawn in paint order and can be clicked. Before, the reader drew the group as one empty shape and lost its children. ToolBook pages, which name groups in `groups`, are passed through as before. Test: `engine/test_fbk_groups.py`.
 - OpenScript arrays. `system int __menuFlags[10]` declares an array, `__menuFlags[index] = 2` sets an element, and `__menuFlags[3]` reads it. An element never set is 0 for a number type and empty for text. A system array keeps its elements when a called handler ends. A variable the reader already keeps in its own form is not written over.
 - `send NAME args` runs the nearest `to handle NAME`: the page, the book, then each system book in `sysBooks` order. A `forward` goes on to the next one up, and a send no handler takes is left to the reader as before (`send next`). `send x to button "OK"` names its target and still takes the old path, and `send okClicked` still goes to the quiz until that family is retired.
 - A call such as `x = getQuizScore()` or `get setMenuFlag(1)` runs the `to get` handler it reaches first: the page, the book, then each system book in `sysBooks` order. The built-in answers in `menu`, `fillin` and `quiz` are asked only when no handler is found. Arguments bind to the header's names, `return` gives the value, a `go to` inside goes to the line that called it, and only the handler's `system` variables keep what it did.
