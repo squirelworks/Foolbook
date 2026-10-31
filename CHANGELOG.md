@@ -5,6 +5,7 @@
 - A `roundrect` shape is drawn with rounded corners from its bounds and `radius` (8 when missing). It was a square box.
 - A shape's `stroke` is the width of its outline or line, in pixels, scaled with the page. Rect, roundrect, ellipse, line, polygon, and arc honor it. A shape with no `stroke` is drawn as before.
 - A `curve` shape is drawn as a polyline through its `points`. It was a box at its bounds. knownbugs.md says it is not smoothed yet.
+- An `arc` that stores `start` and `sweep` is drawn as that part of the ellipse in its bounds, unfilled. An arc read from a `.tbk` (endpoints or rays) is drawn as before.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 - `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
 
