@@ -25,6 +25,7 @@
 ## Unreleased
 
 - `get f()` leaves what f gives in `it`, so `return it` passes it on.
+- A click's `target` is its object, `button "B" of page "P10210"`, so `object of target`, `name of target` and `enabled of target` work. `button temp` names an object by a variable.
 - `increment(x)`, `decrement( x )` and `increment x by n` change the variable. Before, the bracket form did nothing and `by n` added 1.
 - `ansiToChar(n)` gives the character with that ANSI code, and `charToAnsi(c)` the code of its first character.
 - `pageNumber of this page`, `pageCount of this book`, and a property of another page by number or name, such as `questionno of page i`.

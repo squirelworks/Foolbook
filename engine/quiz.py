@@ -499,9 +499,11 @@ def _neighbor(state, step: int):
 
 
 def _click(state, args):
+    from engine.engine import _object_name
     target = args[0] if args else str(state.variables.get("target") or "")
     if target.lower() == "target":
         target = str(state.variables.get("target") or "")
+    target = _object_name(target)
     name = target.strip().strip('"').upper()
     if name in _CHOICES:
         return _choose(state, name)
