@@ -166,6 +166,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                         fill=ink,
                         width=max(1, int(w) - 16),
                     )
+        elif kind in ("check", "radio"):
+            _paint_choice(canvas, shape, kind, fill, outline)
         elif kind == "image":
             shown = shape
             face = ""
@@ -199,6 +201,33 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _paint_choice(canvas, shape, kind, fill, outline):
+    """A checkbox or a radio: the mark at the left, the caption beside it."""
+    x, y, w, h = _box(shape)
+    ink = outline or "black"
+    side = max(8, min(14, int(h) - 4))
+    top = y + (h - side) / 2
+    if fill:
+        canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline="")
+    if kind == "check":
+        canvas.create_rectangle(x + 2, top, x + 2 + side, top + side, fill="#ffffff", outline=ink)
+        if shape.get("value"):
+            canvas.create_line(x + 4, top + side / 2, x + 1 + side / 2, top + side - 3, x + side, top + 3, fill=ink, width=2)
+    else:
+        canvas.create_oval(x + 2, top, x + 2 + side, top + side, fill="#ffffff", outline=ink)
+        if shape.get("value"):
+            inset = side / 4
+            canvas.create_oval(x + 2 + inset, top + inset, x + 2 + side - inset, top + side - inset, fill=ink, outline="")
+    if shape.get("text"):
+        canvas.create_text(
+            x + side + 8, y + h / 2,
+            text=str(shape.get("text")),
+            anchor="w",
+            fill=ink,
+            width=max(1, int(w) - side - 10),
+        )
 
 
 def _flush_caret(canvas, caret):

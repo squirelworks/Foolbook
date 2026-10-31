@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A `check` shape is a checkbox and a `radio` shape is a radio button, drawn with the caption beside the mark. A click turns a checkbox over, and turns a radio on and the other radios of its `group` on the page off. The state is the shape's `value`. `engine/test_choices.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
 - `getObjectiveScore(n)` is the average score of the questions of objective n, as nc81test.sbk adds them (`score div count`). Each question keeps its objective (`__quizTestNo`) when the pool is built by `addObjectiveToPool` or `addObjectiveToPoolEx`. P10410 (93951303) uses it to take the Review link off an objective that is already 100. The link itself goes with the group change (#17).
