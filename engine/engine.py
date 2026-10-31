@@ -282,10 +282,33 @@ def run_handler(state: RuntimeState, source: str, parents: list[str] | None = No
     return actions
 
 
+def _statements(line: str) -> list[str]:
+    """A line split at each `;` outside quotes. OpenScript ends a statement with one."""
+    if ";" not in line or line.strip().startswith("--"):
+        return [line]
+    found, cur, quote = [], [], False
+    for at, ch in enumerate(line):
+        if ch == '"':
+            quote = not quote
+        elif not quote and ch == "-" and line[at:at + 2] == "--":
+            cur.append(line[at:])
+            break
+        elif ch == ";" and not quote:
+            found.append("".join(cur))
+            cur = []
+            continue
+        cur.append(ch)
+    found.append("".join(cur))
+    return found
+
+
 def _lines(source: str) -> list[str]:
     """Normalize and stop at the first standalone end."""
     out = []
+    raws = []
     for raw in source.replace("\r", "").split("\n"):
+        raws.extend(_statements(raw))
+    for raw in raws:
         line = raw.strip()
         if not line or line.startswith("--"):
             continue
@@ -1455,6 +1478,12 @@ def _call_value(expr: str, state: RuntimeState):
         if whole is _UNRESOLVED:
             return _UNRESOLVED
         return len(_pieces(counted, _as_text(whole))[0])
+    if match.group(1).lower() in ("uppercase", "lowercase"):
+        value = _eval(match.group(2), state)
+        if value is _UNRESOLVED:
+            return _UNRESOLVED
+        text = _as_text(value)
+        return text.upper() if match.group(1).lower() == "uppercase" else text.lower()
     if match.group(1).lower() in ("ansitochar", "chartoansi"):
         value = _eval(match.group(2), state)
         if value is _UNRESOLVED:
