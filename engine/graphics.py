@@ -6,6 +6,7 @@ stream is decoded to handler source and the engine runs it.
 
   rect, ellipse   x, y, w, h, fill, outline
   roundrect       x, y, w, h, fill, outline, radius (default 8)
+  arc             x, y, w, h, start, sweep: degrees, zero east, counterclockwise
 
 stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
@@ -88,7 +89,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind == "arc":
             x, y, w, h = _box(shape)
             ends = shape.get("ends") or []
-            if len(ends) >= 2:
+            if shape.get("start") is not None and shape.get("sweep") is not None:
+                start, sweep = _angles(shape)
+                canvas.create_arc(
+                    x, y, x + w, y + h, start=start, extent=sweep, style="arc", outline=outline or "black", **pen
+                )
+            elif len(ends) >= 2:
                 flat = _arc_between(x, y, w, h, ends)
                 if len(flat) >= 4:
                     canvas.create_line(*flat, fill=outline or "#ffffff", width=pen.get("width", 2))
@@ -735,6 +741,16 @@ def _arc_pie(x, y, w, h, rays) -> list[int]:
         flat.append(int(round(cx + rx * math.cos(angle))))
         flat.append(int(round(cy - ry * math.sin(angle))))
     return flat
+
+
+def _angles(shape: dict, start: float = 0.0, sweep: float = 90.0) -> tuple[float, float]:
+    """Start angle and sweep in degrees. Zero is east and a positive sweep turns counterclockwise."""
+    try:
+        start = float(shape.get("start") if shape.get("start") is not None else start)
+        sweep = float(shape.get("sweep") if shape.get("sweep") is not None else sweep)
+    except (TypeError, ValueError):
+        pass
+    return start, sweep
 
 
 def _pen(shape: dict) -> dict:

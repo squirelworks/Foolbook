@@ -98,6 +98,15 @@ class Curve(unittest.TestCase):
         self.assertEqual(canvas.calls[0][1], [0, 0, 20, 30, 40, 0, 60, 30])
         self.assertEqual(canvas.calls[0][2]["fill"], "#071428")
 
+class Arc(unittest.TestCase):
+    def test_an_arc_with_angles_is_not_the_whole_ellipse(self):
+        canvas = drawn({"kind": "arc", "x": 0, "y": 0, "w": 80, "h": 60, "start": 30, "sweep": 120, "fill": "#ff0000"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        _kind, box, options = canvas.calls[0]
+        self.assertEqual(box, [0, 0, 80, 60])
+        self.assertEqual((options["start"], options["extent"], options["style"]), (30, 120, "arc"))
+        self.assertNotIn("fill", options)
+
 
 if __name__ == "__main__":
     unittest.main()
