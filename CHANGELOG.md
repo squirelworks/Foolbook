@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `local int count`, `local string temp`, `local numbers[5]` and `local a, b` start each name blank when the line runs: 0 for a number type, empty otherwise, an empty array with brackets. A called handler counts from zero every time, and the caller's variable of the same name is left alone.
 - Sums are worked out: `+`, `-`, `*`, `/`, `div` and `mod`, times before plus, left to right, brackets first, on variables, numbers, calls and array elements. `score div count` is a whole number. A side that is not a number still leaves the sum unknown, so nothing is written from it.
 - OpenScript arrays. `system int __menuFlags[10]` declares an array, `__menuFlags[index] = 2` sets an element, and `__menuFlags[3]` reads it. An element never set is 0 for a number type and empty for text. A system array keeps its elements when a called handler ends. A variable the reader already keeps in its own form is not written over.
 - `send NAME args` runs the nearest `to handle NAME`: the page, the book, then each system book in `sysBooks` order. A `forward` goes on to the next one up, and a send no handler takes is left to the reader as before (`send next`). `send x to button "OK"` names its target and still takes the old path, and `send okClicked` still goes to the quiz until that family is retired.

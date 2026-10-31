@@ -49,6 +49,7 @@ _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
 _NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+_TYPES = _NUMBER_TYPES + ("string", "stack", "point", "color", "date", "time", "pointer", "filehandle")
 
 
 class _Array(dict):
@@ -263,6 +264,22 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if name and name not in state.variables:
                 blank = 0 if parts[-2].lower() in _NUMBER_TYPES else ""
                 state.variables[name] = _Array(blank) if "[" in parts[-1] else blank
+            i += 1
+            continue
+
+        if low.startswith("local "):
+            # A local starts blank each time the handler runs, whatever a caller had.
+            words = line[6:].strip()
+            first = words.split(None, 1)
+            blank = ""
+            if len(first) == 2 and first[0].lower() in _TYPES:
+                blank = 0 if first[0].lower() in _NUMBER_TYPES else ""
+                words = first[1]
+            for item in words.split(","):
+                item = item.strip()
+                name = item.split("[")[0].strip()
+                if re.fullmatch(r"[A-Za-z_]\w*", name):
+                    state.variables[name] = _Array(blank) if "[" in item else blank
             i += 1
             continue
 
