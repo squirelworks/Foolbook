@@ -90,5 +90,14 @@ class Stroke(unittest.TestCase):
         self.assertEqual(placed[0]["stroke"], 3)
 
 
+class Curve(unittest.TestCase):
+    def test_a_curve_goes_through_every_point(self):
+        points = [[0, 0], [20, 30], [40, 0], [60, 30]]
+        canvas = drawn({"kind": "curve", "points": points, "outline": "#071428"})
+        self.assertEqual(canvas.kinds(), ["line"])
+        self.assertEqual(canvas.calls[0][1], [0, 0, 20, 30, 40, 0, 60, 30])
+        self.assertEqual(canvas.calls[0][2]["fill"], "#071428")
+
+
 if __name__ == "__main__":
     unittest.main()

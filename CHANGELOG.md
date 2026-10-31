@@ -4,6 +4,7 @@
 
 - A `roundrect` shape is drawn with rounded corners from its bounds and `radius` (8 when missing). It was a square box.
 - A shape's `stroke` is the width of its outline or line, in pixels, scaled with the page. Rect, roundrect, ellipse, line, polygon, and arc honor it. A shape with no `stroke` is drawn as before.
+- A `curve` shape is drawn as a polyline through its `points`. It was a box at its bounds. knownbugs.md says it is not smoothed yet.
 
 ## Unreleased
 
