@@ -43,12 +43,16 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
+_END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
+_UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
 _NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+_TYPES = _NUMBER_TYPES + ("string", "stack", "point", "color", "date", "time", "pointer", "filehandle")
 
 
 class _Array(dict):
@@ -127,6 +131,16 @@ def split_handlers(source: str) -> list[Handler]:
     return out
 
 
+def _opens(low: str) -> bool:
+    """A line that opens a block: if, step, while, do, conditions, linkDLL."""
+    return low.startswith(("if ", "step ", "while ", "linkdll")) or low in ("conditions", "do")
+
+
+def _closes(low: str) -> bool:
+    """A line that closes a block. A bare `end` closes whatever block is open."""
+    return low == "end" or low.startswith("end ") or low.startswith("until ")
+
+
 def _strip_handler_end(body: str) -> str:
     lines = body.replace("\r", "").split("\n")
     depth = 0
@@ -135,10 +149,9 @@ def _strip_handler_end(body: str) -> str:
         low = raw.strip().lower()
         if not low or low.startswith("--"):
             continue
-        if low.startswith("if ") or low.startswith("step ") or low.startswith("conditions"):
+        if _opens(low):
             depth += 1
-            continue
-        if low in ("end", "end if", "end step", "end handler"):
+        elif _closes(low):
             if depth == 0:
                 cut = i
                 break
@@ -202,6 +215,18 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
 class _Break(Exception):
     """`break` ends the handler it is in."""
+
+
+class _LoopBreak(Exception):
+    """`break while`, `break step`, `break conditions`, `break do`."""
+
+    def __init__(self, kind: str):
+        super().__init__()
+        self.kind = kind
+
+
+class _LoopNext(Exception):
+    """`continue` goes round the loop it is in again."""
 
 
 class _Return(Exception):
@@ -295,6 +320,39 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = _LINK_DLL.match(line)
+        if m:
+            from engine import dll
+            stop = i + 1
+            while stop < end and not _END_LINK.match(lines[stop]):
+                stop += 1
+            dll.link(state, m.group(1), lines[i + 1:stop])
+            i = stop + 1
+            continue
+
+        m = _UNLINK_DLL.match(line)
+        if m:
+            from engine import dll
+            dll.unlink(state, m.group(1))
+            i += 1
+            continue
+
+        if low.startswith("local "):
+            # A local starts blank each time the handler runs, whatever a caller had.
+            words = line[6:].strip()
+            first = words.split(None, 1)
+            blank = ""
+            if len(first) == 2 and first[0].lower() in _TYPES:
+                blank = 0 if first[0].lower() in _NUMBER_TYPES else ""
+                words = first[1]
+            for item in words.split(","):
+                item = item.strip()
+                name = item.split("[")[0].strip()
+                if re.fullmatch(r"[A-Za-z_]\w*", name):
+                    state.variables[name] = _Array(blank) if "[" in item else blank
+            i += 1
+            continue
+
         if low == "conditions":
             end_at = _find_conditions(lines, i + 1, end)
             _run_conditions(state, lines, i + 1, end_at, actions)
@@ -314,6 +372,48 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "break":
             raise _Break()
+
+        if low in ("break while", "break step", "break conditions", "break do"):
+            raise _LoopBreak(low.split()[1])
+
+        if low == "continue" or low in ("continue while", "continue step", "continue do"):
+            raise _LoopNext()
+
+        if low.startswith("while "):
+            end_at = _close_of(lines, i + 1, end)
+            cond = line[6:].strip()
+            guard = 0
+            while guard < 10000 and _truth(_eval(cond, state)):
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "while":
+                        raise
+                    break
+                except _LoopNext:
+                    continue
+            i = end_at + 1
+            continue
+
+        if low == "do":
+            end_at = _close_of(lines, i + 1, end)
+            cond = lines[end_at][6:].strip() if end_at < end else "true"
+            guard = 0
+            while guard < 10000:
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "do":
+                        raise
+                    break
+                except _LoopNext:
+                    pass
+                if _truth(_eval(cond, state)):
+                    break
+            i = end_at + 1
+            continue
 
         if low == "return" or low.startswith("return "):
             raise _Return(_eval(line[6:], state) if len(line) > 6 else None)
@@ -530,31 +630,36 @@ def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) ->
 
 def _split_if(lines: list[str], start: int, end: int) -> tuple[int, int]:
     """Return (else_index_or_end, end_if_index) for the if that opened before start."""
-    depth = 1
+    depth = 0
     else_at = end
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("if "):
+        if _opens(low):
             depth += 1
-        elif low.startswith("else") and depth == 1 and else_at == end:
-            else_at = i
-        elif low in ("end", "end if"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return (else_at if else_at < i else i), i
+            depth -= 1
+        elif low.startswith("else") and depth == 0 and else_at == end:
+            else_at = i
     return end, end
 
 
 def _find_end_step(lines: list[str], start: int, end: int) -> int:
-    depth = 1
+    return _close_of(lines, start, end)
+
+
+def _close_of(lines: list[str], start: int, end: int) -> int:
+    """The line that closes the block opened just before start, with the blocks inside skipped."""
+    depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("step "):
+        if _opens(low):
             depth += 1
-        elif low in ("end", "end step"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return i
+            depth -= 1
     return end
 
 
@@ -572,9 +677,18 @@ def _run_step(state, name, a, b, by, lines, start, end, actions):
     guard = 0
     while (cur <= hi if step > 0 else cur >= hi) and guard < 10000:
         state.variables[name] = cur
-        _run_block(state, lines, start, end, actions)
+        try:
+            _run_block(state, lines, start, end, actions)
+        except _LoopBreak as stop:
+            if stop.kind != "step":
+                raise
+            break
+        except _LoopNext:
+            pass
         cur += step
         guard += 1
+
+
 
 
 def _whole_quote(expr: str) -> str | None:
@@ -662,6 +776,11 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
+    found_in = _split_is_in(expr)
+    if found_in is not None:
+        left, negate, right = found_in
+        inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
+        return inside != negate
     is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
     if is_at:
         left = _eval(expr[:is_at.start()], state)
@@ -677,6 +796,9 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    split = _split_arithmetic(expr)
+    if split is not None:
+        return _arithmetic(*split, state)
     m = _ITEM.fullmatch(expr)
     if m:
         array = _var(state, m.group(1))
@@ -695,6 +817,70 @@ _MISSING = object()
 # not text, so nothing is written from it.
 _UNRESOLVED = object()
 _OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+def _split_arithmetic(expr: str):
+    """(left, operator, right) at the last + or - outside quotes and brackets, else * / div mod.
+
+    The last one, so that `a - b - c` is `(a - b) - c`. A sign at the start,
+    or after another operator, is part of the number.
+    """
+    for ops in (("+", "-"), ("*", "/", "div", "mod")):
+        quote = ""
+        depth = 0
+        at = None
+        for i, ch in enumerate(expr):
+            if quote:
+                if ch == quote:
+                    quote = ""
+                continue
+            if ch in "\"'":
+                quote = ch
+            elif ch in "([":
+                depth += 1
+            elif ch in ")]" and depth:
+                depth -= 1
+            elif depth == 0:
+                for op in ops:
+                    if op.isalpha():
+                        if not re.match(rf"\s{op}\s", expr[i - 1:i + len(op) + 1], re.IGNORECASE) or i == 0:
+                            continue
+                    elif not expr.startswith(op, i):
+                        continue
+                    before = expr[:i].rstrip()
+                    if not before or before[-1] in "+-*/(=<>,&":
+                        continue
+                    at = (i, op)
+        if at is not None:
+            i, op = at
+            left, right = expr[:i].strip(), expr[i + len(op):].strip()
+            if left and right:
+                return left, op.lower(), right
+    return None
+
+
+def _arithmetic(left: str, op: str, right: str, state: RuntimeState):
+    """A sum of two numbers. A side that is not a number makes the sum unknown."""
+    a = _number(_eval(left, state))
+    b = _number(_eval(right, state))
+    if a is None or b is None:
+        return _UNRESOLVED
+    try:
+        if op == "+":
+            value = a + b
+        elif op == "-":
+            value = a - b
+        elif op == "*":
+            value = a * b
+        elif op == "/":
+            value = a / b
+        elif op == "div":
+            value = float(int(a / b))
+        else:
+            value = a - b * int(a / b)
+    except ZeroDivisionError:
+        return _UNRESOLVED
+    return int(value) if value.is_integer() else value
 
 
 def _has_arithmetic(expr: str) -> bool:
@@ -718,6 +904,9 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "syslinkeddlls":
+        from engine import dll
+        return dll.linked_names(state)
     if low == "sysbooks":
         return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
@@ -866,6 +1055,18 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is_in(expr: str):
+    """(left, negated, right) for `a is in b`, `a is not in b` and `b contains a`."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?in\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    m = re.search(r"\s+contains\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[m.end():].strip(), False, expr[:m.start()].strip()
+    return None
 
 
 def _split_compare(expr: str):
@@ -1036,6 +1237,12 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    from engine import dll
+    linked = dll.find(state, match.group(1))
+    if linked is not None:
+        parts = _call_args(match.group(2))
+        refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
+        return linked[1](state, [_eval(part, state) for part in parts], refs)
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
@@ -1205,16 +1412,7 @@ def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> boo
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
-    depth = 0
-    for i in range(start, end):
-        low = lines[i].lower()
-        if low == "conditions":
-            depth += 1
-        elif low == "end conditions" or (low == "end" and depth == 0):
-            if depth == 0:
-                return i
-            depth -= 1
-    return end
+    return _close_of(lines, start, end)
 
 
 def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int, actions: list[dict]) -> None:
@@ -1224,9 +1422,9 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low == "conditions":
+        if _opens(low):
             depth += 1
-        elif low == "end conditions":
+        elif _closes(low):
             depth = max(0, depth - 1)
         elif depth == 0 and low.startswith("when "):
             branches.append(i)
@@ -1235,10 +1433,18 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     for index, at in enumerate(branches):
         nxt = branches[index + 1] if index + 1 < len(branches) else (otherwise if otherwise is not None else end)
         if _truth(_eval(lines[at][5:].strip(), state)):
-            _run_block(state, lines, at + 1, nxt, actions)
+            _run_conditions_branch(state, lines, at + 1, nxt, actions)
             return
     if otherwise is not None:
-        _run_block(state, lines, otherwise + 1, end, actions)
+        _run_conditions_branch(state, lines, otherwise + 1, end, actions)
+
+
+def _run_conditions_branch(state, lines, start, end, actions) -> None:
+    try:
+        _run_block(state, lines, start, end, actions)
+    except _LoopBreak as stop:
+        if stop.kind != "conditions":
+            raise
 
 
 def _book_keyup(state: RuntimeState, actions: list[dict]) -> bool:
