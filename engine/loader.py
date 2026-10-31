@@ -248,6 +248,8 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         shells=list(data.get("shells") or []),
         handlers=_handlers_of(data),
         props=dict(data.get("props") or {}),
+        author=str(data.get("author") or ""),
+        first_page=str(data.get("firstPage") or ""),
     )
 
 
