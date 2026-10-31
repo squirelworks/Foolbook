@@ -112,11 +112,11 @@ A new install opens `using_foolbook`. Its First Light button opens `first_light`
 
 ## A click on a button
 
-The button's script runs first. A script with no `to handle` line is read as the click. When the script is empty, the click is the button's `item` (a page, a book, or the Next or Back label). When both are set, the item runs only if the script did not change the page. `engine.engine.click` is that order, and `engine/test_click_order.py` tests it.
+The button's script runs first. A script with no `to handle` line, which is how FoolbookEditor saves one, is read as the click. Then the page's `buttonClick` runs, then the button's `item` (a page, a book, or the Next or Back label), each only if nothing before it changed the page. `engine.engine.click` is that order without a window, and `engine/test_click_order.py` tests it.
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
-`go to next page` and `go to previous page` (or `prev`) move the way the Next and Back buttons do, including a Next or Back item the page names.
+`go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
 `engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open, an `if`, `step`, or handler left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
 
@@ -124,7 +124,7 @@ A script shows or hides a shape by the name the editor gave it: `show "Feedback"
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.
 
-`to handle leavePage` runs before the next page is shown, once per departure. If it goes to a page, that page is shown instead. A `go to` inside the leave script does not run the leave script again, so it cannot loop. `engine/test_page_leave.py` tests it.
+`to handle leavePage` runs before the next page is shown. If it goes to a page, that page is shown instead. `engine/test_page_leave.py` tests it.
 
 ## Design notes
 

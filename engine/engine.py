@@ -34,8 +34,9 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
-# `go to next page` and `go to previous page` are the Next and Back buttons.
-_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page$', re.IGNORECASE)
+# `go to next page` and `go to previous page` (of this book) are the pages
+# beside this one in the book's order.
+_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$', re.IGNORECASE)
 _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
@@ -151,33 +152,27 @@ def click_script(obj: dict | None) -> str:
     return obj.get("group_script") or ""
 
 
-def follow_item(state: RuntimeState, item: dict | None) -> bool:
-    """A button's jump: another book, a page, or the Next or Back label."""
-    item = item or {}
-    page = item.get("page") or ""
-    book = item.get("book") or ""
-    if book:
-        return open_book(state, book, page)
-    if page:
-        start = state.index
-        return goto(state, page) and state.index != start
-    label = (item.get("label") or "").lower()
-    if label in ("next", "back", "previous"):
-        return press(state, label)
-    return False
-
-
 def click(state: RuntimeState, obj: dict | None) -> bool:
-    """A click on a button. True when the page changed.
+    """A click on a button, in the window's order. True when the page changed.
 
-    The button's script runs first. When the script is empty, the click is
-    the button's item. When both are set, the item runs only if the script
-    did not change the page.
+    The button's script runs first, then the page's buttonClick, then the
+    button's item, the way the window's click does it, so a test can click
+    without a window.
     """
+    obj = obj or {}
+    start = (id(state.book), state.index)
     script = click_script(obj)
     if script and follow(state, run_handler(state, script)):
         return True
-    return follow_item(state, (obj or {}).get("item"))
+    if follow(state, run_page_handlers(state, "buttonclick")):
+        return True
+    item = obj.get("item") or {}
+    book = item.get("book") or ""
+    if book and open_book(state, book, item.get("page") or ""):
+        return True
+    if item.get("page") or book or item.get("label"):
+        press(state, item.get("label") or obj.get("text") or "", item.get("page") or "")
+    return (id(state.book), state.index) != start
 
 
 class _Break(Exception):
@@ -323,8 +318,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         m = _GO_STEP.match(line)
         if m:
-            step = m.group(1).lower()
-            actions.append({"kind": "send", "name": "next" if step == "next" else "previous"})
+            to = state.index + (1 if m.group(1).lower() == "next" else -1)
+            if 0 <= to < len(state.book.pages):
+                actions.append({"kind": "goto", "page": state.book.pages[to].id, "book": None})
+            else:
+                state.note(f"no page beside: {line}")
             i += 1
             continue
 
@@ -1103,19 +1101,13 @@ def _builtin_page(state: RuntimeState, call: str) -> str | None:
 def leave_page(state: RuntimeState) -> str | None:
     """The page being left. P1910 and P2910 set the menu flag here.
 
-    Returns the page a leavePage script went to, or None. The leave script
-    runs once per departure: a `go to` inside it does not run it again.
+    Returns the page a leavePage script went to, or None.
     """
-    if state.page is None or state.variables.get("__leaving"):
+    if state.page is None:
         return None
     from engine import fields
     fields.blur(state)
-    state.variables["__leaving"] = True
-    try:
-        actions = run_page_handlers(state, "leavepage")
-    finally:
-        state.variables.pop("__leaving", None)
-    for act in actions:
+    for act in run_page_handlers(state, "leavepage"):
         if act.get("kind") == "goto" and act.get("page") and not act.get("book"):
             return str(act["page"])
     return None
