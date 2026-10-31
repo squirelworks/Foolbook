@@ -94,7 +94,10 @@ _TEXT_OF_FIELD = re.compile(
 )
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
-_PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
+_PROP_OF_PAGE = re.compile(
+    r'(\w+)\s+of\s+(?:this\s+page|page\s+((?:(?!\s(?:and|or)\s)[^=<>])+))',
+    re.IGNORECASE,
+)
 _OF_BOOK = re.compile(r'(.+?)\s+of\s+this\s+book$', re.IGNORECASE)
 _BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
 _NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
@@ -559,6 +562,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             actions.append({"kind": "set", "name": name, "value": cur})
             i += 1
             continue
+        m = _ASSIGN_CHUNK.fullmatch(line)
+        if m and _var(state, m.group(4)) is not _MISSING:
+            _put_chunk(state, m)
+            i += 1
+            continue
         m = _ASSIGN_ITEM.match(line)
         if m:
             name = m.group(1)
@@ -751,8 +759,11 @@ def _eval(expr: str, state: RuntimeState):
         return text[at] if 0 <= at < len(text) else ""
     m = _PROP_OF_PAGE.fullmatch(expr)
     if m:
-        return _page_property(state, m.group(1))
+        page = state.page if m.group(2) is None else _page_ref(state, m.group(2))
+        return _page_property(state, m.group(1), page)
     m = _OF_BOOK.fullmatch(expr)
+    if m and m.group(1).strip().lower() == "pagecount":
+        return len(state.book.pages) if state.book is not None else 0
     if m:
         value = _book_property(state, m.group(1).strip())
         if value is not _NO_BOOK_PROP:
@@ -859,6 +870,44 @@ def _chunk(state: RuntimeState, match: re.Match):
     if first is None or last is None:
         return _UNRESOLVED
     return glue.join(parts[max(int(first) - 1, 0):max(int(last), 0)])
+
+
+_ASSIGN_CHUNK = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+([A-Za-z_]\w*)\s*=\s*(.+)",
+    re.IGNORECASE,
+)
+
+
+def _put_chunk(state: RuntimeState, match: re.Match) -> None:
+    """`char i of pool = " "`: that chunk of the variable becomes the value.
+
+    An item or textline past the end pads the list with empty ones.
+    """
+    kind = match.group(1).lower()
+    name = match.group(4)
+    text = _as_text(_var(state, name))
+    first = _number(_eval(match.group(2), state))
+    last = _number(_eval(match.group(3), state)) if match.group(3) else first
+    value = _eval(match.group(5).strip().rstrip("."), state)
+    if first is None or last is None or value is _UNRESOLVED:
+        return
+    first, last = max(int(first), 1), max(int(last), int(first), 1)
+    value = _as_text(value)
+    if kind == "word":
+        spans = [m.span() for m in re.finditer(r"\S+", text)]
+        if first > len(spans):
+            text = text + (" " if text else "") + value
+        else:
+            start = spans[first - 1][0]
+            stop = spans[min(last, len(spans)) - 1][1]
+            text = text[:start] + value + text[stop:]
+    else:
+        parts, glue = _pieces(kind, text)
+        if kind not in ("char", "character"):
+            parts += [""] * (last - len(parts))
+        parts[first - 1:last] = [value]
+        text = glue.join(parts)
+    state.variables[name] = text
 
 
 def _split_arithmetic(expr: str):
@@ -1170,9 +1219,27 @@ def _field_text(state: RuntimeState, name: str) -> str:
     return ""
 
 
-def _page_property(state: RuntimeState, name: str):
-    """`testno of this page` is a property stored on the page."""
-    page = state.page
+def _page_ref(state: RuntimeState, text: str):
+    """The page `page i` or `page "P3"` names: a number counts from 1, else the name."""
+    value = _eval(text, state)
+    pages = state.book.pages if state.book is not None else []
+    number = _number(value)
+    if number is not None and number.is_integer():
+        at = int(number) - 1
+        return pages[at] if 0 <= at < len(pages) else None
+    want = _as_text(value).strip().lower()
+    for page in pages:
+        if page.id.lower() == want or str((page.raw or {}).get("name") or "").lower() == want:
+            return page
+    return None
+
+
+def _page_property(state: RuntimeState, name: str, page=None):
+    """`testno of this page` is a property stored on the page. pageNumber counts from 1."""
+    if page is None:
+        return ""
+    if name.lower() == "pagenumber":
+        return state.book.pages.index(page) + 1
     props = ((page.raw or {}).get("props") or {}) if page is not None else {}
     for key, value in props.items():
         if str(key).lower() == name.lower():
@@ -1272,6 +1339,15 @@ def _truth(value) -> bool:
 _NOT_A_CALL = object()
 
 
+# OpenScript's counting functions, and the chunk each one counts.
+_COUNTS = {
+    "charcount": "char",
+    "wordcount": "word",
+    "itemcount": "item",
+    "textlinecount": "textline",
+}
+
+
 def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
@@ -1285,6 +1361,12 @@ def _call_value(expr: str, state: RuntimeState):
         parts = _call_args(match.group(2))
         refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
         return linked[1](state, [_eval(part, state) for part in parts], refs)
+    counted = _COUNTS.get(match.group(1).lower())
+    if counted is not None:
+        whole = _eval(match.group(2), state)
+        if whole is _UNRESOLVED:
+            return _UNRESOLVED
+        return len(_pieces(counted, _as_text(whole))[0])
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")

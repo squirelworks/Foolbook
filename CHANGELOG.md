@@ -22,6 +22,9 @@
 
 ## Unreleased
 
+- `pageNumber of this page`, `pageCount of this book`, and a property of another page by number or name, such as `questionno of page i`.
+- A chunk of a variable can be set: `char i of pool = " "`, `item 2 of list = "x"`, `word 3 of s = "four"`. An item or textline past the end pads the list.
+- `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
 - A handler parameter taken `by reference` binds to the caller's variable and writes back; an array passed by value is a copy.
 - The openscript_analysis submodule moves to d741054, which has `formats/tbk/store.py`. Opening a ToolBook 8 object store and the Wingdings face test no longer fail on a missing module.
 - Chunks of text: `word 2 of cmdLine`, `item i of pool`, `chars 2 to 4 of name` and `textline 3 of text of field "a"` give that part of the value. The index can be a sum or an array element, and past the end is empty.
