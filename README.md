@@ -100,6 +100,7 @@ The loader decodes OpenScript handlers from a `.tbk` using the clean keyword tab
 A page may carry `shapes`. The window draws the page on screen. The other pictures stay in the file until that page is shown. Coordinates are pixels. A `.tbk` is not drawn from its page stream. The object store is read into these shapes, and the page stream is decoded to handlers.
 
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
+- `roundrect`: a `rect` with quarter-circle corners. `radius` is in pixels, 8 when missing, and never more than half the short side.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
 - `arc`: the open curve between its endpoints. It is not filled.
 - `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
