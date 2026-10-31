@@ -1,4 +1,4 @@
-"""go to next page and go to previous page are the pages beside this one in book order.
+"""In a ToolBook file, go to next page and go to previous page are the pages beside this one in book order.
 
 The NIDA guards run when NIDA_BOOKS names a folder holding the book.
 The books are not in this repository.
@@ -7,6 +7,7 @@ The books are not in this repository.
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,9 +16,21 @@ from engine.loader import load
 from foolbook.model import Book, Page, RuntimeState
 
 
-def _state(items=None):
+_TMP = tempfile.TemporaryDirectory()
+
+
+def _toolbook_file():
+    """A file whose first bytes say ToolBook. The pages come from the test."""
+    from toolbook.format import _AT, _BOOK
+    path = Path(_TMP.name) / "course.tbk"
+    if not path.exists():
+        path.write_bytes(b"\0" * _AT + _BOOK + b"\0" * 64)
+    return str(path)
+
+
+def _state(items=None, path=None):
     pages = [Page(id="P1"), Page(id="P2", items=items or []), Page(id="P3")]
-    return RuntimeState(book=Book(path="b.fbk", pages=pages), index=1)
+    return RuntimeState(book=Book(path=path or _toolbook_file(), pages=pages), index=1)
 
 
 class GoNextPageTests(unittest.TestCase):
@@ -54,6 +67,11 @@ class GoNextPageTests(unittest.TestCase):
         self.assertFalse(follow(state, run_handler(state, "go to next page")))
         self.assertEqual(state.page.id, "P3")
 
+    def test_a_foolbook_book_does_not_read_it(self):
+        state = _state(path="b.fbk")
+        self.assertFalse(follow(state, run_handler(state, "go to next page")))
+        self.assertEqual(state.page.id, "P2")
+
 
 def _nida(page_id):
     path = Path(os.environ.get("NIDA_BOOKS") or "/nonexistent") / "9395T903.fbk"
@@ -66,20 +84,12 @@ def _nida(page_id):
 
 
 class NidaGoNextPageTests(unittest.TestCase):
-    def test_9395T903_p16201_a_click_on_the_page_goes_back(self):
+    def test_converted_9395T903_p16201_is_foolbook_and_stays(self):
+        """The converted course is an FBK1 file, so it does not get the ToolBook reading. Main stays too."""
         state = _nida("P16201")
         overlay = next(s for s in state.page.shapes if s.get("name") == "Overlay")
-        self.assertTrue(click(state, overlay))
-        self.assertEqual(state.page.id, "P16200")
-
-    def test_9395T903_p15030_next_and_back(self):
-        state = _nida("P15030")
-        nxt = next(s for s in state.page.shapes if s.get("name") == "Next")
-        self.assertTrue(click(state, nxt))
-        self.assertEqual(state.page.id, "P15040")
-        back = next(s for s in state.page.shapes if s.get("name") == "Back")
-        self.assertTrue(click(state, back))
-        self.assertEqual(state.page.id, "P15030")
+        self.assertFalse(click(state, overlay))
+        self.assertEqual(state.page.id, "P16201")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,9 @@ The question is written for this test.
 
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from engine.choice import grade
 from engine.engine import click
@@ -15,8 +17,6 @@ QUIZ = {
     "version": 1,
     "question": "How many legs does a spider have?",
     "choices": [{"label": "Six", "correct": False}, {"label": "Eight", "correct": True}],
-    "feedback_right": "Right, eight.",
-    "feedback_wrong": "Count again.",
 }
 
 
@@ -33,21 +33,19 @@ def _state(quiz=QUIZ):
 
 
 class ChoiceGradeTests(unittest.TestCase):
-    def test_the_right_choice_shows_the_right_feedback(self):
+    def test_the_right_choice(self):
         state, shapes = _state()
         self.assertIs(grade(state, shapes[2]), True)
-        self.assertIs(shapes[3]["visible"], True)
-        self.assertIs(shapes[4]["visible"], False)
+        self.assertEqual(state.variables["__answer"], {"page": "P1", "choice": 1, "right": True})
 
-    def test_a_wrong_choice_shows_the_wrong_feedback(self):
+    def test_a_wrong_choice(self):
         state, shapes = _state()
         self.assertIs(grade(state, shapes[1]), False)
-        self.assertIs(shapes[3]["visible"], False)
-        self.assertIs(shapes[4]["visible"], True)
+        self.assertEqual(state.variables["__answer"], {"page": "P1", "choice": 0, "right": False})
 
     def test_the_name_does_not_matter(self):
         state, shapes = _state()
-        shapes[2]["name"] = "A"
+        shapes[2]["name"] = "Something"
         shapes[2]["text"] = "Something else"
         self.assertIs(grade(state, shapes[2]), True)
 
@@ -55,20 +53,22 @@ class ChoiceGradeTests(unittest.TestCase):
         state, shapes = _state()
         self.assertIsNone(grade(state, {"kind": "button", "name": "Eight"}))
         self.assertIsNone(grade(state, {"kind": "button", "choice": 7}))
+        self.assertNotIn("__answer", state.variables)
 
-    def test_click_goes_to_next_or_again(self):
-        state, shapes = _state(dict(QUIZ, next="P3", again="P2"))
-        self.assertTrue(click(state, shapes[2]))
-        self.assertEqual(state.page.id, "P3")
-        state, shapes = _state(dict(QUIZ, next="P3", again="P2"))
-        self.assertTrue(click(state, shapes[1]))
-        self.assertEqual(state.page.id, "P2")
-
-    def test_click_with_no_pages_stays_and_shows_feedback(self):
+    def test_a_click_grades(self):
         state, shapes = _state()
-        self.assertFalse(click(state, shapes[1]))
-        self.assertEqual(state.page.id, "P1")
-        self.assertIs(shapes[4]["visible"], True)
+        self.assertFalse(click(state, shapes[2]))
+        self.assertTrue(state.variables["__answer"]["right"])
+
+    def test_a_toolbook_file_is_not_graded(self):
+        from toolbook.format import _AT, _BOOK
+        state, shapes = _state()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "q.fbk"
+            path.write_bytes(b"\0" * _AT + _BOOK + b"\0" * 64)
+            state.book.path = str(path)
+            self.assertIsNone(grade(state, shapes[2]))
+        self.assertNotIn("__answer", state.variables)
 
 
 if __name__ == "__main__":

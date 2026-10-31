@@ -116,11 +116,11 @@ The button's script runs first. A script with no `to handle` line, which is how 
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
-`go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
+In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. In a Foolbook book, `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
 `engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open, an `if`, `step`, or handler left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
 
-A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name. The shape with `feedback: "right"` or `feedback: "wrong"` for that result is shown and the other is hidden. The quiz's `next` or `again` page follows when the button itself does not move. A ToolBook quiz is still graded by the clicked name against the page's Answer.
+A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name, in a book of Foolbook's own format. A ToolBook quiz is still graded by the clicked name against the page's Answer.
 
 ## Page scripts
 
