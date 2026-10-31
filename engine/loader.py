@@ -505,6 +505,19 @@ def _store_shape(obj: dict, to_pixel) -> dict | None:
         shape["marginR"] = to_pixel(int(obj["marginR"]))
     if obj.get("runs"):
         shape["runs"] = obj["runs"]
+    if "stroke" in obj:
+        # 0 is no stroke. Dropping it made Tk draw a hairline.
+        shape["stroke"] = obj["stroke"]
+    if obj.get("hotwords"):
+        shape["hotwords"] = [
+            {
+                "start": int(hot["start"]),
+                "end": int(hot["end"]),
+                "name": hot.get("name") or "",
+                "script": hot.get("script") or "",
+            }
+            for hot in obj["hotwords"]
+        ]
     points = obj.get("points") or []
     if obj.get("kind") == "arc" and obj.get("ends"):
         shape["ends"] = [[to_pixel(x), to_pixel(y)] for x, y in obj["ends"]]

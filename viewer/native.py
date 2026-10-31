@@ -16,6 +16,7 @@ from engine.preload import start as open_ahead, stop as stop_ahead
 from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
+from engine.hotword import hotword_under
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
 from engine.origin import is_toolbook
@@ -363,6 +364,19 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             seen.add(id(item))
             _run_named(item, "buttonUp")
         point = _page_xy(event)
+        if top and top.get("hotwords") and view.get("scale"):
+            placed = place_window(
+                [top], view["scale"], view["x0"], view["y0"], view["ox"] - view["x0"], view["oy"] - view["y0"]
+            )[0]
+            hot = hotword_under(placed, event.x, event.y)
+            if hot:
+                _activate(hot)
+                if state.variables.pop("__beep", None):
+                    try:
+                        root.bell()
+                    except tk.TclError:
+                        pass
+                return
         still = shapes_at(_objects(page), *point) if point else []
         if target is None or target not in still:
             if state.variables.pop("__redraw", None):

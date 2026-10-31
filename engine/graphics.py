@@ -12,6 +12,7 @@ stream is decoded to handler source and the engine runs it.
   hotspot         x, y, w, h and an item. Clicked, never drawn.
 
 stroke, when present, is the width of the outline or line in pixels.
+A stroke of 0 is no outline. Tk draws a width of 0 as 1, so the line is skipped.
   line, polygon   points: [[x, y], ...]
   curve           points: [[x, y], ...], drawn as a polyline through them for now
   text            x, y, text
@@ -73,6 +74,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"
         pen = _pen(shape)
+        if "stroke" in shape and not float(shape.get("stroke") or 0):
+            # Tk draws a width of 0 as 1, so a stored "none" has to be left out.
+            if kind in ("line", "curve"):
+                continue
+            outline = ""
         if kind == "polygon":
             flat = _points(shape)
             if len(flat) >= 6:
