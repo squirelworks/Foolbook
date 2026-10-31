@@ -558,6 +558,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             actions.append({"kind": "set", "name": name, "value": cur})
             i += 1
             continue
+        m = _ASSIGN_CHUNK.fullmatch(line)
+        if m and _var(state, m.group(4)) is not _MISSING:
+            _put_chunk(state, m)
+            i += 1
+            continue
         m = _ASSIGN_ITEM.match(line)
         if m:
             name = m.group(1)
@@ -851,6 +856,44 @@ def _chunk(state: RuntimeState, match: re.Match):
     if first is None or last is None:
         return _UNRESOLVED
     return glue.join(parts[max(int(first) - 1, 0):max(int(last), 0)])
+
+
+_ASSIGN_CHUNK = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+([A-Za-z_]\w*)\s*=\s*(.+)",
+    re.IGNORECASE,
+)
+
+
+def _put_chunk(state: RuntimeState, match: re.Match) -> None:
+    """`char i of pool = " "`: that chunk of the variable becomes the value.
+
+    An item or textline past the end pads the list with empty ones.
+    """
+    kind = match.group(1).lower()
+    name = match.group(4)
+    text = _as_text(_var(state, name))
+    first = _number(_eval(match.group(2), state))
+    last = _number(_eval(match.group(3), state)) if match.group(3) else first
+    value = _eval(match.group(5).strip().rstrip("."), state)
+    if first is None or last is None or value is _UNRESOLVED:
+        return
+    first, last = max(int(first), 1), max(int(last), int(first), 1)
+    value = _as_text(value)
+    if kind == "word":
+        spans = [m.span() for m in re.finditer(r"\S+", text)]
+        if first > len(spans):
+            text = text + (" " if text else "") + value
+        else:
+            start = spans[first - 1][0]
+            stop = spans[min(last, len(spans)) - 1][1]
+            text = text[:start] + value + text[stop:]
+    else:
+        parts, glue = _pieces(kind, text)
+        if kind not in ("char", "character"):
+            parts += [""] * (last - len(parts))
+        parts[first - 1:last] = [value]
+        text = glue.join(parts)
+    state.variables[name] = text
 
 
 def _split_arithmetic(expr: str):
