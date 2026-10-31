@@ -74,7 +74,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     pages = book.pages
     last = progress.last_page(course_id)
-    start_at = 0
+    start_at = book.start()
 
     if splash:
         win = tk.Toplevel(root)
@@ -135,13 +135,13 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             messagebox.showerror("Foolbook", str(exc), parent=root)
             return
         state.book = opened
-        state.index = 0
+        state.index = opened.start()
         held["course"] = Path(path).stem
         held["pile"] = []
         held["piles"] = {}
         progress.touch(held["course"])
         open_ahead(opened)
-        show(0)
+        show(state.index)
 
     ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
     lb = tk.Listbox(sidebar)

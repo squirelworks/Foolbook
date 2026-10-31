@@ -37,6 +37,13 @@ class Book:
     shells: list[str] = field(default_factory=list)
     handlers: list[Handler] = field(default_factory=list)
     props: dict = field(default_factory=dict)
+    author: str = ""
+    first_page: str = ""
+
+    def start(self) -> int:
+        """Where a reader opens the book: its first page id when that page exists, else the first page."""
+        found = self.index_of(self.first_page) if self.first_page else -1
+        return found if found >= 0 else 0
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:
