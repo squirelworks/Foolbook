@@ -86,6 +86,12 @@ class NidaClickTests(unittest.TestCase):
         self.assertTrue(click(state, {"kind": "button", "name": "p16020", "text": "p16020", "item": item}))
         self.assertEqual(state.page.id, "P16020")
 
+    def test_93950101_p1910_next_with_its_page(self):
+        state = _nida("93950101.fbk", "P1910")
+        button = next(s for s in state.page.shapes if s.get("name") == "Next")
+        self.assertTrue(click(state, button))
+        self.assertEqual(state.page.id, "P1001")
+
     def test_93950101_has_no_bare_button_script(self):
         state = _nida("93950101.fbk", "P1")
         for page in state.book.pages:
