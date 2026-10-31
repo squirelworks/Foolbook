@@ -12,6 +12,7 @@
 
 ## Unreleased
 
+- `r is in "0,1,2"`, `"nc81base.sbk" is not in sysBooks` and `word contains "bc"` test for text inside text, ignoring case. A course's `if "nc81base.sbk" is not in sysBooks` guard now pushes its system books, so nc81base, nc81test, nc81recs and nc81trnr are open when its enterBook ends.
 - `local int count`, `local string temp`, `local numbers[5]` and `local a, b` start each name blank when the line runs: 0 for a number type, empty otherwise, an empty array with brackets. A called handler counts from zero every time, and the caller's variable of the same name is left alone.
 - Sums are worked out: `+`, `-`, `*`, `/`, `div` and `mod`, times before plus, left to right, brackets first, on variables, numbers, calls and array elements. `score div count` is a whole number. A side that is not a number still leaves the sum unknown, so nothing is written from it.
 - A rectangle can carry `tile`, eight rows of eight bits, and it is filled with that pattern repeated: the outline colour for 1, the fill colour for 0. Each bit grows with the page scale.
