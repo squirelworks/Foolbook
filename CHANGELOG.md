@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- A rectangle can carry `tile`, eight rows of eight bits, and it is filled with that pattern repeated: the outline colour for 1, the fill colour for 0. Each bit grows with the page scale.
 - A `group` shape in an `.fbk` (what FoolbookEditor writes: `kind: group`, `children`) is replaced, for the reader, by its children in its place, so they are drawn in paint order and can be clicked. Before, the reader drew the group as one empty shape and lost its children. ToolBook pages, which name groups in `groups`, are passed through as before. Test: `engine/test_fbk_groups.py`.
 - OpenScript arrays. `system int __menuFlags[10]` declares an array, `__menuFlags[index] = 2` sets an element, and `__menuFlags[3]` reads it. An element never set is 0 for a number type and empty for text. A system array keeps its elements when a called handler ends. A variable the reader already keeps in its own form is not written over.
 - `send NAME args` runs the nearest `to handle NAME`: the page, the book, then each system book in `sysBooks` order. A `forward` goes on to the next one up, and a send no handler takes is left to the reader as before (`send next`). `send x to button "OK"` names its target and still takes the old path, and `send okClicked` still goes to the quiz until that family is retired.
