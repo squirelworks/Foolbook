@@ -2,7 +2,8 @@
 
 The page holds the quiz (``page.quiz``: ``choices``, each with ``label``
 and ``correct``). Each answer button stores ``choice``, its index into
-``choices``. A ToolBook quiz, graded by the clicked name against the
+``choices``. The feedback shapes store ``feedback``: ``"right"`` or
+``"wrong"``, and start hidden. A ToolBook quiz, graded by the clicked name against the
 page's Answer, is not this path and is left as it is.
 """
 
@@ -22,7 +23,8 @@ def choice_of(obj: dict | None) -> int | None:
 def grade(state: RuntimeState, obj: dict | None) -> bool | None:
     """True for the right choice, False for a wrong one, None when not a quiz answer.
 
-    The answer is kept in ``__answer``. A ToolBook file is never graded here.
+    The answer is kept in ``__answer``, and the feedback shape for the
+    result is shown and the other hidden. A ToolBook file is never graded here.
     """
     page = state.page
     index = choice_of(obj)
@@ -32,5 +34,11 @@ def grade(state: RuntimeState, obj: dict | None) -> bool | None:
     if not 0 <= index < len(choices):
         return None
     right = bool((choices[index] or {}).get("correct"))
+    want = "right" if right else "wrong"
+    for shape in page.shapes or []:
+        side = shape.get("feedback")
+        if side in ("right", "wrong"):
+            shape["visible"] = side == want
+    state.variables["__redraw"] = True
     state.variables["__answer"] = {"page": page.id, "choice": index, "right": right}
     return right
