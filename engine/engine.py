@@ -538,6 +538,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if re.fullmatch(r"[A-Za-z_]\w*", call) and _var(state, call) is _MISSING:
                 call += "()"
             value = _eval(call, state)
+            if value is not _UNRESOLVED and not isinstance(value, tuple):
+                # `get f()` leaves what it gives in `it`.
+                state.variables["it"] = value
             if isinstance(value, tuple) and value and value[0] == "goto":
                 actions.append({
                     "kind": "goto",
