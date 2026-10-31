@@ -29,6 +29,7 @@
 
 ## Unreleased
 
+- `GetTickCount()` linked from kernel32.dll gives milliseconds as Windows does, so a script can time itself. Tested in `engine/test_linked_dll.py`.
 - A `;` outside quotes ends a statement: `a = 1; b = 2` runs both, and `result = true;` sets true.
 - `uppercase(x)` and `lowercase(x)` change the case of text.
 - `get f()` leaves what f gives in `it`, so `return it` passes it on.
