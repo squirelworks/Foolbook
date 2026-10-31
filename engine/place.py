@@ -65,7 +65,11 @@ def in_front(shapes: list[dict]) -> list[dict]:
 
 def _contains(shape, x: float, y: float) -> bool:
     left, top = float(shape.get("x") or 0), float(shape.get("y") or 0)
-    return left <= x <= left + float(shape.get("w") or 0) and top <= y <= top + float(shape.get("h") or 0)
+    tall = float(shape.get("h") or 0)
+    if (shape.get("kind") or "") == "combo":
+        from engine.listbox import combo_reach
+        tall = combo_reach(shape)
+    return left <= x <= left + float(shape.get("w") or 0) and top <= y <= top + tall
 
 
 def _paper(shape) -> bool:

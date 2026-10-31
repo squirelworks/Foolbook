@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A click on a combo box opens it. Open, a click on one of its rows stores that index as `value` and closes it, and a click on the box closes it and keeps the choice. An open combo takes the clicks on its rows ahead of the shapes they hang over. `engine/test_combo_click.py`.
 - A `combo` shape is drawn as a combo box: the chosen row (`value`) and an arrow. When it is `open`, its `choices` hang below the box, in front of every other shape on the page. `engine/test_combo.py`.
 - A click on the upper half of a long list box's bar scrolls up one row, on the lower half down one, and stops at the first and last rows. It does not pick a row. `engine/test_list_scroll.py`.
 - A click on a row of a list box picks it: its index is the shape's `value`. A click below the last row picks nothing. `engine/test_list_pick.py`.

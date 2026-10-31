@@ -374,6 +374,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if (target.get("kind") or "") == "list":
             listbox.click(target, *point)
             state.variables["__redraw"] = True
+        elif (target.get("kind") or "") == "combo":
+            listbox.combo_click(target, *point)
+            state.variables["__redraw"] = True
         _activate(target)
         if state.variables.pop("__beep", None):
             try:
