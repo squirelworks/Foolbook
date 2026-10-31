@@ -677,6 +677,9 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    split = _split_arithmetic(expr)
+    if split is not None:
+        return _arithmetic(*split, state)
     m = _ITEM.fullmatch(expr)
     if m:
         array = _var(state, m.group(1))
@@ -695,6 +698,70 @@ _MISSING = object()
 # not text, so nothing is written from it.
 _UNRESOLVED = object()
 _OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+def _split_arithmetic(expr: str):
+    """(left, operator, right) at the last + or - outside quotes and brackets, else * / div mod.
+
+    The last one, so that `a - b - c` is `(a - b) - c`. A sign at the start,
+    or after another operator, is part of the number.
+    """
+    for ops in (("+", "-"), ("*", "/", "div", "mod")):
+        quote = ""
+        depth = 0
+        at = None
+        for i, ch in enumerate(expr):
+            if quote:
+                if ch == quote:
+                    quote = ""
+                continue
+            if ch in "\"'":
+                quote = ch
+            elif ch in "([":
+                depth += 1
+            elif ch in ")]" and depth:
+                depth -= 1
+            elif depth == 0:
+                for op in ops:
+                    if op.isalpha():
+                        if not re.match(rf"\s{op}\s", expr[i - 1:i + len(op) + 1], re.IGNORECASE) or i == 0:
+                            continue
+                    elif not expr.startswith(op, i):
+                        continue
+                    before = expr[:i].rstrip()
+                    if not before or before[-1] in "+-*/(=<>,&":
+                        continue
+                    at = (i, op)
+        if at is not None:
+            i, op = at
+            left, right = expr[:i].strip(), expr[i + len(op):].strip()
+            if left and right:
+                return left, op.lower(), right
+    return None
+
+
+def _arithmetic(left: str, op: str, right: str, state: RuntimeState):
+    """A sum of two numbers. A side that is not a number makes the sum unknown."""
+    a = _number(_eval(left, state))
+    b = _number(_eval(right, state))
+    if a is None or b is None:
+        return _UNRESOLVED
+    try:
+        if op == "+":
+            value = a + b
+        elif op == "-":
+            value = a - b
+        elif op == "*":
+            value = a * b
+        elif op == "/":
+            value = a / b
+        elif op == "div":
+            value = float(int(a / b))
+        else:
+            value = a - b * int(a / b)
+    except ZeroDivisionError:
+        return _UNRESOLVED
+    return int(value) if value.is_integer() else value
 
 
 def _has_arithmetic(expr: str) -> bool:

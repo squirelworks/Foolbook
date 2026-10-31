@@ -12,6 +12,7 @@
 
 ## Unreleased
 
+- Sums are worked out: `+`, `-`, `*`, `/`, `div` and `mod`, times before plus, left to right, brackets first, on variables, numbers, calls and array elements. `score div count` is a whole number. A side that is not a number still leaves the sum unknown, so nothing is written from it.
 - A rectangle can carry `tile`, eight rows of eight bits, and it is filled with that pattern repeated: the outline colour for 1, the fill colour for 0. Each bit grows with the page scale.
 - A `group` shape in an `.fbk` (what FoolbookEditor writes: `kind: group`, `children`) is replaced, for the reader, by its children in its place, so they are drawn in paint order and can be clicked. Before, the reader drew the group as one empty shape and lost its children. ToolBook pages, which name groups in `groups`, are passed through as before. Test: `engine/test_fbk_groups.py`.
 - OpenScript arrays. `system int __menuFlags[10]` declares an array, `__menuFlags[index] = 2` sets an element, and `__menuFlags[3]` reads it. An element never set is 0 for a number type and empty for text. A system array keeps its elements when a called handler ends. A variable the reader already keeps in its own form is not written over.
