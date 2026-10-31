@@ -128,6 +128,8 @@ In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with
 
 A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name, in a book of Foolbook's own format. A ToolBook quiz is still graded by the clicked name against the page's Answer.
 
+Each graded page leaves `{"page", "choice", "right"}` in the book's `props["results"]`, one entry per page, the last answer winning. `engine.choice.score(state)` is (right, answered). It is kept in memory and not written to Foolcourse yet.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.

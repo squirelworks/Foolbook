@@ -40,8 +40,22 @@ def grade(state: RuntimeState, obj: dict | None) -> bool | None:
         if side in ("right", "wrong"):
             shape["visible"] = side == want
     state.variables["__redraw"] = True
-    state.variables["__answer"] = {"page": page.id, "choice": index, "right": right}
+    answer = {"page": page.id, "choice": index, "right": right}
+    state.variables["__answer"] = answer
+    record(state, answer)
     return right
+
+
+def results(state: RuntimeState) -> list[dict]:
+    """The book's list of page results, in memory. One entry per page, the last answer."""
+    return state.book.props.setdefault("results", [])
+
+
+def record(state: RuntimeState, answer: dict) -> None:
+    rows = results(state)
+    key = str(answer["page"]).lower()
+    rows[:] = [row for row in rows if str(row.get("page")).lower() != key]
+    rows.append(dict(answer))
 
 
 def after(state: RuntimeState, right: bool) -> str:
