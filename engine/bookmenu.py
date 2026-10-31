@@ -1,9 +1,10 @@
-"""A book's own menu bar.
+"""A book's own menu bar, as the loader keeps it.
 
 A Foolbook book may carry `menubar`: a list of menus, each a `label` and
 `items`. An item is a `label` and either a `page` to go to or a `script`
-to run, as a button's buttonClick runs. A menu with no label or no usable
-item is left off the bar, as is an item with no label or nowhere to go.
+to run. A menu with no label or no usable item is left off the bar, as is
+an item with no label or nowhere to go. The window does not show the bar
+yet; that is a separate change.
 """
 
 from __future__ import annotations
@@ -24,11 +25,3 @@ def menus(book) -> list[tuple[str, list[dict]]]:
             bar.append((label, items))
     return bar
 
-
-def choose(state, item: dict) -> list[dict]:
-    """The actions a menu item asks for. The window follows them."""
-    if item.get("page"):
-        return [{"kind": "goto", "page": str(item["page"])}]
-    from engine.engine import click_script, run_handler
-    script = click_script({"script": item.get("script") or ""}) or str(item.get("script") or "")
-    return run_handler(state, script) if script else []

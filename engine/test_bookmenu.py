@@ -1,4 +1,4 @@
-"""A book can carry a menu bar. The reader shows it, and an item goes to a page or runs its script."""
+"""A book can carry a menu bar, and the loader keeps it."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 from engine import bookmenu, formats
 from engine.loader import load
-from foolbook.model import Book, Page, RuntimeState
+from foolbook.model import Book
 
 MENUBAR = [
     {"label": "Go", "items": [
@@ -29,16 +29,6 @@ class Menus(unittest.TestCase):
 
     def test_a_book_without_a_bar_has_none(self):
         self.assertEqual(bookmenu.menus(Book(path="x")), [])
-
-    def test_a_page_item_goes_to_that_page(self):
-        state = RuntimeState(book=Book(path="x", pages=[Page(id="P0"), Page(id="P2")]))
-        self.assertEqual(bookmenu.choose(state, {"label": "Contents", "page": "P2"}),
-                         [{"kind": "goto", "page": "P2"}])
-
-    def test_a_script_item_runs_its_script(self):
-        state = RuntimeState(book=Book(path="x", pages=[Page(id="P0"), Page(id="P2")]))
-        actions = bookmenu.choose(state, MENUBAR[0]["items"][1])
-        self.assertTrue(any(a.get("kind") == "goto" and a.get("page") == "P2" for a in actions), actions)
 
     def test_the_loader_keeps_the_bar(self):
         with tempfile.TemporaryDirectory() as tmp:

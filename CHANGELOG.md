@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- A book can carry its own menu bar (`menubar`: menus of items that go to a page or run a script), and the reader shows it above the page. A book without one gets no bar.
+- The loader keeps a book's own menu bar (`menubar`: menus of items that go to a page or run a script), and `engine.bookmenu.menus` lists the usable ones. A book without one, and every `.tbk` book, has none. The window does not show it yet.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
 - `getObjectiveScore(n)` is the average score of the questions of objective n, as nc81test.sbk adds them (`score div count`). Each question keeps its objective (`__quizTestNo`) when the pool is built by `addObjectiveToPool` or `addObjectiveToPoolEx`. P10410 (93951303) uses it to take the Review link off an objective that is already 100. The link itself goes with the group change (#17).
