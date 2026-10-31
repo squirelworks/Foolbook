@@ -3,7 +3,7 @@
 ## 2026-10-31
 
 - An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
-- A button click runs its script, then its `item` only if the script did not change the page. An empty script is the item. An `.fbk` script with no `to handle` line is the click; before, it was not run. `engine.engine.click` and `follow_item` are the headless order, and the window uses `follow_item`. Tested in `engine/test_click_order.py`.
+- An `.fbk` button script with no `to handle` line is the click. Before, it was not run. No NIDA button has such a script, so NIDA clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 
 ## Unreleased
