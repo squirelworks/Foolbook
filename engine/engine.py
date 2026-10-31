@@ -1262,6 +1262,10 @@ def follow(state: RuntimeState, actions: list[dict]) -> bool:
                 if isinstance(result, tuple) and result and result[0] == "goto" and result[1]:
                     return goto(state, result[1])
                 return False
+            if name in ("tryagain", "resetscore"):
+                from engine import choice
+                choice.try_again(state) if name == "tryagain" else choice.reset_score(state)
+                continue
             if name == "next":
                 if _follow_label(state, "next"):
                     return True

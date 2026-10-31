@@ -42,6 +42,8 @@ MESSAGES = {
     "previous": "the previous page",
     "back": "the previous page",
     "exit": "close the reader",
+    "tryagain": "hide the page's quiz feedback; the book's results stay",
+    "resetscore": "forget the book's quiz results",
 }
 
 _ASSIGN = re.compile(r"^[A-Za-z_]\w*\s*=")

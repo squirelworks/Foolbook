@@ -67,3 +67,20 @@ def after(state: RuntimeState, right: bool) -> str:
     """The page the quiz names for this result, or ""."""
     quiz = (state.page.quiz if state.page else None) or {}
     return str(quiz.get("next" if right else "again") or "")
+
+
+def try_again(state: RuntimeState) -> None:
+    """Put the page's quiz back: both feedback shapes hidden. The book's results stay."""
+    page = state.page
+    if page is None:
+        return
+    for shape in page.shapes or []:
+        if shape.get("feedback") in ("right", "wrong"):
+            shape["visible"] = False
+    state.variables.pop("__answer", None)
+    state.variables["__redraw"] = True
+
+
+def reset_score(state: RuntimeState) -> None:
+    """Forget every page result on the book. Only when the reader asks."""
+    results(state).clear()

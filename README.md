@@ -124,6 +124,8 @@ A quiz the editor writes is graded by the choice index on the button (`choice`, 
 
 Each graded page leaves `{"page", "choice", "right"}` in the book's `props["results"]`, one entry per page, the last answer winning. `engine.choice.score(state)` is (right, answered). It is kept in memory and not written to Foolcourse yet.
 
+Two script lines put a quiz back. `send tryAgain` hides the page's feedback shapes and keeps the book's results. `send resetScore` forgets the results. Neither moves the page.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.
