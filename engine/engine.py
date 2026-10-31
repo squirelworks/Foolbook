@@ -161,18 +161,47 @@ def one_handler(script: str, name: str) -> str:
     return ""
 
 
-def click_script(obj: dict | None) -> str:
+def click_script(obj: dict | None, book=None) -> str:
     """The buttonClick a click should run.
 
     The object's own script wins when it handles the click. Otherwise the
-    group's script runs. A field's mouse handlers are not that click.
+    group's script runs. A field's mouse handlers are not that click. In a
+    book of Foolbook's own format, a script with no `to handle` line is the
+    click. A ToolBook book does not get that reading.
     """
     if not obj:
         return ""
     own = obj.get("script") or ""
     if "buttonclick" in own.lower():
         return own
+    if book is not None and own.strip() and not _TO_HANDLE.search(own):
+        from engine.origin import is_toolbook
+        if not is_toolbook(book):
+            return own
     return obj.get("group_script") or ""
+
+
+def click(state: RuntimeState, obj: dict | None) -> bool:
+    """A click on a button, in the window's order. True when the page changed.
+
+    The button's script runs first, then the page's buttonClick, then the
+    button's item, the way the window's click does it, so a test can click
+    without a window.
+    """
+    obj = obj or {}
+    start = (id(state.book), state.index)
+    script = click_script(obj, state.book)
+    if script and follow(state, run_handler(state, script)):
+        return True
+    if follow(state, run_page_handlers(state, "buttonclick")):
+        return True
+    item = obj.get("item") or {}
+    book = item.get("book") or ""
+    if book and open_book(state, book, item.get("page") or ""):
+        return True
+    if item.get("page") or book or item.get("label"):
+        press(state, item.get("label") or obj.get("text") or "", item.get("page") or "")
+    return (id(state.book), state.index) != start
 
 
 class _Break(Exception):
@@ -670,6 +699,11 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
+    found_in = _split_is_in(expr)
+    if found_in is not None:
+        left, negate, right = found_in
+        inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
+        return inside != negate
     is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
     if is_at:
         left = _eval(expr[:is_at.start()], state)
@@ -944,6 +978,18 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is_in(expr: str):
+    """(left, negated, right) for `a is in b`, `a is not in b` and `b contains a`."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?in\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    m = re.search(r"\s+contains\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[m.end():].strip(), False, expr[:m.start()].strip()
+    return None
 
 
 def _split_compare(expr: str):
