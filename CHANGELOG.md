@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- `foolbook.core.unknown_words(script)` gives FoolbookEditor the interpreter's answer through the core, so the editor does not import the engine. Tested in `engine/test_core_unknown_words.py`.
 - In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook file does not get this reading (`engine.origin.is_toolbook`). No button in the converted NIDA courses has such a script, so their clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
 - A `roundrect` shape is drawn with rounded corners from its bounds and `radius` (8 when missing). It was a square box.
 - A shape's `stroke` is the width of its outline or line, in pixels, scaled with the page. Rect, roundrect, ellipse, line, polygon, and arc honor it. A shape with no `stroke` is drawn as before.
