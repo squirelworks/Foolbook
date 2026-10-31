@@ -65,6 +65,12 @@ class ClickOrderTests(unittest.TestCase):
         self.assertTrue(click(state, {"item": {"page": "P2"}}))
         self.assertEqual(state.page.id, "P3")
 
+    def test_a_toolbook_book_does_not_read_a_bare_script_as_the_click(self):
+        pages = [Page(id="P1"), Page(id="P2"), Page(id="P3")]
+        state = RuntimeState(book=Book(path="course.tbk", pages=pages))
+        self.assertFalse(click(state, {"kind": "button", "script": 'go to page "P3"\n'}))
+        self.assertEqual(state.page.id, "P1")
+
     def test_nothing_set_does_nothing(self):
         state = _state()
         self.assertFalse(click(state, {"kind": "button"}))
@@ -99,7 +105,7 @@ class NidaClickTests(unittest.TestCase):
                 own = shape.get("script") or ""
                 if "buttonclick" in own.lower() or _TO_HANDLE.search(own):
                     continue
-                self.assertEqual(click_script(shape), shape.get("group_script") or "", page.id)
+                self.assertEqual(click_script(shape, state.book), shape.get("group_script") or "", page.id)
 
 
 if __name__ == "__main__":
