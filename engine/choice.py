@@ -42,3 +42,9 @@ def grade(state: RuntimeState, obj: dict | None) -> bool | None:
     state.variables["__redraw"] = True
     state.variables["__answer"] = {"page": page.id, "choice": index, "right": right}
     return right
+
+
+def after(state: RuntimeState, right: bool) -> str:
+    """The page the quiz names for this result (``next`` or ``again``), or ""."""
+    quiz = (state.page.quiz if state.page else None) or {}
+    return str(quiz.get("next" if right else "again") or "")
