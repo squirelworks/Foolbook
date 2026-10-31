@@ -43,12 +43,16 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
+_END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
+_UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
 _NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+_TYPES = _NUMBER_TYPES + ("string", "stack", "point", "color", "date", "time", "pointer", "filehandle")
 
 
 class _Array(dict):
@@ -157,18 +161,47 @@ def one_handler(script: str, name: str) -> str:
     return ""
 
 
-def click_script(obj: dict | None) -> str:
+def click_script(obj: dict | None, book=None) -> str:
     """The buttonClick a click should run.
 
     The object's own script wins when it handles the click. Otherwise the
-    group's script runs. A field's mouse handlers are not that click.
+    group's script runs. A field's mouse handlers are not that click. In a
+    book of Foolbook's own format, a script with no `to handle` line is the
+    click. A ToolBook book does not get that reading.
     """
     if not obj:
         return ""
     own = obj.get("script") or ""
     if "buttonclick" in own.lower():
         return own
+    if book is not None and own.strip() and not _TO_HANDLE.search(own):
+        from engine.origin import is_toolbook
+        if not is_toolbook(book):
+            return own
     return obj.get("group_script") or ""
+
+
+def click(state: RuntimeState, obj: dict | None) -> bool:
+    """A click on a button, in the window's order. True when the page changed.
+
+    The button's script runs first, then the page's buttonClick, then the
+    button's item, the way the window's click does it, so a test can click
+    without a window.
+    """
+    obj = obj or {}
+    start = (id(state.book), state.index)
+    script = click_script(obj, state.book)
+    if script and follow(state, run_handler(state, script)):
+        return True
+    if follow(state, run_page_handlers(state, "buttonclick")):
+        return True
+    item = obj.get("item") or {}
+    book = item.get("book") or ""
+    if book and open_book(state, book, item.get("page") or ""):
+        return True
+    if item.get("page") or book or item.get("label"):
+        press(state, item.get("label") or obj.get("text") or "", item.get("page") or "")
+    return (id(state.book), state.index) != start
 
 
 class _Break(Exception):
@@ -263,6 +296,39 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if name and name not in state.variables:
                 blank = 0 if parts[-2].lower() in _NUMBER_TYPES else ""
                 state.variables[name] = _Array(blank) if "[" in parts[-1] else blank
+            i += 1
+            continue
+
+        m = _LINK_DLL.match(line)
+        if m:
+            from engine import dll
+            stop = i + 1
+            while stop < end and not _END_LINK.match(lines[stop]):
+                stop += 1
+            dll.link(state, m.group(1), lines[i + 1:stop])
+            i = stop + 1
+            continue
+
+        m = _UNLINK_DLL.match(line)
+        if m:
+            from engine import dll
+            dll.unlink(state, m.group(1))
+            i += 1
+            continue
+
+        if low.startswith("local "):
+            # A local starts blank each time the handler runs, whatever a caller had.
+            words = line[6:].strip()
+            first = words.split(None, 1)
+            blank = ""
+            if len(first) == 2 and first[0].lower() in _TYPES:
+                blank = 0 if first[0].lower() in _NUMBER_TYPES else ""
+                words = first[1]
+            for item in words.split(","):
+                item = item.strip()
+                name = item.split("[")[0].strip()
+                if re.fullmatch(r"[A-Za-z_]\w*", name):
+                    state.variables[name] = _Array(blank) if "[" in item else blank
             i += 1
             continue
 
@@ -633,6 +699,11 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
+    found_in = _split_is_in(expr)
+    if found_in is not None:
+        left, negate, right = found_in
+        inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
+        return inside != negate
     is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
     if is_at:
         left = _eval(expr[:is_at.start()], state)
@@ -648,6 +719,9 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    split = _split_arithmetic(expr)
+    if split is not None:
+        return _arithmetic(*split, state)
     m = _ITEM.fullmatch(expr)
     if m:
         array = _var(state, m.group(1))
@@ -666,6 +740,70 @@ _MISSING = object()
 # not text, so nothing is written from it.
 _UNRESOLVED = object()
 _OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+def _split_arithmetic(expr: str):
+    """(left, operator, right) at the last + or - outside quotes and brackets, else * / div mod.
+
+    The last one, so that `a - b - c` is `(a - b) - c`. A sign at the start,
+    or after another operator, is part of the number.
+    """
+    for ops in (("+", "-"), ("*", "/", "div", "mod")):
+        quote = ""
+        depth = 0
+        at = None
+        for i, ch in enumerate(expr):
+            if quote:
+                if ch == quote:
+                    quote = ""
+                continue
+            if ch in "\"'":
+                quote = ch
+            elif ch in "([":
+                depth += 1
+            elif ch in ")]" and depth:
+                depth -= 1
+            elif depth == 0:
+                for op in ops:
+                    if op.isalpha():
+                        if not re.match(rf"\s{op}\s", expr[i - 1:i + len(op) + 1], re.IGNORECASE) or i == 0:
+                            continue
+                    elif not expr.startswith(op, i):
+                        continue
+                    before = expr[:i].rstrip()
+                    if not before or before[-1] in "+-*/(=<>,&":
+                        continue
+                    at = (i, op)
+        if at is not None:
+            i, op = at
+            left, right = expr[:i].strip(), expr[i + len(op):].strip()
+            if left and right:
+                return left, op.lower(), right
+    return None
+
+
+def _arithmetic(left: str, op: str, right: str, state: RuntimeState):
+    """A sum of two numbers. A side that is not a number makes the sum unknown."""
+    a = _number(_eval(left, state))
+    b = _number(_eval(right, state))
+    if a is None or b is None:
+        return _UNRESOLVED
+    try:
+        if op == "+":
+            value = a + b
+        elif op == "-":
+            value = a - b
+        elif op == "*":
+            value = a * b
+        elif op == "/":
+            value = a / b
+        elif op == "div":
+            value = float(int(a / b))
+        else:
+            value = a - b * int(a / b)
+    except ZeroDivisionError:
+        return _UNRESOLVED
+    return int(value) if value.is_integer() else value
 
 
 def _has_arithmetic(expr: str) -> bool:
@@ -689,6 +827,9 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "syslinkeddlls":
+        from engine import dll
+        return dll.linked_names(state)
     if low == "sysbooks":
         return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
@@ -837,6 +978,18 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is_in(expr: str):
+    """(left, negated, right) for `a is in b`, `a is not in b` and `b contains a`."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?in\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    m = re.search(r"\s+contains\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[m.end():].strip(), False, expr[:m.start()].strip()
+    return None
 
 
 def _split_compare(expr: str):
@@ -1007,6 +1160,12 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    from engine import dll
+    linked = dll.find(state, match.group(1))
+    if linked is not None:
+        parts = _call_args(match.group(2))
+        refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
+        return linked[1](state, [_eval(part, state) for part in parts], refs)
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")

@@ -102,14 +102,23 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `roundrect`: a `rect` with quarter-circle corners. `radius` is in pixels, 8 when missing, and never more than half the short side.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
-- `arc`: the open curve between its endpoints. It is not filled.
-- `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
+- `curve`: `points` as `[[x, y], ...]`. It is drawn as straight segments through the points until a real curve is drawn.
+- `stroke` on any of those is the outline or line width in pixels. Missing means 1.
+- `arc`: the open curve between its endpoints. It is not filled. An `.fbk` arc that stores `start` and `sweep` (degrees, zero east, counterclockwise) is that part of the ellipse in its bounds.
+- `pie`: the same `start` and `sweep`, filled back to the centre. Missing angles are 0 and 90.
+- `chord`: the same `start` and `sweep`, closed by the straight line between the two ends and filled.
+- `hotspot`: `x`, `y`, `w`, `h`, and an `item`. It is not drawn. A click inside it follows the item.
+- `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. An `.fbk` text shape may also set `underline`, and `align` as `left`, `center`, or `right`. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
 - `button`: the picture stored for that button, or a caption when there is no picture.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
 
 A field named Page# shows the page that is open. A text field named `correct` is the practice answer and stays on the page. The Correct rectangle is the answer key and stays hidden.
 
 A new install opens `using_foolbook`. Its First Light button opens `first_light`. Both are folders under `_books/`.
+
+## A click on a button
+
+The button's script runs first. A script with no `to handle` line, which is how FoolbookEditor saves one, is read as the click. Then the page's `buttonClick` runs, then the button's `item` (a page, a book, or the Next or Back label), each only if nothing before it changed the page. `engine.engine.click` is that order without a window, and `engine/test_click_order.py` tests it.
 
 ## Design notes
 
