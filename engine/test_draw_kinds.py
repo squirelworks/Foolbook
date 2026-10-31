@@ -1,0 +1,72 @@
+"""Shapes an .fbk names by kind are drawn as that kind.
+
+The canvas here records each call. No window is opened.
+"""
+
+import unittest
+
+from engine import graphics
+from engine.place import place_window
+
+
+class Recorder:
+    """Stands in for a Tk canvas and keeps what was drawn."""
+
+    def __init__(self):
+        self.calls = []
+
+    def __getattr__(self, name):
+        if not name.startswith("create_"):
+            raise AttributeError(name)
+
+        def record(*args, **kwargs):
+            self.calls.append((name[len("create_"):], list(args), kwargs))
+            return len(self.calls)
+
+        return record
+
+    def find_all(self):
+        return tuple(range(1, len(self.calls) + 1))
+
+    def kinds(self):
+        return [call[0] for call in self.calls]
+
+
+def drawn(*shapes):
+    canvas = Recorder()
+    graphics.draw(canvas, list(shapes))
+    return canvas
+
+
+class RoundRect(unittest.TestCase):
+    def test_a_rounded_rectangle_is_not_a_square_box(self):
+        canvas = drawn({"kind": "roundrect", "x": 10, "y": 20, "w": 100, "h": 50, "fill": "#f7f4ee", "radius": 12})
+        self.assertEqual(canvas.kinds(), ["polygon"])
+        _kind, flat, options = canvas.calls[0]
+        self.assertEqual(options["fill"], "#f7f4ee")
+        points = list(zip(flat[0::2], flat[1::2]))
+        for px, py in points:
+            self.assertGreaterEqual(px, 10 - 0.01)
+            self.assertLessEqual(px, 110 + 0.01)
+            self.assertGreaterEqual(py, 20 - 0.01)
+            self.assertLessEqual(py, 70 + 0.01)
+        # The top-left corner is cut off by the radius.
+        self.assertNotIn((10, 20), [(round(px), round(py)) for px, py in points])
+        self.assertIn((10, 32), [(round(px), round(py)) for px, py in points])
+
+    def test_the_radius_defaults_to_8(self):
+        flat = drawn({"kind": "roundrect", "x": 0, "y": 0, "w": 100, "h": 50}).calls[0][1]
+        self.assertIn((0, 8), [(round(px), round(py)) for px, py in zip(flat[0::2], flat[1::2])])
+
+    def test_a_radius_past_half_the_short_side_is_clamped(self):
+        flat = drawn({"kind": "roundrect", "x": 0, "y": 0, "w": 100, "h": 20, "radius": 50}).calls[0][1]
+        ys = flat[1::2]
+        self.assertEqual((round(min(ys)), round(max(ys))), (0, 20))
+
+    def test_the_window_scale_scales_the_radius(self):
+        placed = place_window([{"kind": "roundrect", "x": 0, "y": 0, "w": 100, "h": 50, "radius": 10}], 2, 0, 0, 0, 0)
+        self.assertEqual(placed[0]["radius"], 20)
+
+
+if __name__ == "__main__":
+    unittest.main()
