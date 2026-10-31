@@ -47,8 +47,33 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
+_ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
+_ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
+_NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+
+
+class _Array(dict):
+    """An OpenScript array, `system int __menuFlags[10]`. An element never set is blank."""
+
+    def __init__(self, blank):
+        super().__init__()
+        self.blank = blank
+
+    def __missing__(self, key):
+        return self.blank
+
+
+def _item_key(text: str, state):
+    """`a[i]` is keyed by the number i. `a[i, j]` by both."""
+    keys = []
+    for part in _call_args(text):
+        value = _eval(part, state)
+        number = _number(value)
+        keys.append(int(number) if number is not None and number.is_integer() else value)
+    return keys[0] if len(keys) == 1 else tuple(keys)
 _FILL = re.compile(
     r'rgbfill\s+of\s+field\s+"([^"]+)"\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)',
     re.IGNORECASE,
@@ -186,6 +211,14 @@ class _Break(Exception):
     """`break` ends the handler it is in."""
 
 
+class _Return(Exception):
+    """`return VALUE` ends the handler and gives the caller the value."""
+
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+
 def run_handler(state: RuntimeState, source: str, parents: list[str] | None = None) -> list[dict]:
     """Execute a handler source against the current state.
 
@@ -203,6 +236,8 @@ def run_handler(state: RuntimeState, source: str, parents: list[str] | None = No
         _run_block(state, lines, 0, len(lines), actions)
     except _Break:
         pass
+    except _Return as done:
+        state.variables["__return"] = done.value
     finally:
         if outer is None:
             state.variables.pop("__parents", None)
@@ -231,6 +266,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
     """Run lines[start:end]. Returns the index after the block consumed."""
     i = start
     while i < end:
+        _take_called(state, actions)
         line = lines[i]
         low = line.lower()
 
@@ -259,9 +295,10 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low.startswith("system "):
             parts = line.split()
-            if len(parts) >= 3 and parts[-1].rstrip("[]") not in state.variables:
-                kind = parts[-2].lower()
-                state.variables[parts[-1].rstrip("[]")] = 0 if kind in ("int", "long", "word", "byte", "logical") else ""
+            name = parts[-1].split("[")[0] if len(parts) >= 3 else ""
+            if name and name not in state.variables:
+                blank = 0 if parts[-2].lower() in _NUMBER_TYPES else ""
+                state.variables[name] = _Array(blank) if "[" in parts[-1] else blank
             i += 1
             continue
 
@@ -284,6 +321,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "break":
             raise _Break()
+
+        if low == "return" or low.startswith("return "):
+            raise _Return(_eval(line[6:], state) if len(line) > 6 else None)
 
         if low in ("end conditions", "else"):
             return i + 1
@@ -320,6 +360,12 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if ask is not None:
                 answer = ask(m.group(1)) or "No"
             state.variables["it"] = answer
+            i += 1
+            continue
+
+        m = _PUSH_SYSBOOKS.match(line)
+        if m:
+            push_sysbook(state, _as_text(_eval(m.group(1), state)))
             i += 1
             continue
 
@@ -370,6 +416,12 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                         actions.append({"kind": "goto", "page": page, "book": book})
                 i += 1
                 continue
+            # okClicked still goes to the quiz in follow() until that family is retired.
+            rest = line[m.end(1):].strip()
+            if name.lower() != "okclicked" and not _has_target(rest):
+                if _send(state, name, rest, actions):
+                    i += 1
+                    continue
             actions.append({"kind": "send", "name": name})
             i += 1
             continue
@@ -423,6 +475,21 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             actions.append({"kind": "set", "name": name, "value": cur})
             i += 1
             continue
+        m = _ASSIGN_ITEM.match(line)
+        if m:
+            name = m.group(1)
+            found = _var(state, name)
+            if found is _MISSING or found in ("", 0, None):
+                found = _Array("")
+                state.variables[name] = found
+            if not isinstance(found, _Array):
+                # A value the reader keeps in its own form is not written over.
+                actions.append({"kind": "note", "text": line})
+                i += 1
+                continue
+            found[_item_key(m.group(2), state)] = _eval(m.group(3).strip().rstrip("."), state)
+            i += 1
+            continue
         m = _ASSIGN.match(line)
         if m and not low.startswith("if "):
             name, expr = m.group(1), m.group(2).strip().rstrip(".")
@@ -462,7 +529,15 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         actions.append({"kind": "note", "text": line})
         i += 1
+    _take_called(state, actions)
     return i
+
+
+def _take_called(state: RuntimeState, actions: list[dict]) -> None:
+    """What a called handler did, such as a go to, belongs to the line that called it."""
+    called = state.variables.pop("__called", None)
+    if called:
+        actions.extend(called)
 
 
 def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) -> None:
@@ -626,6 +701,11 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    m = _ITEM.fullmatch(expr)
+    if m:
+        array = _var(state, m.group(1))
+        if isinstance(array, _Array):
+            return array[_item_key(m.group(2), state)]
     called = _call_value(expr, state)
     if called is not _NOT_A_CALL:
         return called
@@ -662,6 +742,8 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "sysbooks":
+        return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
         return 13
     if low == "keyback":
@@ -975,6 +1057,9 @@ def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
         return _NOT_A_CALL
+    handler = find_handler(state, match.group(1))
+    if handler is not None:
+        return call_handler(state, handler, match.group(2))
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
@@ -992,6 +1077,155 @@ def _call_value(expr: str, state: RuntimeState):
         return hit
     from engine.quiz import call
     return call(state, match.group(1), match.group(2))
+
+
+_HEADER = re.compile(r"\s*to\s+(handle|get|set)\s+[A-Za-z_]\w*(.*)$", re.IGNORECASE)
+
+
+def _signature(handler) -> tuple[str, list[str], str]:
+    """(kind, parameter names, body) of a handler.
+
+    A handler read from a .tbk keeps its `to get NAME params` line. One
+    split from a script starts just after the name, so its first line is
+    the parameters. The kind is "" when the header is not kept.
+    """
+    source = (handler.source or "").replace("\r", "")
+    first, _sep, rest = source.partition("\n")
+    kind = ""
+    found = _HEADER.match(first)
+    if found:
+        kind, first = found.group(1).lower(), found.group(2)
+    names = []
+    for part in first.split(","):
+        words = part.split()
+        if words:
+            names.append(words[-1].rstrip("[]"))
+    return kind, names, _strip_handler_end(rest)
+
+
+def find_handlers(state: RuntimeState, name: str, kind: str = "get") -> list:
+    """The handlers for NAME, nearest first: the page, the book, then sysBooks in order."""
+    want = (name or "").lower()
+    places = []
+    if state.page is not None:
+        places.append(state.page.handlers or [])
+    if state.book is not None:
+        places.append(state.book.handlers or [])
+    for _name, book in getattr(state, "sysbooks", []):
+        if book is not None:
+            places.append(book.handlers or [])
+    found = []
+    for handlers in places:
+        for handler in handlers:
+            if handler.name.lower() == want and _signature(handler)[0] in ("", kind):
+                found.append(handler)
+    return found
+
+
+def find_handler(state: RuntimeState, name: str):
+    """The `to get NAME` a call reaches."""
+    found = find_handlers(state, name, "get")
+    return found[0] if found else None
+
+
+def _call_args(text: str) -> list[str]:
+    """The arguments of a call, split at commas outside quotes and brackets."""
+    found, cur, quote, depth = [], [], "", 0
+    for ch in text:
+        if quote:
+            if ch == quote:
+                quote = ""
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        elif ch == "," and depth == 0:
+            found.append("".join(cur).strip())
+            cur = []
+            continue
+        cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail or found:
+        found.append(tail)
+    return found
+
+
+def call_handler(state: RuntimeState, handler, args: str):
+    """Run a `to get` with its arguments bound, and give back what it returns.
+
+    The handler's own names are its own. When it ends, only its system
+    variables and the reader's `__` names keep what it did.
+    """
+    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    called = state.variables.pop("__called", None)
+    result, actions = _invoke(state, handler, values)
+    pending = list(called or [])
+    pending.extend(action for action in actions if action.get("kind") != "note")
+    if pending:
+        state.variables["__called"] = pending
+    return result
+
+
+def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None):
+    """(returned value, actions) of one handler run in its own names."""
+    _kind, names, body = _signature(handler)
+    depth = int(state.variables.get("__depth") or 0)
+    if depth >= 64:
+        state.note(f"too deep {handler.name}")
+        return None, []
+    before = dict(state.variables)
+    for index, name in enumerate(names):
+        state.variables[name] = values[index] if index < len(values) else ""
+    state.variables["__depth"] = depth + 1
+    state.variables.pop("__return", None)
+    actions = run_handler(state, body, parents)
+    result = state.variables.pop("__return", None)
+    shared = {
+        words[-1].split("[")[0].lower()
+        for words in (line.split() for line in body.splitlines())
+        if len(words) >= 2 and words[0].lower() == "system"
+    }
+    variables = state.variables
+    kept = {
+        key: value for key, value in variables.items()
+        if str(key).startswith("__") or str(key).lower() in shared
+    }
+    variables.clear()
+    variables.update(before)
+    variables.update(kept)
+    state.variables["__depth"] = depth
+    return result, actions
+
+
+def _has_target(rest: str) -> bool:
+    """`send x to button "OK"` names its target. That form is not sent up from here."""
+    bare = re.sub(r'"[^"]*"', '""', rest)
+    while True:
+        flat = re.sub(r"\([^()]*\)", "", bare)
+        if flat == bare:
+            break
+        bare = flat
+    return re.search(r"\bto\b", bare, re.IGNORECASE) is not None
+
+
+def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> bool:
+    """`send NAME args` runs the nearest `to handle NAME`. False when there is none.
+
+    A forward goes on to the next handler up. A forward past the last one
+    leaves the message to the reader, as an unhandled send.
+    """
+    found = find_handlers(state, name, "handle")
+    if not found:
+        return False
+    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    rest = [_signature(handler)[2] for handler in found[1:]]
+    _result, done = _invoke(state, found[0], values, rest)
+    actions.extend(done)
+    if not rest and any(action.get("kind") == "forward" for action in done):
+        actions.append({"kind": "send", "name": name})
+    return True
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
@@ -1103,6 +1337,26 @@ def _builtin_page(state: RuntimeState, call: str) -> str | None:
         page = "P10003" if _lesson_mode(state) == 1 else "P10004"
         return page if _has_page(state, page) else "P900"
     return None
+
+
+def push_sysbook(state: RuntimeState, name: str) -> None:
+    """`push "x.sbk" onto sysBooks`. The system book is opened from beside the book.
+
+    A push puts the name first, and the first is searched first. A book
+    that is not found keeps its name in the list.
+    """
+    name = (name or "").strip()
+    if not name:
+        return
+    from engine.loader import load, find_book
+    book = None
+    found = find_book(name, state.book.path) if state.book is not None else None
+    if found:
+        book = load(found)
+        state.note(f"sysbook {Path(found).name}")
+    else:
+        state.note(f"missing sysbook {name}")
+    state.sysbooks.insert(0, (name, book))
 
 
 def leave_page(state: RuntimeState) -> str | None:
