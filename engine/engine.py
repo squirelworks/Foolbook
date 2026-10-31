@@ -931,35 +931,53 @@ def _put_chunk(state: RuntimeState, match: re.Match) -> None:
 
     An item or textline past the end pads the list with empty ones.
     """
-    kind = match.group(1).lower()
     name = match.group(4)
-    text = _as_text(_var(state, name))
-    first = _number(_eval(match.group(2), state))
-    last = _number(_eval(match.group(3), state)) if match.group(3) else first
     value = _eval(match.group(5).strip().rstrip("."), state)
-    if first is None or last is None or value is _UNRESOLVED:
+    if value is _UNRESOLVED:
         return
+    text = _replace_chunk(state, match.group(1), match.group(2), match.group(3), _as_text(_var(state, name)), value)
+    if text is not None:
+        state.variables[name] = text
+
+
+def _replace_chunk(state: RuntimeState, kind: str, first, last, text: str, value):
+    """text with chunks first..last of that kind replaced by value, or None when first is not a number."""
+    kind = kind.lower()
+    first = _number(_eval(first, state))
+    last = _number(_eval(last, state)) if last else first
+    if first is None or last is None:
+        return None
     first, last = max(int(first), 1), max(int(last), int(first), 1)
     value = _as_text(value)
     if kind == "word":
         spans = [m.span() for m in re.finditer(r"\S+", text)]
         if first > len(spans):
-            text = text + (" " if text else "") + value
-        else:
-            start = spans[first - 1][0]
-            stop = spans[min(last, len(spans)) - 1][1]
-            text = text[:start] + value + text[stop:]
-    else:
-        parts, glue = _pieces(kind, text)
-        if kind not in ("char", "character"):
-            parts += [""] * (last - len(parts))
-        parts[first - 1:last] = [value]
-        text = glue.join(parts)
-    state.variables[name] = text
+            return text + (" " if text else "") + value
+        start = spans[first - 1][0]
+        stop = spans[min(last, len(spans)) - 1][1]
+        return text[:start] + value + text[stop:]
+    parts, glue = _pieces(kind, text)
+    if kind not in ("char", "character"):
+        parts += [""] * (last - len(parts))
+    parts[first - 1:last] = [value]
+    return glue.join(parts)
+
+
+class ScriptError(ValueError):
+    """A statement this reader matched but cannot carry out."""
+
+
+_CHUNK_OF = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+(.+)",
+    re.IGNORECASE,
+)
 
 
 def _clear(state: RuntimeState, target: str) -> None:
-    """`clear text of field "x"`, `clear x`, `clear item 2 of list`: make it empty."""
+    """`clear text of field "x"`, `clear x`, `clear item 2 of list`, `clear textline 2 of text of field "x"`: make it empty.
+
+    A target it cannot clear raises ScriptError, so the script does not go on as if it had.
+    """
     if objects.PROPERTY.fullmatch(target) or _FIELD_TEXT.fullmatch(target):
         _apply_set(state, target, "")
         return
@@ -969,6 +987,17 @@ def _clear(state: RuntimeState, target: str) -> None:
         return
     if re.fullmatch(r"[A-Za-z_]\w*", target):
         state.variables[target] = ""
+        return
+    chunk = _CHUNK_OF.fullmatch(target)
+    container = chunk.group(4).strip() if chunk else ""
+    if chunk and (objects.PROPERTY.fullmatch(container) or _FIELD_TEXT.fullmatch(container)):
+        current = _eval(container, state)
+        if current is not _UNRESOLVED:
+            text = _replace_chunk(state, chunk.group(1), chunk.group(2), chunk.group(3), _as_text(current), "")
+            if text is not None:
+                _apply_set(state, container, text)
+                return
+    raise ScriptError(f"clear: cannot clear {target}")
 
 
 def _split_arithmetic(expr: str):
