@@ -2,7 +2,7 @@
 
 ## 2026-10-31
 
-- `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. An `.fbk` hotspot or text shape can be shown without a ToolBook class word. Tested in `engine/test_show_hide_name.py`.
+- `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. This is for books in Foolbook's own format, so a hotspot or text shape can be shown without a ToolBook class word. A ToolBook file does not get this reading. Tested in `engine/test_show_hide_name.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.
 - An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
 - In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook file does not get this reading (`engine.origin.is_toolbook`). No button in the converted NIDA courses has such a script, so their clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
