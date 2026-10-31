@@ -29,6 +29,7 @@
 
 ## Unreleased
 
+- `fileExists32(name)` linked from tbfile32.dll gives 1 when the file is beside the book, whatever its case, and 0 when not. Tested in `engine/test_tbfile32.py`.
 - `GetTickCount()` linked from kernel32.dll gives milliseconds as Windows does, so a script can time itself. Tested in `engine/test_linked_dll.py`.
 - A `;` outside quotes ends a statement: `a = 1; b = 2` runs both, and `result = true;` sets true.
 - `uppercase(x)` and `lowercase(x)` change the case of text.
