@@ -124,6 +124,8 @@ A script shows or hides a shape by the name the editor gave it: `show "Feedback"
 
 In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. In a Foolbook book, `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
+`engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open at the end of the script, an `if`, `step`, `while`, or `linkDLL` block left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.

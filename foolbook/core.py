@@ -164,3 +164,9 @@ def unknown_words(source: str) -> list[tuple[int, str]]:
     """Lines of a script the reader's interpreter does not act on, as (line, word)."""
     from engine.subset import unknown_words as find
     return find(source)
+
+
+def check_script(source: str) -> list[tuple[int, str]]:
+    """Errors in a script, as (line, message). A check, not a compile."""
+    from engine.subset import check
+    return check(source)
