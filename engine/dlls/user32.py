@@ -1,19 +1,28 @@
 """user32.dll: the window message functions.
 
-The reader runs no other Windows programs, so a message sent or posted to
-another window reaches nobody. SendMessageA answers 0 and PostMessageA
-answers 0, as Windows does for a window that is not there.
+The reader gives a script no window handle of its own (sysWindowHandle is
+not answered), so a handle a script holds comes from outside, such as the
+records window NIDAREC.INI names, and the reader cannot reach it. A
+message is kept in `__windowMessages` as (function, handle, message,
+wParam, lParam) so it is not lost, and the call answers 0: nothing
+received it.
 """
 
 from __future__ import annotations
 
 
-def send_message(state, args, refs):
+def _keep(state, name, args):
+    values = (list(args) + [0, 0, 0, 0])[:4]
+    state.variables.setdefault("__windowMessages", []).append((name, *values))
     return 0
+
+
+def send_message(state, args, refs):
+    return _keep(state, "SendMessageA", args)
 
 
 def post_message(state, args, refs):
-    return 0
+    return _keep(state, "PostMessageA", args)
 
 
 FUNCTIONS = {

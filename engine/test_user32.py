@@ -20,6 +20,8 @@ class User32Messages(unittest.TestCase):
         run_handler(state, LINK + "s = SendMessageA(77, 1488, 1, 2)\np = PostMessageA(77, 1488, 1, 2)")
         self.assertEqual(state.variables.get("s"), 0)
         self.assertEqual(state.variables.get("p"), 0)
+        self.assertEqual(state.variables["__windowMessages"],
+                         [("SendMessageA", 77, 1488, 1, 2), ("PostMessageA", 77, 1488, 1, 2)])
 
 
 if __name__ == "__main__":

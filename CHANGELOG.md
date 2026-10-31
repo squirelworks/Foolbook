@@ -29,7 +29,7 @@
 
 ## Unreleased
 
-- `SendMessageA` and `PostMessageA` linked from user32.dll answer 0, because the reader runs no other window for them to reach. Tested in `engine/test_user32.py`.
+- `SendMessageA` and `PostMessageA` linked from user32.dll answer 0 and are kept in `__windowMessages`. The reader gives a script no window handle of its own, so the handle is another program's window (nc81base sends to the records window NIDAREC.INI names), which the reader cannot reach. Tested in `engine/test_user32.py`.
 - `get f()` leaves what f gives in `it`, so `return it` passes it on.
 - A click's `target` is its object, `button "B" of page "P10210"`, so `object of target`, `name of target` and `enabled of target` work. `button temp` names an object by a variable.
 - `increment(x)`, `decrement( x )` and `increment x by n` change the variable. Before, the bracket form did nothing and `by n` added 1.
