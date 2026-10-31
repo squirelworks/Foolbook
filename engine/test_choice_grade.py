@@ -71,5 +71,40 @@ class ChoiceGradeTests(unittest.TestCase):
         self.assertNotIn("__answer", state.variables)
 
 
+class NidaToolBookClickTests(unittest.TestCase):
+    """A ToolBook click takes the old path, even on a button carrying `choice`.
+
+    Runs when FOOLBOOK_COURSES names a folder holding 93951303.tbk.
+    """
+
+    def test_a_letter_click_on_93951303_is_not_graded_by_choice(self):
+        import copy
+        import os
+        from engine.loader import load
+        from foolbook.model import RuntimeState
+        folder = Path(os.environ.get("FOOLBOOK_COURSES") or "/nonexistent")
+        found = [p for p in folder.glob("*") if p.name.lower() == "93951303.tbk"] if folder.is_dir() else []
+        if not found:
+            raise unittest.SkipTest("93951303.tbk is not here; set FOOLBOOK_COURSES")
+        book = load(found[0])
+        index = next(i for i, p in enumerate(book.pages)
+                     if (p.raw or {}).get("props", {}).get("QuestionNo")
+                     and any((s.get("name") or "").upper() == "A" for s in p.shapes or []))
+
+        def run(extra):
+            state = RuntimeState(book=copy.deepcopy(book))
+            state.index = index
+            # Give the page a Foolbook quiz too, so only the ToolBook check stops a grade.
+            state.page.quiz = dict(state.page.quiz or {}, choices=[{"label": "A", "correct": True}])
+            letter = next(s for s in state.page.shapes if (s.get("name") or "").upper() == "A")
+            click(state, dict(letter, **extra))
+            return state
+
+        plain, with_choice = run({}), run({"choice": 0})
+        self.assertNotIn("__answer", with_choice.variables)
+        self.assertEqual(with_choice.index, plain.index)
+        self.assertEqual(repr(sorted(with_choice.variables.items())), repr(sorted(plain.variables.items())))
+
+
 if __name__ == "__main__":
     unittest.main()

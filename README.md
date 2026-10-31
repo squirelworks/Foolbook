@@ -102,8 +102,13 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `roundrect`: a `rect` with quarter-circle corners. `radius` is in pixels, 8 when missing, and never more than half the short side.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
-- `arc`: the open curve between its endpoints. It is not filled.
-- `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
+- `curve`: `points` as `[[x, y], ...]`. It is drawn as straight segments through the points until a real curve is drawn.
+- `stroke` on any of those is the outline or line width in pixels. Missing means 1.
+- `arc`: the open curve between its endpoints. It is not filled. An `.fbk` arc that stores `start` and `sweep` (degrees, zero east, counterclockwise) is that part of the ellipse in its bounds.
+- `pie`: the same `start` and `sweep`, filled back to the centre. Missing angles are 0 and 90.
+- `chord`: the same `start` and `sweep`, closed by the straight line between the two ends and filled.
+- `hotspot`: `x`, `y`, `w`, `h`, and an `item`. It is not drawn. A click inside it follows the item.
+- `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. An `.fbk` text shape may also set `underline`, and `align` as `left`, `center`, or `right`. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
 - `button`: the picture stored for that button, or a caption when there is no picture.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
 
@@ -119,7 +124,7 @@ A script shows or hides a shape by the name the editor gave it: `show "Feedback"
 
 In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. In a Foolbook book, `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
-`engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open, an `if`, `step`, or handler left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
+`engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open at the end of the script, an `if`, `step`, `while`, or `linkDLL` block left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
 
 A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name, in a book of Foolbook's own format. A ToolBook quiz is still graded by the clicked name against the page's Answer.
 

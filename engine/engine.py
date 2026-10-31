@@ -23,13 +23,13 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
-from engine import groups
+from engine import groups, objects
 from engine.origin import is_toolbook
 
 
 _GOTO = re.compile(
     r'go\s+to\s+page\s*'
-    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
+    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([^()"]+?)\s*\)|([A-Za-z_]\w*))'
     r'(?:\s+of\s+book\s*'
     r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
     r')?',
@@ -47,12 +47,19 @@ _STEP = re.compile(
     r'step\s+(\w+)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+(.+))?$',
     re.IGNORECASE,
 )
+_LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
+_END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
+_UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
-_INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
+_INC = re.compile(
+    r'(increment|decrement)\s*(?:\(\s*(\w+)\s*\)|(\w+))(?:\s+by\s+(.+))?\s*$',
+    re.IGNORECASE,
+)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
 _NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+_TYPES = _NUMBER_TYPES + ("string", "stack", "point", "color", "date", "time", "pointer", "filehandle")
 
 
 class _Array(dict):
@@ -93,7 +100,10 @@ _TEXT_OF_FIELD = re.compile(
 )
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
-_PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
+_PROP_OF_PAGE = re.compile(
+    r'(\w+)\s+of\s+(?:this\s+page|page\s+((?:(?!\s(?:and|or)\s)[^=<>])+))',
+    re.IGNORECASE,
+)
 _OF_BOOK = re.compile(r'(.+?)\s+of\s+this\s+book$', re.IGNORECASE)
 _BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
 _NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
@@ -131,6 +141,16 @@ def split_handlers(source: str) -> list[Handler]:
     return out
 
 
+def _opens(low: str) -> bool:
+    """A line that opens a block: if, step, while, do, conditions, linkDLL."""
+    return low.startswith(("if ", "step ", "while ", "linkdll")) or low in ("conditions", "do")
+
+
+def _closes(low: str) -> bool:
+    """A line that closes a block. A bare `end` closes whatever block is open."""
+    return low == "end" or low.startswith("end ") or low.startswith("until ")
+
+
 def _strip_handler_end(body: str) -> str:
     lines = body.replace("\r", "").split("\n")
     depth = 0
@@ -139,10 +159,9 @@ def _strip_handler_end(body: str) -> str:
         low = raw.strip().lower()
         if not low or low.startswith("--"):
             continue
-        if low.startswith("if ") or low.startswith("step ") or low.startswith("conditions"):
+        if _opens(low):
             depth += 1
-            continue
-        if low in ("end", "end if", "end step", "end handler"):
+        elif _closes(low):
             if depth == 0:
                 cut = i
                 break
@@ -190,7 +209,7 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
     """
     obj = obj or {}
     start = (id(state.book), state.index)
-    if "choice" in obj:
+    if "choice" in obj and not is_toolbook(state.book):
         from engine import choice
         choice.grade(state, obj)
     script = click_script(obj, state.book)
@@ -209,6 +228,18 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
 class _Break(Exception):
     """`break` ends the handler it is in."""
+
+
+class _LoopBreak(Exception):
+    """`break while`, `break step`, `break conditions`, `break do`."""
+
+    def __init__(self, kind: str):
+        super().__init__()
+        self.kind = kind
+
+
+class _LoopNext(Exception):
+    """`continue` goes round the loop it is in again."""
 
 
 class _Return(Exception):
@@ -302,6 +333,39 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = _LINK_DLL.match(line)
+        if m:
+            from engine import dll
+            stop = i + 1
+            while stop < end and not _END_LINK.match(lines[stop]):
+                stop += 1
+            dll.link(state, m.group(1), lines[i + 1:stop])
+            i = stop + 1
+            continue
+
+        m = _UNLINK_DLL.match(line)
+        if m:
+            from engine import dll
+            dll.unlink(state, m.group(1))
+            i += 1
+            continue
+
+        if low.startswith("local "):
+            # A local starts blank each time the handler runs, whatever a caller had.
+            words = line[6:].strip()
+            first = words.split(None, 1)
+            blank = ""
+            if len(first) == 2 and first[0].lower() in _TYPES:
+                blank = 0 if first[0].lower() in _NUMBER_TYPES else ""
+                words = first[1]
+            for item in words.split(","):
+                item = item.strip()
+                name = item.split("[")[0].strip()
+                if re.fullmatch(r"[A-Za-z_]\w*", name):
+                    state.variables[name] = _Array(blank) if "[" in item else blank
+            i += 1
+            continue
+
         if low == "conditions":
             end_at = _find_conditions(lines, i + 1, end)
             _run_conditions(state, lines, i + 1, end_at, actions)
@@ -321,6 +385,48 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "break":
             raise _Break()
+
+        if low in ("break while", "break step", "break conditions", "break do"):
+            raise _LoopBreak(low.split()[1])
+
+        if low == "continue" or low in ("continue while", "continue step", "continue do"):
+            raise _LoopNext()
+
+        if low.startswith("while "):
+            end_at = _close_of(lines, i + 1, end)
+            cond = line[6:].strip()
+            guard = 0
+            while guard < 10000 and _truth(_eval(cond, state)):
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "while":
+                        raise
+                    break
+                except _LoopNext:
+                    continue
+            i = end_at + 1
+            continue
+
+        if low == "do":
+            end_at = _close_of(lines, i + 1, end)
+            cond = lines[end_at][6:].strip() if end_at < end else "true"
+            guard = 0
+            while guard < 10000:
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "do":
+                        raise
+                    break
+                except _LoopNext:
+                    pass
+                if _truth(_eval(cond, state)):
+                    break
+            i = end_at + 1
+            continue
 
         if low == "return" or low.startswith("return "):
             raise _Return(_eval(line[6:], state) if len(line) > 6 else None)
@@ -383,7 +489,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             actions.append({
                 "kind": "goto",
-                "page": _token(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
+                "page": _page_target(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
                 "book": _token(state, m.group(5) or m.group(6), m.group(7) or m.group(8)),
             })
             i += 1
@@ -452,6 +558,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if re.fullmatch(r"[A-Za-z_]\w*", call) and _var(state, call) is _MISSING:
                 call += "()"
             value = _eval(call, state)
+            if value is not _UNRESOLVED and not isinstance(value, tuple):
+                # `get f()` leaves what it gives in `it`.
+                state.variables["it"] = value
             if isinstance(value, tuple) and value and value[0] == "goto":
                 actions.append({
                     "kind": "goto",
@@ -464,15 +573,20 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
         m = _INC.match(line)
         if m:
-            name = m.group(2)
-            cur = state.variables.get(name, 0)
-            try:
-                cur = int(cur)
-            except (TypeError, ValueError):
-                cur = 0
-            cur = cur + 1 if m.group(1).lower() == "increment" else cur - 1
+            name = m.group(2) or m.group(3)
+            cur = _number(state.variables.get(name, 0))
+            cur = 0 if cur is None else cur
+            by = _number(_eval(m.group(4), state)) if m.group(4) else 1
+            by = 1 if by is None else by
+            cur = cur + by if m.group(1).lower() == "increment" else cur - by
+            cur = int(cur) if float(cur).is_integer() else cur
             state.variables[name] = cur
             actions.append({"kind": "set", "name": name, "value": cur})
+            i += 1
+            continue
+        m = _ASSIGN_CHUNK.fullmatch(line)
+        if m and _var(state, m.group(4)) is not _MISSING:
+            _put_chunk(state, m)
             i += 1
             continue
         m = _ASSIGN_ITEM.match(line)
@@ -554,31 +668,36 @@ def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) ->
 
 def _split_if(lines: list[str], start: int, end: int) -> tuple[int, int]:
     """Return (else_index_or_end, end_if_index) for the if that opened before start."""
-    depth = 1
+    depth = 0
     else_at = end
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("if "):
+        if _opens(low):
             depth += 1
-        elif low.startswith("else") and depth == 1 and else_at == end:
-            else_at = i
-        elif low in ("end", "end if"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return (else_at if else_at < i else i), i
+            depth -= 1
+        elif low.startswith("else") and depth == 0 and else_at == end:
+            else_at = i
     return end, end
 
 
 def _find_end_step(lines: list[str], start: int, end: int) -> int:
-    depth = 1
+    return _close_of(lines, start, end)
+
+
+def _close_of(lines: list[str], start: int, end: int) -> int:
+    """The line that closes the block opened just before start, with the blocks inside skipped."""
+    depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("step "):
+        if _opens(low):
             depth += 1
-        elif low in ("end", "end step"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return i
+            depth -= 1
     return end
 
 
@@ -596,9 +715,18 @@ def _run_step(state, name, a, b, by, lines, start, end, actions):
     guard = 0
     while (cur <= hi if step > 0 else cur >= hi) and guard < 10000:
         state.variables[name] = cur
-        _run_block(state, lines, start, end, actions)
+        try:
+            _run_block(state, lines, start, end, actions)
+        except _LoopBreak as stop:
+            if stop.kind != "step":
+                raise
+            break
+        except _LoopNext:
+            pass
         cur += step
         guard += 1
+
+
 
 
 def _whole_quote(expr: str) -> str | None:
@@ -645,6 +773,12 @@ def _eval(expr: str, state: RuntimeState):
     m = _TEXT_OF_FIELD.fullmatch(expr)
     if m:
         return _field_text(state, m.group(1))
+    m = objects.IS_OBJECT.fullmatch(expr)
+    if m:
+        return objects.exists(state, m)
+    m = objects.PROPERTY.fullmatch(expr)
+    if m:
+        return objects.get_property(state, m)
     m = _CHAR_OF.fullmatch(expr)
     if m:
         found = _var(state, m.group(2))
@@ -653,8 +787,11 @@ def _eval(expr: str, state: RuntimeState):
         return text[at] if 0 <= at < len(text) else ""
     m = _PROP_OF_PAGE.fullmatch(expr)
     if m:
-        return _page_property(state, m.group(1))
+        page = state.page if m.group(2) is None else _page_ref(state, m.group(2))
+        return _page_property(state, m.group(1), page)
     m = _OF_BOOK.fullmatch(expr)
+    if m and m.group(1).strip().lower() == "pagecount":
+        return len(state.book.pages) if state.book is not None else 0
     if m:
         value = _book_property(state, m.group(1).strip())
         if value is not _NO_BOOK_PROP:
@@ -686,13 +823,21 @@ def _eval(expr: str, state: RuntimeState):
         return _truth(_eval(expr[:i], state)) or _truth(_eval(expr[i + 4:], state))
     if low.startswith("not "):
         return not _truth(_eval(expr[4:], state))
-    is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
-    if is_at:
-        left = _eval(expr[:is_at.start()], state)
-        named = re.search(r'"([^"]+)"', expr[is_at.end():])
+    found_in = _split_is_in(expr)
+    if found_in is not None:
+        left, negate, right = found_in
+        inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
+        return inside != negate
+    split = _split_is(expr)
+    if split is not None:
+        left, negate, right = split
+        named = _NAMED_OBJECT.match(right)
         if named:
-            return str(left).strip().lower() == named.group(1).lower()
-        return False
+            # `target is button "OK" of parent of this page`: the same object, by name.
+            same = _object_name(_eval(left, state)).lower() == named.group(2).lower()
+        else:
+            same = _cmp("=", _is_side(_eval(left, state)), _is_side(_eval(right, state)))
+        return same != negate
     # comparisons. OpenScript does not need spaces round the operator.
     split = _split_compare(expr)
     if split is not None:
@@ -701,6 +846,12 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    m = _CHUNK.fullmatch(expr)
+    if m:
+        return _chunk(state, m)
+    split = _split_arithmetic(expr)
+    if split is not None:
+        return _arithmetic(*split, state)
     m = _ITEM.fullmatch(expr)
     if m:
         array = _var(state, m.group(1))
@@ -719,6 +870,139 @@ _MISSING = object()
 # not text, so nothing is written from it.
 _UNRESOLVED = object()
 _OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+_CHUNK = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+(.+)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _pieces(kind: str, text: str) -> tuple[list[str], str]:
+    """The parts of text a chunk counts, and the glue that joins a range of them."""
+    if kind == "word":
+        return text.split(), " "
+    if kind == "item":
+        return (text.split(",") if text != "" else []), ","
+    if kind in ("char", "character"):
+        return list(text), ""
+    return (text.replace("\r\n", "\n").replace("\r", "\n").split("\n") if text != "" else []), "\r\n"
+
+
+def _chunk(state: RuntimeState, match: re.Match):
+    """`word 2 of x`, `item i of list`, `chars 1 to 3 of x`, `textline 4 of text of field "a"`."""
+    kind = match.group(1).lower()
+    whole = _eval(match.group(4), state)
+    if whole is _UNRESOLVED:
+        return _UNRESOLVED
+    parts, glue = _pieces(kind, _as_text(whole))
+    first = _number(_eval(match.group(2), state))
+    last = _number(_eval(match.group(3), state)) if match.group(3) else first
+    if first is None or last is None:
+        return _UNRESOLVED
+    return glue.join(parts[max(int(first) - 1, 0):max(int(last), 0)])
+
+
+_ASSIGN_CHUNK = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+([A-Za-z_]\w*)\s*=\s*(.+)",
+    re.IGNORECASE,
+)
+
+
+def _put_chunk(state: RuntimeState, match: re.Match) -> None:
+    """`char i of pool = " "`: that chunk of the variable becomes the value.
+
+    An item or textline past the end pads the list with empty ones.
+    """
+    kind = match.group(1).lower()
+    name = match.group(4)
+    text = _as_text(_var(state, name))
+    first = _number(_eval(match.group(2), state))
+    last = _number(_eval(match.group(3), state)) if match.group(3) else first
+    value = _eval(match.group(5).strip().rstrip("."), state)
+    if first is None or last is None or value is _UNRESOLVED:
+        return
+    first, last = max(int(first), 1), max(int(last), int(first), 1)
+    value = _as_text(value)
+    if kind == "word":
+        spans = [m.span() for m in re.finditer(r"\S+", text)]
+        if first > len(spans):
+            text = text + (" " if text else "") + value
+        else:
+            start = spans[first - 1][0]
+            stop = spans[min(last, len(spans)) - 1][1]
+            text = text[:start] + value + text[stop:]
+    else:
+        parts, glue = _pieces(kind, text)
+        if kind not in ("char", "character"):
+            parts += [""] * (last - len(parts))
+        parts[first - 1:last] = [value]
+        text = glue.join(parts)
+    state.variables[name] = text
+
+
+def _split_arithmetic(expr: str):
+    """(left, operator, right) at the last + or - outside quotes and brackets, else * / div mod.
+
+    The last one, so that `a - b - c` is `(a - b) - c`. A sign at the start,
+    or after another operator, is part of the number.
+    """
+    for ops in (("+", "-"), ("*", "/", "div", "mod")):
+        quote = ""
+        depth = 0
+        at = None
+        for i, ch in enumerate(expr):
+            if quote:
+                if ch == quote:
+                    quote = ""
+                continue
+            if ch in "\"'":
+                quote = ch
+            elif ch in "([":
+                depth += 1
+            elif ch in ")]" and depth:
+                depth -= 1
+            elif depth == 0:
+                for op in ops:
+                    if op.isalpha():
+                        if not re.match(rf"\s{op}\s", expr[i - 1:i + len(op) + 1], re.IGNORECASE) or i == 0:
+                            continue
+                    elif not expr.startswith(op, i):
+                        continue
+                    before = expr[:i].rstrip()
+                    if not before or before[-1] in "+-*/(=<>,&":
+                        continue
+                    at = (i, op)
+        if at is not None:
+            i, op = at
+            left, right = expr[:i].strip(), expr[i + len(op):].strip()
+            if left and right:
+                return left, op.lower(), right
+    return None
+
+
+def _arithmetic(left: str, op: str, right: str, state: RuntimeState):
+    """A sum of two numbers. A side that is not a number makes the sum unknown."""
+    a = _number(_eval(left, state))
+    b = _number(_eval(right, state))
+    if a is None or b is None:
+        return _UNRESOLVED
+    try:
+        if op == "+":
+            value = a + b
+        elif op == "-":
+            value = a - b
+        elif op == "*":
+            value = a * b
+        elif op == "/":
+            value = a / b
+        elif op == "div":
+            value = float(int(a / b))
+        else:
+            value = a - b * int(a / b)
+    except ZeroDivisionError:
+        return _UNRESOLVED
+    return int(value) if value.is_integer() else value
 
 
 def _has_arithmetic(expr: str) -> bool:
@@ -742,6 +1026,9 @@ def _var(state: RuntimeState, name: str):
             return value
     if low == "syslevel":
         return "reader"
+    if low == "syslinkeddlls":
+        from engine import dll
+        return dll.linked_names(state)
     if low == "sysbooks":
         return ",".join(name for name, _book in getattr(state, "sysbooks", []))
     if low == "keyenter":
@@ -833,6 +1120,13 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     if shown is not None:
         groups.set_visible(state, shown, _flag(value))
         return
+    named = objects.PROPERTY.fullmatch(target or "")
+    if named is not None and named.group("prop").lower() != "invert":
+        text = "" if value is None else str(value)
+        unread = "__" in text and "of this book" in text.lower()
+        if (value is None or isinstance(value, (str, int, float, bool))) and not unread:
+            objects.set_property(state, named, value)
+        return
     shown = groups.OBJECT_VISIBLE.fullmatch(target or "")
     if shown is not None:
         groups.set_object_visible(state, shown, _flag(value))
@@ -890,6 +1184,51 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is(expr: str):
+    """(left, negated, right) for `a is b` and `a is not b`, at an `is` outside quotes."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    return None
+
+
+_NAMED_OBJECT = re.compile(
+    r'\s*(' + "|".join(sorted(groups._CLASSES, key=len, reverse=True)) + r'|page|group)\s*"([^"]*)"',
+    re.IGNORECASE,
+)
+
+
+def _object_name(value) -> str:
+    """The name in an object reference such as `button "OK"`, or the value itself."""
+    text = "" if value is None or value is _UNRESOLVED else str(value)
+    named = _NAMED_OBJECT.match(text)
+    return named.group(2) if named else text.strip()
+
+
+def _is_side(value):
+    """One side of `is`. A flag is the word, null is blank, and a value not worked out is blank."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is _UNRESOLVED or value is None:
+        return ""
+    if isinstance(value, str) and value.strip().lower() == "null":
+        return ""
+    return value
+
+
+def _split_is_in(expr: str):
+    """(left, negated, right) for `a is in b`, `a is not in b` and `b contains a`."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?in\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    m = re.search(r"\s+contains\s+", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[m.end():].strip(), False, expr[:m.start()].strip()
+    return None
 
 
 def _split_compare(expr: str):
@@ -951,9 +1290,27 @@ def _field_text(state: RuntimeState, name: str) -> str:
     return ""
 
 
-def _page_property(state: RuntimeState, name: str):
-    """`testno of this page` is a property stored on the page."""
-    page = state.page
+def _page_ref(state: RuntimeState, text: str):
+    """The page `page i` or `page "P3"` names: a number counts from 1, else the name."""
+    value = _eval(text, state)
+    pages = state.book.pages if state.book is not None else []
+    number = _number(value)
+    if number is not None and number.is_integer():
+        at = int(number) - 1
+        return pages[at] if 0 <= at < len(pages) else None
+    want = _as_text(value).strip().lower()
+    for page in pages:
+        if page.id.lower() == want or str((page.raw or {}).get("name") or "").lower() == want:
+            return page
+    return None
+
+
+def _page_property(state: RuntimeState, name: str, page=None):
+    """`testno of this page` is a property stored on the page. pageNumber counts from 1."""
+    if page is None:
+        return ""
+    if name.lower() == "pagenumber":
+        return state.book.pages.index(page) + 1
     props = ((page.raw or {}).get("props") or {}) if page is not None else {}
     for key, value in props.items():
         if str(key).lower() == name.lower():
@@ -1053,6 +1410,15 @@ def _truth(value) -> bool:
 _NOT_A_CALL = object()
 
 
+# OpenScript's counting functions, and the chunk each one counts.
+_COUNTS = {
+    "charcount": "char",
+    "wordcount": "word",
+    "itemcount": "item",
+    "textlinecount": "textline",
+}
+
+
 def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
@@ -1060,6 +1426,36 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    if match.group(1).lower() == "random":
+        # OpenScript's random(n) is a whole number from 1 to n.
+        top = _number(_eval(match.group(2), state))
+        if top is None:
+            return _UNRESOLVED
+        import random
+        return random.randint(1, max(int(top), 1))
+    from engine import dll
+    linked = dll.find(state, match.group(1))
+    if linked is not None:
+        parts = _call_args(match.group(2))
+        refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
+        return linked[1](state, [_eval(part, state) for part in parts], refs)
+    counted = _COUNTS.get(match.group(1).lower())
+    if counted is not None:
+        whole = _eval(match.group(2), state)
+        if whole is _UNRESOLVED:
+            return _UNRESOLVED
+        return len(_pieces(counted, _as_text(whole))[0])
+    if match.group(1).lower() in ("ansitochar", "chartoansi"):
+        value = _eval(match.group(2), state)
+        if value is _UNRESOLVED:
+            return _UNRESOLVED
+        if match.group(1).lower() == "chartoansi":
+            text = _as_text(value)
+            return ord(text[0].encode("cp1252", "replace")[:1] or b"\0") if text else 0
+        number = _number(value)
+        if number is None:
+            return _UNRESOLVED
+        return bytes([int(number) & 0xFF]).decode("cp1252", "replace")
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
@@ -1095,12 +1491,50 @@ def _signature(handler) -> tuple[str, list[str], str]:
     found = _HEADER.match(first)
     if found:
         kind, first = found.group(1).lower(), found.group(2)
-    names = []
-    for part in first.split(","):
-        words = part.split()
-        if words:
-            names.append(words[-1].rstrip("[]"))
+    names = [name for name, _ref in _params(first)]
     return kind, names, _strip_handler_end(rest)
+
+
+_BY_REFERENCE = re.compile(r"\s+by\s+reference\s*$", re.IGNORECASE)
+
+
+def _params(text: str) -> list[tuple[str, bool]]:
+    """(name, by reference) of each parameter: `int numbers[] by reference, int n`."""
+    found = []
+    for part in text.split(","):
+        ref = _BY_REFERENCE.search(part) is not None
+        words = _BY_REFERENCE.sub("", part).split()
+        if words:
+            found.append((words[-1].split("[")[0], ref))
+    return found
+
+
+def _references(handler) -> set[int]:
+    """The places of the parameters a handler takes by reference."""
+    first = (handler.source or "").replace("\r", "").partition("\n")[0]
+    found = _HEADER.match(first)
+    if found:
+        first = found.group(2)
+    return {index for index, (_name, ref) in enumerate(_params(first)) if ref}
+
+
+def _bind(state: RuntimeState, handler, args: str) -> tuple[list, dict[int, str]]:
+    """(values, references) for a call. A by-reference argument that names a
+    variable is written back to it. An array passed by value is a copy."""
+    texts = _call_args(args or "")
+    refs = _references(handler)
+    values, back = [], {}
+    for index, text in enumerate(texts):
+        value = _eval(text, state)
+        if index in refs:
+            if re.fullmatch(r"[A-Za-z_]\w*", text.strip()):
+                back[index] = text.strip()
+        elif isinstance(value, _Array):
+            copy = _Array(value.blank)
+            copy.update(value)
+            value = copy
+        values.append(value)
+    return values, back
 
 
 def find_handlers(state: RuntimeState, name: str, kind: str = "get") -> list:
@@ -1158,9 +1592,9 @@ def call_handler(state: RuntimeState, handler, args: str):
     The handler's own names are its own. When it ends, only its system
     variables and the reader's `__` names keep what it did.
     """
-    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    values, back = _bind(state, handler, args)
     called = state.variables.pop("__called", None)
-    result, actions = _invoke(state, handler, values)
+    result, actions = _invoke(state, handler, values, refs=back)
     pending = list(called or [])
     pending.extend(action for action in actions if action.get("kind") != "note")
     if pending:
@@ -1168,8 +1602,13 @@ def call_handler(state: RuntimeState, handler, args: str):
     return result
 
 
-def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None):
-    """(returned value, actions) of one handler run in its own names."""
+def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None,
+            refs: dict[int, str] | None = None):
+    """(returned value, actions) of one handler run in its own names.
+
+    refs maps a parameter's place to the caller's variable that gets its
+    last value, for a parameter taken by reference.
+    """
     _kind, names, body = _signature(handler)
     depth = int(state.variables.get("__depth") or 0)
     if depth >= 64:
@@ -1192,6 +1631,9 @@ def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | Non
         key: value for key, value in variables.items()
         if str(key).startswith("__") or str(key).lower() in shared
     }
+    for index, caller in (refs or {}).items():
+        if index < len(names):
+            kept[caller] = variables.get(names[index], "")
     variables.clear()
     variables.update(before)
     variables.update(kept)
@@ -1219,9 +1661,9 @@ def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> boo
     found = find_handlers(state, name, "handle")
     if not found:
         return False
-    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    values, back = _bind(state, found[0], args)
     rest = [_signature(handler)[2] for handler in found[1:]]
-    _result, done = _invoke(state, found[0], values, rest)
+    _result, done = _invoke(state, found[0], values, rest, refs=back)
     actions.extend(done)
     if not rest and any(action.get("kind") == "forward" for action in done):
         actions.append({"kind": "send", "name": name})
@@ -1229,16 +1671,7 @@ def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> boo
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
-    depth = 0
-    for i in range(start, end):
-        low = lines[i].lower()
-        if low == "conditions":
-            depth += 1
-        elif low == "end conditions" or (low == "end" and depth == 0):
-            if depth == 0:
-                return i
-            depth -= 1
-    return end
+    return _close_of(lines, start, end)
 
 
 def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int, actions: list[dict]) -> None:
@@ -1248,9 +1681,9 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low == "conditions":
+        if _opens(low):
             depth += 1
-        elif low == "end conditions":
+        elif _closes(low):
             depth = max(0, depth - 1)
         elif depth == 0 and low.startswith("when "):
             branches.append(i)
@@ -1259,10 +1692,18 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     for index, at in enumerate(branches):
         nxt = branches[index + 1] if index + 1 < len(branches) else (otherwise if otherwise is not None else end)
         if _truth(_eval(lines[at][5:].strip(), state)):
-            _run_block(state, lines, at + 1, nxt, actions)
+            _run_conditions_branch(state, lines, at + 1, nxt, actions)
             return
     if otherwise is not None:
-        _run_block(state, lines, otherwise + 1, end, actions)
+        _run_conditions_branch(state, lines, otherwise + 1, end, actions)
+
+
+def _run_conditions_branch(state, lines, start, end, actions) -> None:
+    try:
+        _run_block(state, lines, start, end, actions)
+    except _LoopBreak as stop:
+        if stop.kind != "conditions":
+            raise
 
 
 def _book_keyup(state: RuntimeState, actions: list[dict]) -> bool:
@@ -1400,6 +1841,25 @@ def goto(state: RuntimeState, page_id: str, leave: bool = True) -> bool:
     state.index = idx
     state.note(f"goto {page_id}")
     return True
+
+
+def _page_target(state: RuntimeState, quoted: str | None, bare: str | None):
+    """The page a `go to page` names. A quoted name is a name. A value
+    worked out from the script is a page number when it is a whole number
+    and no page has it as its name."""
+    if quoted or not bare:
+        return _token(state, quoted, bare)
+    value = _eval(bare, state)
+    if value is _UNRESOLVED:
+        return bare
+    text = _as_text(value).strip()
+    number = _number(value)
+    pages = state.book.pages if state.book is not None else []
+    if number is not None and number.is_integer() and not any(p.id.lower() == text.lower() for p in pages):
+        at = int(number) - 1
+        if 0 <= at < len(pages):
+            return pages[at].id
+    return text
 
 
 def _token(state: RuntimeState, quoted: str | None, bare: str | None):
