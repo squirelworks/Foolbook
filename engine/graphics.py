@@ -148,6 +148,9 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             text_kwargs = {}
             if wrap:
                 text_kwargs["width"] = wrap
+                if isinstance(shape.get("align"), str):
+                    # A named alignment is the .fbk's. A wrapped .tbk field keeps its left edge.
+                    text_kwargs["justify"] = ("left", "right", "center")[_align_code(shape["align"])]
             canvas.create_text(
                 tx,
                 ty,
@@ -688,12 +691,25 @@ def _fit_text(shape, x, y, w, h):
         return raw, size, max(1, w), "nw", x, y
     words = [line for line in pieces if line.strip()]
     count = max(1, len(words))
-    align = int(shape.get("align") or 0)
+    align = _align_code(shape.get("align"))
     if align == 2:
         return raw, size, 0, "center", x + w / 2, y + h / 2
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
     return raw, size, 0, "w", x, y + h / 2
+
+
+def _align_code(value) -> int:
+    """0 left, 1 right, 2 centre. A .tbk stores the number. An .fbk may name it."""
+    if isinstance(value, str):
+        named = {"left": 0, "right": 1, "center": 2, "centre": 2}
+        if value.strip().lower() in named:
+            return named[value.strip().lower()]
+    try:
+        code = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return code if code in (0, 1, 2) else 0
 
 
 def _arc_between(x, y, w, h, ends) -> list[int]:
