@@ -18,6 +18,7 @@ from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
 from engine import fields
+from engine.origin import is_toolbook
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -72,9 +73,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     root.bind("<Configure>", _keep_window)
 
-    pages = book.pages
     last = progress.last_page(course_id)
-    start_at = 0
+    start_at = book.start()
 
     if splash:
         win = tk.Toplevel(root)
@@ -98,10 +98,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         tk.Label(win, text="For greater values of 2.").pack(side="bottom", pady=8)
         root.wait_window(win)
         if chosen.get() == 1 and last:
-            for i, p in enumerate(pages):
-                if p.id == last:
-                    start_at = i
-                    break
+            start_at = book.start(last)
 
     idx = tk.IntVar(value=start_at)
     state = RuntimeState(book=book, index=start_at)
@@ -135,13 +132,13 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             messagebox.showerror("Foolbook", str(exc), parent=root)
             return
         state.book = opened
-        state.index = 0
+        state.index = opened.start()
         held["course"] = Path(path).stem
         held["pile"] = []
         held["piles"] = {}
         progress.touch(held["course"])
         open_ahead(opened)
-        show(0)
+        show(state.index)
 
     ttk.Button(sidebar, text="Open", command=choose).pack(fill="x", padx=4, pady=(4, 2))
     lb = tk.Listbox(sidebar)
@@ -426,7 +423,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
         picked = ((obj or {}).get("name") or "").upper()
-        if "choice" in (obj or {}):
+        if "choice" in (obj or {}) and not is_toolbook(state.book):
             from engine import choice
             graded = choice.grade(state, obj)
             target = choice.after(state, graded) if graded is not None else ""
