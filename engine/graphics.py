@@ -204,13 +204,19 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
 
 
 def _caption_place(shape: dict, x: int, w: int) -> tuple[float, str, str]:
-    """Where a button's caption sits. A push button centres it; `align` moves it."""
-    align = (shape.get("align") or "center").lower()
-    if align == "left":
-        return x + 8, "w", "left"
+    """Where a button's caption sits.
+
+    The left edge, as before, unless `align` names `center` or `right`, as
+    the editor's Properties pane writes it. A `.tbk` alignment is a number;
+    it, and a missing `align`, keep the left edge.
+    """
+    align = shape.get("align")
+    align = align.lower() if isinstance(align, str) else ""
+    if align in ("center", "centre"):
+        return x + w / 2, "center", "center"
     if align == "right":
         return x + w - 8, "e", "right"
-    return x + w / 2, "center", "center"
+    return x + 8, "w", "left"
 
 
 def _flush_caret(canvas, caret):
