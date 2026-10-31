@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- A page with `"background": true` is a shared background. It is not read as a page. A page that names it in `uses` paints its shapes first, then its own, so one edit shows on every page that uses it. A page whose shapes carry `layer: background` still paints as before. Test: `engine/test_backgrounds.py`.
+
 ## Unreleased
 
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
