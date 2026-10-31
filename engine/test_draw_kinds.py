@@ -118,5 +118,40 @@ class Arc(unittest.TestCase):
         ], {"fill": "#071428", "width": 2})])
 
 
+class Pie(unittest.TestCase):
+    def test_a_pie_is_a_filled_slice(self):
+        canvas = drawn({"kind": "pie", "x": 0, "y": 0, "w": 80, "h": 80, "start": 90, "sweep": -45, "fill": "#ff0000"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        options = canvas.calls[0][2]
+        self.assertEqual((options["start"], options["extent"], options["style"]), (90, -45, "pieslice"))
+        self.assertEqual(options["fill"], "#ff0000")
+
+    def test_a_pie_with_no_angles_is_a_quarter(self):
+        options = drawn({"kind": "pie", "x": 0, "y": 0, "w": 80, "h": 80}).calls[0][2]
+        self.assertEqual((options["start"], options["extent"]), (0, 90))
+
+class Chord(unittest.TestCase):
+    def test_a_chord_is_closed_by_a_straight_line(self):
+        canvas = drawn({"kind": "chord", "x": 0, "y": 0, "w": 80, "h": 80, "start": 0, "sweep": 180, "fill": "#00ff00"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        options = canvas.calls[0][2]
+        self.assertEqual((options["start"], options["extent"], options["style"]), (0, 180, "chord"))
+        self.assertEqual(options["fill"], "#00ff00")
+
+class Hotspot(unittest.TestCase):
+    spot = {"kind": "hotspot", "name": "Door", "x": 10, "y": 10, "w": 40, "h": 40, "outline": "#071428",
+            "item": {"page": "P200"}}
+
+    def test_a_hotspot_is_not_drawn(self):
+        self.assertEqual(drawn(dict(self.spot)).calls, [])
+
+    def test_a_click_inside_a_hotspot_is_the_hotspot(self):
+        from engine.place import click_target
+        under = {"kind": "rect", "x": 0, "y": 0, "w": 100, "h": 100, "fill": "#ffffff"}
+        target = click_target([under, dict(self.spot)], 20, 20)
+        self.assertEqual(target["name"], "Door")
+        self.assertEqual(target["item"]["page"], "P200")
+
+
 if __name__ == "__main__":
     unittest.main()
