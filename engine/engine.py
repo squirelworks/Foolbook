@@ -1455,6 +1455,12 @@ def _call_value(expr: str, state: RuntimeState):
         if whole is _UNRESOLVED:
             return _UNRESOLVED
         return len(_pieces(counted, _as_text(whole))[0])
+    if match.group(1).lower() in ("uppercase", "lowercase"):
+        value = _eval(match.group(2), state)
+        if value is _UNRESOLVED:
+            return _UNRESOLVED
+        text = _as_text(value)
+        return text.upper() if match.group(1).lower() == "uppercase" else text.lower()
     if match.group(1).lower() in ("ansitochar", "chartoansi"):
         value = _eval(match.group(2), state)
         if value is _UNRESOLVED:
