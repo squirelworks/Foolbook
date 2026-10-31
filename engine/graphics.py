@@ -168,6 +168,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                     )
         elif kind in ("check", "radio"):
             _paint_choice(canvas, shape, kind, fill, outline)
+        elif kind == "list":
+            _paint_list(canvas, shape, fill, outline)
         elif kind == "image":
             shown = shape
             face = ""
@@ -201,6 +203,27 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _paint_list(canvas, shape, fill, outline):
+    """The rows that fit, the chosen one marked, and a bar when it scrolls."""
+    from engine import listbox
+    x, y, w, h = _box(shape)
+    ink = outline or "black"
+    canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "#ffffff", outline=ink)
+    wide = w - (listbox.BAR if listbox.scrolls(shape) else 0)
+    chosen = shape.get("value")
+    for index, text, top in listbox.visible_rows(shape):
+        if chosen is not None and index == chosen:
+            canvas.create_rectangle(x + 1, top + 1, x + wide - 1, top + listbox.ROW, fill=listbox.CHOSEN, outline="")
+        canvas.create_text(x + 4, top + listbox.ROW / 2, text=text, anchor="w", fill=ink, width=max(1, int(wide) - 8))
+    if listbox.scrolls(shape):
+        left = x + w - listbox.BAR
+        mid = left + listbox.BAR / 2
+        canvas.create_rectangle(left, y, x + w, y + h, fill="#e4e4e4", outline=ink)
+        canvas.create_line(left, y + h / 2, x + w, y + h / 2, fill=ink)
+        canvas.create_polygon(left + 3, y + 10, x + w - 3, y + 10, mid, y + 4, fill=ink, outline="")
+        canvas.create_polygon(left + 3, y + h - 10, x + w - 3, y + h - 10, mid, y + h - 4, fill=ink, outline="")
 
 
 def _paint_choice(canvas, shape, kind, fill, outline):
