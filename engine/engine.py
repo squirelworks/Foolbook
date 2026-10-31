@@ -149,33 +149,27 @@ def click_script(obj: dict | None) -> str:
     return obj.get("group_script") or ""
 
 
-def follow_item(state: RuntimeState, item: dict | None) -> bool:
-    """A button's jump: another book, a page, or the Next or Back label."""
-    item = item or {}
-    page = item.get("page") or ""
-    book = item.get("book") or ""
-    if book:
-        return open_book(state, book, page)
-    if page:
-        start = state.index
-        return goto(state, page) and state.index != start
-    label = (item.get("label") or "").lower()
-    if label in ("next", "back", "previous"):
-        return press(state, label)
-    return False
-
-
 def click(state: RuntimeState, obj: dict | None) -> bool:
-    """A click on a button. True when the page changed.
+    """A click on a button, in the window's order. True when the page changed.
 
-    The button's script runs first. When the script is empty, the click is
-    the button's item. When both are set, the item runs only if the script
-    did not change the page.
+    The button's script runs first, then the page's buttonClick, then the
+    button's item, the way the window's click does it, so a test can click
+    without a window.
     """
+    obj = obj or {}
+    start = (id(state.book), state.index)
     script = click_script(obj)
     if script and follow(state, run_handler(state, script)):
         return True
-    return follow_item(state, (obj or {}).get("item"))
+    if follow(state, run_page_handlers(state, "buttonclick")):
+        return True
+    item = obj.get("item") or {}
+    book = item.get("book") or ""
+    if book and open_book(state, book, item.get("page") or ""):
+        return True
+    if item.get("page") or book or item.get("label"):
+        press(state, item.get("label") or obj.get("text") or "", item.get("page") or "")
+    return (id(state.book), state.index) != start
 
 
 class _Break(Exception):
