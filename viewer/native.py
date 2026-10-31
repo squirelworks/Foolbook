@@ -420,7 +420,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         return "break"
 
     def _activate(obj):
-        state.variables["target"] = (obj or {}).get("name") or "page"
+        from engine import objects
+        state.variables["target"] = objects.reference(state, obj)
         picked = ((obj or {}).get("name") or "").upper()
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call

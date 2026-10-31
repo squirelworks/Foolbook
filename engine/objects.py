@@ -17,7 +17,10 @@ from foolbook.model import RuntimeState
 from engine.groups import _CLASSES
 
 _CLASS = "(?P<cls>" + "|".join(sorted(_CLASSES, key=len, reverse=True)) + ")"
-_NAME = r'\s*(?:\(\s*(?P<paren>[^()]*(?:\([^()]*\)[^()]*)*)\s*\)|(?P<quoted>"[^"]*"))'
+_NAME = (
+    r'\s*(?:\(\s*(?P<paren>[^()]*(?:\([^()]*\)[^()]*)*)\s*\)|(?P<quoted>"[^"]*")'
+    r'|(?<=\s)(?P<bare>(?!of\b)[A-Za-z_]\w*))'
+)
 _PLACE = (
     r'(?:\s+of\s+(?:'
     r'(?P<bg>parent\s+of\s+)?this\s+page'
@@ -59,7 +62,7 @@ def shapes(state: RuntimeState, match: re.Match) -> list[dict]:
     page = _page(state, match)
     if page is None:
         return []
-    name = _eval(match.group("quoted") or match.group("paren"), state)
+    name = _eval(match.group("quoted") or match.group("paren") or match.group("bare"), state)
     name = ("" if name is None else str(name)).strip().lower()
     kinds = _CLASSES[match.group("cls").lower()]
     found = [
@@ -104,3 +107,54 @@ def set_property(state: RuntimeState, match: re.Match, value) -> None:
         else:
             shape[prop] = value
     state.variables["__redraw"] = True
+
+
+# ---- a reference held in a value: target, or a variable set from it ---------------------------------------
+#   object of target is button      name of vTarget is "OK"      enabled of target
+# The reader hands a click its object as `button "B" of page "P10210"`, the
+# form a script can name it by.
+_KIND_CLASS = {"text": "field", "rect": "rectangle", "ellipse": "ellipse", "line": "line",
+               "polygon": "polygon", "arc": "arc", "button": "button", "picture": "picture",
+               "paint": "paintobject"}
+REFERENCE = re.compile(r'\s*' + REF + r'\s*$', re.IGNORECASE)
+PAGE_REFERENCE = re.compile(r'\s*page\s+"(?P<name>[^"]*)"\s*$', re.IGNORECASE)
+OF_VALUE = re.compile(r'\s*(?P<prop>\w+)\s+of\s+(?P<var>[A-Za-z_]\w*)\s*$', re.IGNORECASE)
+
+
+def reference(state: RuntimeState, shape: dict | None) -> str:
+    """How a script names a shape on this page, or this page when there is none."""
+    page = state.page
+    where = f' of page "{page.id}"' if page is not None else ""
+    if not shape:
+        return f'page "{page.id}"' if page is not None else ""
+    kind = shape.get("kind") or ""
+    cls = _KIND_CLASS.get(kind)
+    if kind == "image":
+        cls = "button" if shape.get("invert_data") or shape.get("checked_data") else "picture"
+    name = (shape.get("name") or "").replace('"', "'")
+    parent = "parent of " if shape.get("layer") == "background" and where else ""
+    return f'{cls or "button"} "{name}"' + (f" of {parent}{where[4:]}" if where else "")
+
+
+def of_value(state: RuntimeState, match: re.Match):
+    """`object of target`, `name of target`, or a property of the object a variable holds.
+
+    None when the variable does not hold a reference.
+    """
+    from engine.engine import _var, _MISSING
+    held = _var(state, match.group("var"))
+    if held is _MISSING or not isinstance(held, str):
+        return None
+    prop = match.group("prop").lower()
+    page = PAGE_REFERENCE.match(held)
+    if page:
+        return {"object": "page", "name": page.group("name")}.get(prop, "")
+    ref = REFERENCE.match(held)
+    if not ref:
+        return None
+    if prop == "object":
+        return ref.group("cls").lower()
+    if prop == "name":
+        return _eval(ref.group("quoted") or ref.group("paren") or ref.group("bare"), state)
+    whole = PROPERTY.fullmatch(f"{match.group('prop')} of {held}")
+    return get_property(state, whole) if whole else ""
