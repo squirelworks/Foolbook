@@ -3,6 +3,7 @@
 ## 2026-10-31
 
 - In a ToolBook file, `go to next page` and `go to previous page` (also `prev`, and `of this book`) go to the page beside this one in book order, through `goto`, so leavePage runs. Before, they were notes and did nothing. A book in Foolbook's own format does not read them; it has `send next` and `send previous`. The converted NIDA courses are FBK1 files, so they are unchanged. Tested in `engine/test_go_next_page.py`.
+- quiz_check finds a `goto` page again. The viewer's page list shows every page id only in developer mode, so a spec's `goto` found no page. quiz_check now opens the developer page list, without `--debug` and the decoded files it writes beside the book. Tested in `tools/quiz_check/test_child_page_ids.py`.
 - `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. This is for books in Foolbook's own format, so a hotspot or text shape can be shown without a ToolBook class word. A ToolBook file does not get this reading. Tested in `engine/test_show_hide_name.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.
 - An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
@@ -23,6 +24,9 @@
 
 ## Unreleased
 
+- `get f()` leaves what f gives in `it`, so `return it` passes it on.
+- `increment(x)`, `decrement( x )` and `increment x by n` change the variable. Before, the bracket form did nothing and `by n` added 1.
+- `ansiToChar(n)` gives the character with that ANSI code, and `charToAnsi(c)` the code of its first character.
 - `pageNumber of this page`, `pageCount of this book`, and a property of another page by number or name, such as `questionno of page i`.
 - A chunk of a variable can be set: `char i of pool = " "`, `item 2 of list = "x"`, `word 3 of s = "four"`. An item or textline past the end pads the list.
 - `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
@@ -30,6 +34,8 @@
 - The openscript_analysis submodule moves to d741054, which has `formats/tbk/store.py`. Opening a ToolBook 8 object store and the Wingdings face test no longer fail on a missing module.
 - `go to page(n)` goes to the nth page when n is a whole number and no page has that name, and `go to page(pages[3])` takes an array element.
 - `random(n)` gives a whole number from 1 to n.
+- `a is b` and `a is not b` compare like `=` and `<>` with a variable, number, flag, bare word or `null` on the right. `is not "x"` no longer reads as `is "x"`.
+- An object can be named on another page or its background: `text of field("index") of parent of page i`, `set checked of button(temp) of page i to false`, `isObject(rectangle("correct") of page i)`. Text, visible, enabled and checked are read and set.
 - Chunks of text: `word 2 of cmdLine`, `item i of pool`, `chars 2 to 4 of name` and `textline 3 of text of field "a"` give that part of the value. The index can be a sum or an array element, and past the end is empty.
 - A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
 - `while ... end while` and `do ... until` loop. `break while`, `break step`, `break do` and `break conditions` leave that block and the handler goes on, and `continue` starts the next pass. A handler with a `while` or `conditions` block inside it is no longer cut short at that block's own `end`.
