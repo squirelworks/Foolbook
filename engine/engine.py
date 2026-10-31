@@ -1271,6 +1271,13 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    if match.group(1).lower() == "random":
+        # OpenScript's random(n) is a whole number from 1 to n.
+        top = _number(_eval(match.group(2), state))
+        if top is None:
+            return _UNRESOLVED
+        import random
+        return random.randint(1, max(int(top), 1))
     from engine import dll
     linked = dll.find(state, match.group(1))
     if linked is not None:
