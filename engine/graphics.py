@@ -166,6 +166,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                         fill=ink,
                         width=max(1, int(w) - 16),
                     )
+        elif kind == "media":
+            _paint_media(canvas, shape, fill, outline)
         elif kind == "image":
             shown = shape
             face = ""
@@ -199,6 +201,28 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _paint_media(canvas, shape, fill, outline):
+    """A media clip: a play mark, the path, and what happened when it was clicked."""
+    x, y, w, h = _box(shape)
+    ink = outline or "black"
+    canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "#f0f0f0", outline=ink)
+    side = max(8, min(16, int(h) - 8))
+    top = y + min(h / 2, 14) - side / 2
+    canvas.create_polygon(x + 6, top, x + 6, top + side, x + 6 + side, top + side / 2, fill=ink, outline="")
+    canvas.create_text(
+        x + side + 12, y + min(h / 2, 14),
+        text=str(shape.get("text") or shape.get("src") or "(no file)"),
+        anchor="w", fill=ink, width=max(1, int(w) - side - 16),
+    )
+    if shape.get("note"):
+        canvas.create_text(
+            x + 6, y + h - 4,
+            text=str(shape["note"]),
+            anchor="sw", fill="#8a1c1c" if not str(shape["note"]).startswith("Playing") else ink,
+            width=max(1, int(w) - 12),
+        )
 
 
 def _flush_caret(canvas, caret):
