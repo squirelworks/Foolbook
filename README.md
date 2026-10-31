@@ -118,6 +118,8 @@ The button's script runs first. A script with no `to handle` line is read as the
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.
 
+`to handle leavePage` runs before the next page is shown, once per departure. If it goes to a page, that page is shown instead. A `go to` inside the leave script does not run the leave script again, so it cannot loop. `engine/test_page_leave.py` tests it.
+
 ## Design notes
 
 - Foolbook is the viewer. A course module drives which book it opens.
