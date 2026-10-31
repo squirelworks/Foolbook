@@ -2,9 +2,9 @@
 
 ## 2026-10-31
 
-- In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook book, or an export of one, does not get this reading (`engine.origin.is_toolbook`), so NIDA clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
+- In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook file does not get this reading (`engine.origin.is_toolbook`). No button in the converted NIDA courses has such a script, so their clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
-- `engine.origin.is_toolbook(book)` says whether a book came from ToolBook: a `.tbk`, `.sbk` or TBKX, or a Foolbook export of one (its pages are `settled`). A book in Foolbook's own format is not. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
+- `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
 
 ## Unreleased
 
