@@ -2,7 +2,7 @@
 
 ## 2026-10-31
 
-- `engine.origin.is_toolbook(book)` says whether a book came from ToolBook: a `.tbk`, `.sbk` or TBKX, or a Foolbook export of one (its pages are `settled`). A book in Foolbook's own format is not. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
+- `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
 
 ## Unreleased
 

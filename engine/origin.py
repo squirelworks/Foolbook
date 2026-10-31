@@ -1,27 +1,24 @@
 """Which reader a book is for: ToolBook's, or Foolbook's own.
 
 Foolbook is a reader for its own format. ToolBook behavior belongs to
-books that came from ToolBook: a .tbk, .sbk or TBKX opened as it is, or a
-Foolbook file exported from one, whose pages are marked ``settled``. A book
-written in Foolbook's own format gets Foolbook behavior. Code that differs
-between the two asks here, and nowhere else.
+ToolBook files. The file says which it is in its first bytes, whatever its
+name: a ToolBook file renamed .fbk is still ToolBook, and an FBK1 envelope
+named .tbk is still Foolbook. Code that differs between the two asks here.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from foolbook.model import Book
-
-# Files Foolbook writes or reads as its own. Anything else is a ToolBook file.
-_OWN = {".fbk", ".fsk", ".fsc", ".json", ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".odt",
-        ".txt", ".text", ".md", ".markdown", ".rst", ".log", ".rtf"}
 
 
 def is_toolbook(book: Book | None) -> bool:
-    if book is None:
+    if book is None or not book.path:
         return False
-    path = Path(book.path or "")
-    if path.suffix.lower() not in _OWN and book.path:
+    from toolbook.format import is_toolbook as toolbook_bytes
+    if toolbook_bytes(book.path):
         return True
-    return any((page.raw or {}).get("settled") for page in book.pages or [])
+    from engine.tbx import is_tbx
+    try:
+        return bool(is_tbx(book.path))
+    except Exception:
+        return False
