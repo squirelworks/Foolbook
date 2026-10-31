@@ -13,6 +13,7 @@ LINK = """linkDLL32 "kernel32.dll"
     INT WritePrivateProfileStringA(STRING, STRING, STRING, STRING)
     INT GetPrivateProfileIntA(STRING, STRING, INT, STRING)
     INT GetPrivateProfileStringA(STRING, STRING, STRING, STRING, INT, STRING)
+    LONG GetTickCount()
 end linkDLL32
 """
 
@@ -46,6 +47,14 @@ class LinkedDll(unittest.TestCase):
     def test_the_linked_dll_is_in_syslinkeddlls(self):
         run_handler(self.state, LINK + 'if "kernel32.dll" is not in sysLinkedDLLs then\nmissing = 1\nend if\nnames = sysLinkedDLLs')
         self.assertEqual(self.state.variables["names"], "kernel32.dll")
+
+    def test_gettickcount_counts_milliseconds(self):
+        run_handler(self.state, LINK + "t1 = GetTickCount()")
+        import time
+        time.sleep(0.05)
+        run_handler(self.state, LINK + "t2 = GetTickCount()\nd = t2 - t1")
+        self.assertGreaterEqual(self.state.variables["d"], 40)
+        self.assertLess(self.state.variables["d"], 5000)
 
     def test_an_unlinked_function_is_not_answered(self):
         run_handler(self.state, 'mode = GetPrivateProfileIntA("Lesson", "Lesson Mode", 2, "NIDAREC.INI")')
