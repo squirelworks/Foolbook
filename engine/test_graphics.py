@@ -48,9 +48,20 @@ class NamedAlignment(unittest.TestCase):
         _text, _size, _wrap, anchor, tx, _ty = self.fit("right")
         self.assertEqual((anchor, tx), ("e", 400))
 
-    def test_left_and_the_tbk_number_still_work(self):
-        self.assertEqual(self.fit("left")[3], "w")
-        self.assertEqual(self.fit(2)[3], "center")
+    def test_left_is_the_left_edge(self):
+        self.assertEqual(self.fit("left")[3:5], ("w", 0))
+
+    def test_a_tbk_number_draws_as_before(self):
+        # What main drew for the .tbk numbers before names were read.
+        self.assertEqual(self.fit(0), ("Next", 12, 0, "w", 0, 20.0))
+        self.assertEqual(self.fit(1), ("Next", 12, 0, "e", 400, 20.0))
+        self.assertEqual(self.fit(2), ("Next", 12, 0, "center", 200.0, 20.0))
+        from engine.test_draw_kinds import drawn
+        canvas = drawn({"kind": "text", "x": 0, "y": 0, "w": 200, "h": 80, "text": "one\ntwo", "align": 2})
+        texts = [call for call in canvas.calls if call[0] == "text"]
+        self.assertEqual(texts, [("text", [0, 4], {
+            "text": "one\ntwo", "anchor": "nw", "font": ("TkDefaultFont", 12), "fill": "black", "width": 200,
+        })])
 
     def test_a_wrapped_centered_field_is_justified_centre(self):
         from engine.test_draw_kinds import drawn
