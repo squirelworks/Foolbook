@@ -34,7 +34,7 @@ Done:
 Furthering v1.
 
 - Quizzes extracted from a raw `.tbk`
-- System books used as a runtime shell, not only as a jump target. Started: an `.fbk` that names `"system": "x.fsk"` runs that book's `to handle` and `to get` handlers for `send NAME` and `NAME(...)` before the approximations (test: `engine/test_system_handlers.py`). A `.tbk` that loads `.sbk` system books still goes to the approximations.
+- System books used as a runtime shell, not only as a jump target. Started: an `.fbk` that names `"system": "x.fsk"` sends a call `NAME(...)` to that book's handler before the approximations (test: `engine/test_system_handlers.py`). A `.tbk` that loads `.sbk` system books still goes to the approximations.
 - Produce backwards-compatible `.tbk` and `.sbk` files
 
 ### Next check: TB80RTM opens a generated shell

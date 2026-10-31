@@ -324,11 +324,6 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                         actions.append({"kind": "goto", "page": page, "book": book})
                 i += 1
                 continue
-            from engine import systembook
-            if systembook.has(state, name):
-                actions.extend(systembook.run(state, name)[0])
-                i += 1
-                continue
             actions.append({"kind": "send", "name": name})
             i += 1
             continue
