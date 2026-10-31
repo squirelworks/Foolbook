@@ -17,7 +17,7 @@ from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
-from engine import fields
+from engine import bookmenu, fields
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -166,6 +166,8 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             enter_page(state)
         finally:
             painting["on"] = False
+        if held.get("menu_for") is not state.book:
+            _menubar()
         root.update_idletasks()
         fitted["size"] = (gfx.winfo_width(), gfx.winfo_height())
         _apply_fit()
@@ -468,6 +470,23 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             return
         press(state, label, target)
         show(state.index)
+
+    def _menubar():
+        # The book's own menu bar. A book without one gets no bar.
+        held["menu_for"] = state.book
+        bar = tk.Menu(root)
+        for label, items in bookmenu.menus(state.book):
+            menu = tk.Menu(bar, tearoff=0)
+            for item in items:
+                menu.add_command(label=item["label"], command=lambda item=item: _on_menu(item))
+            bar.add_cascade(label=label, menu=menu)
+        root.config(menu=bar)
+
+    def _on_menu(item: dict):
+        if follow(state, bookmenu.choose(state, item)):
+            show(state.index)
+        elif state.variables.pop("__redraw", None):
+            _paint()
 
     gfx.bind("<Configure>", _on_configure)
     gfx.bind("<ButtonPress-1>", on_press)

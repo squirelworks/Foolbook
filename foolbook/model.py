@@ -37,6 +37,7 @@ class Book:
     shells: list[str] = field(default_factory=list)
     handlers: list[Handler] = field(default_factory=list)
     props: dict = field(default_factory=dict)
+    menubar: list = field(default_factory=list)   # [{"label", "items": [{"label", "page" or "script"}]}]
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:
