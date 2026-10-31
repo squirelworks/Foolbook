@@ -388,6 +388,8 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
             item["y"] = my(shape.get("y") or 0)
             item["w"] = float(shape.get("w") or 0) * scale
             item["h"] = float(shape.get("h") or 0) * scale
+        if shape.get("tile"):
+            item["cell"] = max(1, int(round(scale)))
         if shape.get("points"):
             item["points"] = [
                 [mx(pt[0]), my(pt[1])] for pt in shape["points"] if len(pt) >= 2
@@ -415,6 +417,10 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
                     item_run["size"] = max(1, int(round(float(run["size"]) * scale * 96 / 72)))
                 scaled.append(item_run)
             item["runs"] = scaled
+        if shape.get("stroke"):
+            item["stroke"] = max(1.0, float(shape["stroke"]) * scale)
+        if shape.get("radius"):
+            item["radius"] = float(shape["radius"]) * scale
         for key in ("marginL", "marginR", "indentRest"):
             if shape.get(key):
                 item[key] = int(round(float(shape[key]) * scale))
