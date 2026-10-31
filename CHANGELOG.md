@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The reader shows a bar under the page with the buttons the book's first viewer asks for: Previous, Next and the page number (`2 of 3`). Previous and Next move one page in book order and stop at the ends. A book with no viewer shows no bar. Test: `engine/test_viewer_bar.py`.
 - The reader keeps a book's `viewers`, the list of records with a name, a size and the buttons a viewer shows, as `Book.viewers` in file order. A record that is not a dict is left out. A book with none has an empty list. Nothing is drawn from it yet. Test: `engine/test_viewers.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
