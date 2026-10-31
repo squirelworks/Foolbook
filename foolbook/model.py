@@ -40,10 +40,18 @@ class Book:
     author: str = ""
     first_page: str = ""
 
-    def start(self) -> int:
-        """Where a reader opens the book: its first page id when that page exists, else the first page."""
-        found = self.index_of(self.first_page) if self.first_page else -1
-        return found if found >= 0 else 0
+    def start(self, last: str = "") -> int:
+        """Where a reader opens the book.
+
+        The student's saved last page when there is one and it exists, else
+        the book's first page id when that page exists, else the first page.
+        A ToolBook book has no first page id, so it opens on page 0 as before.
+        """
+        for wanted in (last, self.first_page):
+            found = self.index_of(wanted) if wanted else -1
+            if found >= 0:
+                return found
+        return 0
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:
@@ -68,6 +76,8 @@ class RuntimeState:
     # Books already open. ToolBook does not close one to show another.
     shelf: dict = field(default_factory=dict)
     where: dict = field(default_factory=dict)
+    # sysBooks, first searched first: (name as pushed, Book or None).
+    sysbooks: list = field(default_factory=list)
 
     @property
     def page(self) -> Page | None:

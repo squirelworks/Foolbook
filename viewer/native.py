@@ -72,7 +72,6 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     root.bind("<Configure>", _keep_window)
 
-    pages = book.pages
     last = progress.last_page(course_id)
     start_at = book.start()
 
@@ -98,10 +97,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         tk.Label(win, text="For greater values of 2.").pack(side="bottom", pady=8)
         root.wait_window(win)
         if chosen.get() == 1 and last:
-            for i, p in enumerate(pages):
-                if p.id == last:
-                    start_at = i
-                    break
+            start_at = book.start(last)
 
     idx = tk.IntVar(value=start_at)
     state = RuntimeState(book=book, index=start_at)
@@ -429,7 +425,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
             call(state, "handleQuizClick", f'"{picked}"')
-        script = click_script(obj)
+        script = click_script(obj, state.book)
         moved = False
         revealed = False
         if script:
