@@ -765,6 +765,30 @@ def _fit_image(raw: bytes, width: int, height: int) -> bytes:
         return raw
 
 
+def _fit_image(image, width: int, height: int, fit: str | None):
+    """The picture as its frame shows it, exactly width by height.
+
+    fill, or no fit, stretches it to the frame, as every book did before.
+    contain scales it to fit inside and centres it. none keeps its size
+    and clips it at the frame. Where the picture does not reach is clear.
+    """
+    from PIL import Image
+    fit = (fit or "fill").lower()
+    if fit == "fill" or fit not in ("contain", "none"):
+        if image.size == (width, height):
+            return image
+        return image.resize((width, height), Image.Resampling.NEAREST)
+    frame = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    if fit == "contain":
+        scale = min(width / image.width, height / image.height)
+        size = (max(1, round(image.width * scale)), max(1, round(image.height * scale)))
+        shown = image.resize(size, Image.Resampling.NEAREST)
+        frame.paste(shown, ((width - size[0]) // 2, (height - size[1]) // 2))
+    else:
+        frame.paste(image.crop((0, 0, min(width, image.width), min(height, image.height))), (0, 0))
+    return frame
+
+
 def _photo(canvas, shape: dict, base: str | Path | None):
     """A button picture. The grey matte is transparent, so it must not paint black."""
     try:
@@ -788,8 +812,8 @@ def _photo(canvas, shape: dict, base: str | Path | None):
             from engine.loader import _clear_edge
             _clear_edge(image)
         width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
-        if width > 1 and height > 1 and image.size != (width, height):
-            image = image.resize((width, height), Image.Resampling.NEAREST)
+        if width > 1 and height > 1:
+            image = _fit_image(image, width, height, shape.get("fit"))
         return ImageTk.PhotoImage(image, master=canvas)
     except Exception:
         return None
