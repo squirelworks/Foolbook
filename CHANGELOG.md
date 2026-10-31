@@ -1,10 +1,15 @@
 # Changelog
 
+## 2026-10-31
+
+- `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
+
 ## Unreleased
 
 - `send NAME args` runs the nearest `to handle NAME`: the page, the book, then each system book in `sysBooks` order. A `forward` goes on to the next one up, and a send no handler takes is left to the reader as before (`send next`). `send x to button "OK"` names its target and still takes the old path, and `send okClicked` still goes to the quiz until that family is retired.
 - A call such as `x = getQuizScore()` or `get setMenuFlag(1)` runs the `to get` handler it reaches first: the page, the book, then each system book in `sysBooks` order. The built-in answers in `menu`, `fillin` and `quiz` are asked only when no handler is found. Arguments bind to the header's names, `return` gives the value, a `go to` inside goes to the line that called it, and only the handler's `system` variables keep what it did.
 - `push "nc81base.sbk" onto sysBooks` opens that system book from beside the book, one folder up, or `core/`, and keeps it open with its handlers. The last push is first in `sysBooks`, and `sysBooks` reads as that list. A system book that is not found keeps its name. Calls do not reach its handlers yet.
+- Deprecated and gone: the `foolbookeditor` package and the `author*` entry in `pyproject.toml`. The editor lives in [FoolbookEditor](https://github.com/squirelworks/FoolbookEditor), which owns `author` and `foolbookeditor`. Installing both no longer gives two packages of the same name. `python3 -m foolbookeditor` from FoolbookEditor is the editor. The shim here imported `author.gui`, which this repository no longer has.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
 - `getObjectiveScore(n)` is the average score of the questions of objective n, as nc81test.sbk adds them (`score div count`). Each question keeps its objective (`__quizTestNo`) when the pool is built by `addObjectiveToPool` or `addObjectiveToPoolEx`. P10410 (93951303) uses it to take the Review link off an objective that is already 100. The link itself goes with the group change (#17).
