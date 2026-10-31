@@ -1423,6 +1423,17 @@ def _call_value(expr: str, state: RuntimeState):
         if whole is _UNRESOLVED:
             return _UNRESOLVED
         return len(_pieces(counted, _as_text(whole))[0])
+    if match.group(1).lower() in ("ansitochar", "chartoansi"):
+        value = _eval(match.group(2), state)
+        if value is _UNRESOLVED:
+            return _UNRESOLVED
+        if match.group(1).lower() == "chartoansi":
+            text = _as_text(value)
+            return ord(text[0].encode("cp1252", "replace")[:1] or b"\0") if text else 0
+        number = _number(value)
+        if number is None:
+            return _UNRESOLVED
+        return bytes([int(number) & 0xFF]).decode("cp1252", "replace")
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
