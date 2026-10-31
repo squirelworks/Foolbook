@@ -5,7 +5,15 @@ A ToolBook page stream is not a shape source. When a .tbk is open, that
 stream is decoded to handler source and the engine runs it.
 
   rect, ellipse   x, y, w, h, fill, outline
+  roundrect       x, y, w, h, fill, outline, radius (default 8)
+  arc             x, y, w, h, start, sweep: degrees, zero east, counterclockwise
+  pie             the same, filled back to the centre (start 0, sweep 90 when missing)
+  chord           the same, closed by the straight line between the two ends
+  hotspot         x, y, w, h and an item. Clicked, never drawn.
+
+stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
+  curve           points: [[x, y], ...], drawn as a polyline through them for now
   text            x, y, text
   image           x, y, and src (a file beside the book) or data (base64 BMP, PNG, or GIF)
 
@@ -60,38 +68,55 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     for shape in shapes:
         caret = _flush_caret(canvas, caret)
         kind = (shape.get("kind") or "rect").lower()
-        if shape.get("visible") is False:
+        if shape.get("visible") is False or kind == "hotspot":
             continue
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"
+        pen = _pen(shape)
         if kind == "polygon":
             flat = _points(shape)
             if len(flat) >= 6:
-                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
-        elif kind == "line":
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
+        elif kind in ("line", "curve"):
             flat = _points(shape)
             if len(flat) >= 4:
-                canvas.create_line(*flat, fill=outline or fill or "black")
+                canvas.create_line(*flat, fill=outline or fill or "black", **pen)
+        elif kind == "roundrect":
+            x, y, w, h = _box(shape)
+            flat = _round_box(x, y, w, h, shape.get("radius"))
+            if len(flat) >= 6:
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
-            canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+            canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
+        elif kind in ("pie", "chord"):
+            x, y, w, h = _box(shape)
+            start, sweep = _angles(shape)
+            canvas.create_arc(
+                x, y, x + w, y + h, start=start, extent=sweep, style="pieslice" if kind == "pie" else "chord", fill=fill, outline=outline or "", **pen
+            )
         elif kind == "arc":
             x, y, w, h = _box(shape)
             ends = shape.get("ends") or []
-            if len(ends) >= 2:
+            if shape.get("start") is not None and shape.get("sweep") is not None:
+                start, sweep = _angles(shape)
+                canvas.create_arc(
+                    x, y, x + w, y + h, start=start, extent=sweep, style="arc", outline=outline or "black", **pen
+                )
+            elif len(ends) >= 2:
                 flat = _arc_between(x, y, w, h, ends)
                 if len(flat) >= 4:
-                    canvas.create_line(*flat, fill=outline or "#ffffff", width=2)
+                    canvas.create_line(*flat, fill=outline or "#ffffff", width=pen.get("width", 2))
             elif int(shape.get("pattern") or 0) == 0x39:
                 flat = _arc_curve(x, y, w, h, shape.get("rays") or [])
                 if len(flat) >= 4:
-                    canvas.create_line(*flat, fill=outline or "#808080")
+                    canvas.create_line(*flat, fill=outline or "#808080", **pen)
             else:
                 flat = _arc_pie(x, y, w, h, shape.get("rays") or [])
                 if len(flat) >= 6:
-                    canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+                    canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
                 else:
-                    canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+                    canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
         elif kind == "text":
             x, y, w, h = _box(shape)
             if shape.get("focused"):
@@ -123,6 +148,9 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             text_kwargs = {}
             if wrap:
                 text_kwargs["width"] = wrap
+                if isinstance(shape.get("align"), str):
+                    # A named alignment is the .fbk's. A wrapped .tbk field keeps its left edge.
+                    text_kwargs["justify"] = ("left", "right", "center")[_align_code(shape["align"])]
             canvas.create_text(
                 tx,
                 ty,
@@ -195,7 +223,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 )
         else:
             x, y, w, h = _box(shape)
-            canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
+            tiled = _tiled(canvas, shape, w, h, fill, outline)
+            if tiled is not None:
+                photos.append(tiled)
+                canvas.create_image(x, y, image=tiled, anchor="nw")
+                fill = ""
+            canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
@@ -585,17 +618,26 @@ def _typeface(shape, size):
         size = -max(1, int(round(abs(int(size)) / _ink_factor())))
     weight = "bold" if shape.get("bold") else "normal"
     slant = "italic" if shape.get("italic") else "roman"
-    key = (face, int(size), weight, slant)
+    underline = 1 if shape.get("underline") else 0
+    key = (face, int(size), weight, slant, underline)
     found = _FONTS.get(key)
     if found is not None:
         return found
     try:
         from tkinter import font as tkfont
-        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant)
+        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant, underline=underline)
         _FONTS[key] = found
         return found
     except Exception:
-        style = " ".join(part for part in ("bold" if weight == "bold" else "", "italic" if slant == "italic" else "") if part)
+        style = " ".join(
+            part
+            for part in (
+                "bold" if weight == "bold" else "",
+                "italic" if slant == "italic" else "",
+                "underline" if underline else "",
+            )
+            if part
+        )
         if style:
             return (face, size, style)
         return (face, size)
@@ -649,12 +691,25 @@ def _fit_text(shape, x, y, w, h):
         return raw, size, max(1, w), "nw", x, y
     words = [line for line in pieces if line.strip()]
     count = max(1, len(words))
-    align = int(shape.get("align") or 0)
+    align = _align_code(shape.get("align"))
     if align == 2:
         return raw, size, 0, "center", x + w / 2, y + h / 2
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
     return raw, size, 0, "w", x, y + h / 2
+
+
+def _align_code(value) -> int:
+    """0 left, 1 right, 2 centre. A .tbk stores the number. An .fbk may name it."""
+    if isinstance(value, str):
+        named = {"left": 0, "right": 1, "center": 2, "centre": 2}
+        if value.strip().lower() in named:
+            return named[value.strip().lower()]
+    try:
+        code = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return code if code in (0, 1, 2) else 0
 
 
 def _arc_between(x, y, w, h, ends) -> list[int]:
@@ -727,6 +782,50 @@ def _arc_pie(x, y, w, h, rays) -> list[int]:
     return flat
 
 
+def _angles(shape: dict, start: float = 0.0, sweep: float = 90.0) -> tuple[float, float]:
+    """Start angle and sweep in degrees. Zero is east and a positive sweep turns counterclockwise."""
+    try:
+        start = float(shape.get("start") if shape.get("start") is not None else start)
+        sweep = float(shape.get("sweep") if shape.get("sweep") is not None else sweep)
+    except (TypeError, ValueError):
+        pass
+    return start, sweep
+
+
+def _pen(shape: dict) -> dict:
+    """The outline width the shape asks for. Nothing when it names none, so Tk keeps its 1."""
+    if shape.get("stroke") is None:
+        return {}
+    try:
+        return {"width": max(0.0, float(shape["stroke"]))}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _round_box(x, y, w, h, radius=None) -> list[float]:
+    """A rectangle whose corners are quarter circles. The radius is clamped to half the short side."""
+    if w < 1 or h < 1:
+        return []
+    r = 8.0 if radius is None else max(0.0, float(radius))
+    r = min(r, w / 2, h / 2)
+    if r <= 0:
+        return [x, y, x + w, y, x + w, y + h, x, y + h]
+    steps = 6
+    flat = []
+    # Corner centres, clockwise from top left, with the angle each quarter starts at.
+    for cx, cy, start in (
+        (x + r, y + r, 180),
+        (x + w - r, y + r, 270),
+        (x + w - r, y + h - r, 0),
+        (x + r, y + h - r, 90),
+    ):
+        for step in range(steps + 1):
+            angle = math.radians(start + 90 * step / steps)
+            flat.append(cx + r * math.cos(angle))
+            flat.append(cy + r * math.sin(angle))
+    return flat
+
+
 def _box(shape: dict) -> tuple[int, int, int, int]:
     bounds = shape.get("bounds")
     if isinstance(bounds, (list, tuple)) and len(bounds) >= 4:
@@ -745,6 +844,19 @@ def _points(shape: dict) -> list[int]:
         if len(pt) >= 2:
             flat.extend((int(pt[0]), int(pt[1])))
     return flat
+
+
+def _tiled(canvas, shape: dict, w: int, h: int, fill: str, outline: str):
+    """The shape's 8 by 8 pattern, repeated to its size. None when it has none."""
+    from engine import patterns
+    grid = patterns.pixels(shape.get("tile"), outline or "#000000", fill or "#ffffff", shape.get("cell") or 1)
+    if not grid or w < 1 or h < 1:
+        return None
+    tile = tk.PhotoImage(master=canvas, width=len(grid[0]), height=len(grid))
+    tile.put(" ".join("{" + " ".join(line) + "}" for line in grid))
+    photo = tk.PhotoImage(master=canvas, width=int(w), height=int(h))
+    photo.tk.call(photo, "copy", tile, "-to", 0, 0, int(w), int(h))
+    return photo
 
 
 def _fit_image(raw: bytes, width: int, height: int) -> bytes:
