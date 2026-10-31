@@ -7,6 +7,9 @@ stream is decoded to handler source and the engine runs it.
   rect, ellipse   x, y, w, h, fill, outline
   roundrect       x, y, w, h, fill, outline, radius (default 8)
   arc             x, y, w, h, start, sweep: degrees, zero east, counterclockwise
+  pie             the same, filled back to the centre (start 0, sweep 90 when missing)
+  chord           the same, closed by the straight line between the two ends
+  hotspot         x, y, w, h and an item. Clicked, never drawn.
 
 stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
@@ -65,7 +68,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     for shape in shapes:
         caret = _flush_caret(canvas, caret)
         kind = (shape.get("kind") or "rect").lower()
-        if shape.get("visible") is False:
+        if shape.get("visible") is False or kind == "hotspot":
             continue
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"
@@ -86,6 +89,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
+        elif kind in ("pie", "chord"):
+            x, y, w, h = _box(shape)
+            start, sweep = _angles(shape)
+            canvas.create_arc(
+                x, y, x + w, y + h, start=start, extent=sweep, style="pieslice" if kind == "pie" else "chord", fill=fill, outline=outline or "", **pen
+            )
         elif kind == "arc":
             x, y, w, h = _box(shape)
             ends = shape.get("ends") or []
@@ -139,6 +148,9 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             text_kwargs = {}
             if wrap:
                 text_kwargs["width"] = wrap
+                if isinstance(shape.get("align"), str):
+                    # A named alignment is the .fbk's. A wrapped .tbk field keeps its left edge.
+                    text_kwargs["justify"] = ("left", "right", "center")[_align_code(shape["align"])]
             canvas.create_text(
                 tx,
                 ty,
@@ -606,17 +618,26 @@ def _typeface(shape, size):
         size = -max(1, int(round(abs(int(size)) / _ink_factor())))
     weight = "bold" if shape.get("bold") else "normal"
     slant = "italic" if shape.get("italic") else "roman"
-    key = (face, int(size), weight, slant)
+    underline = 1 if shape.get("underline") else 0
+    key = (face, int(size), weight, slant, underline)
     found = _FONTS.get(key)
     if found is not None:
         return found
     try:
         from tkinter import font as tkfont
-        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant)
+        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant, underline=underline)
         _FONTS[key] = found
         return found
     except Exception:
-        style = " ".join(part for part in ("bold" if weight == "bold" else "", "italic" if slant == "italic" else "") if part)
+        style = " ".join(
+            part
+            for part in (
+                "bold" if weight == "bold" else "",
+                "italic" if slant == "italic" else "",
+                "underline" if underline else "",
+            )
+            if part
+        )
         if style:
             return (face, size, style)
         return (face, size)
@@ -670,12 +691,25 @@ def _fit_text(shape, x, y, w, h):
         return raw, size, max(1, w), "nw", x, y
     words = [line for line in pieces if line.strip()]
     count = max(1, len(words))
-    align = int(shape.get("align") or 0)
+    align = _align_code(shape.get("align"))
     if align == 2:
         return raw, size, 0, "center", x + w / 2, y + h / 2
     if align == 1:
         return raw, size, 0, "e", x + w, y + h / 2
     return raw, size, 0, "w", x, y + h / 2
+
+
+def _align_code(value) -> int:
+    """0 left, 1 right, 2 centre. A .tbk stores the number. An .fbk may name it."""
+    if isinstance(value, str):
+        named = {"left": 0, "right": 1, "center": 2, "centre": 2}
+        if value.strip().lower() in named:
+            return named[value.strip().lower()]
+    try:
+        code = int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+    return code if code in (0, 1, 2) else 0
 
 
 def _arc_between(x, y, w, h, ends) -> list[int]:

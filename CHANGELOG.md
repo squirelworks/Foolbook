@@ -2,16 +2,26 @@
 
 ## 2026-10-31
 
+- A `.fbk` book can store `author` and `firstPage`. The reader opens at the first page id when that page exists, else at the first page, and so does a book opened with Open. A saved last page the student picks still wins, and a ToolBook book, which has no first page id, still opens on page 0. `engine/test_first_page.py`.
+- `foolbook.core.unknown_words(script)` gives FoolbookEditor the interpreter's answer through the core, so the editor does not import the engine. Tested in `engine/test_core_unknown_words.py`.
 - In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook file does not get this reading (`engine.origin.is_toolbook`). No button in the converted NIDA courses has such a script, so their clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.
 - A `roundrect` shape is drawn with rounded corners from its bounds and `radius` (8 when missing). It was a square box.
 - A shape's `stroke` is the width of its outline or line, in pixels, scaled with the page. Rect, roundrect, ellipse, line, polygon, and arc honor it. A shape with no `stroke` is drawn as before.
 - A `curve` shape is drawn as a polyline through its `points`. It was a box at its bounds. knownbugs.md says it is not smoothed yet.
 - An `arc` that stores `start` and `sweep` is drawn as that part of the ellipse in its bounds, unfilled. An arc read from a `.tbk` (endpoints or rays) is drawn as before.
+- A `pie` shape is drawn as a filled slice of the ellipse in its bounds, from `start` and `sweep`. It was a box.
+- A `chord` shape is drawn as the slice of the ellipse between `start` and `sweep`, closed by a straight line and filled. It was a box.
+- A `hotspot` shape is not drawn. A click inside it is the hotspot, and its `item` is followed like a button's. It was drawn as a box with an outline.
+- An `.fbk` text shape with `underline` is drawn underlined. Before, only face, size, bold, and italic were read.
+- An `.fbk` text shape may name its alignment: `left`, `center`, or `right`. A wrapped field is justified the same way. A named alignment used to stop the page from drawing, because only the `.tbk` number was read.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 - `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
 
 ## Unreleased
 
+- A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
+- `while ... end while` and `do ... until` loop. `break while`, `break step`, `break do` and `break conditions` leave that block and the handler goes on, and `continue` starts the next pass. A handler with a `while` or `conditions` block inside it is no longer cut short at that block's own `end`.
+- `linkDLL32 "kernel32.dll"` ... `end linkDLL32` declares DLL functions, `unlinkDLL` drops them, and `sysLinkedDLLs` lists the DLLs. A declared function with a shim in `engine/dlls/` answers. The first shim is kernel32's private profile calls: `GetPrivateProfileIntA` and `GetPrivateProfileStringA` read the INI beside the book and give the script's default when the key is not there, and `WritePrivateProfileStringA` keeps the value for the session without writing a file.
 - `r is in "0,1,2"`, `"nc81base.sbk" is not in sysBooks` and `word contains "bc"` test for text inside text, ignoring case. A course's `if "nc81base.sbk" is not in sysBooks` guard now pushes its system books, so nc81base, nc81test, nc81recs and nc81trnr are open when its enterBook ends.
 - `local int count`, `local string temp`, `local numbers[5]` and `local a, b` start each name blank when the line runs: 0 for a number type, empty otherwise, an empty array with brackets. A called handler counts from zero every time, and the caller's variable of the same name is left alone.
 - Sums are worked out: `+`, `-`, `*`, `/`, `div` and `mod`, times before plus, left to right, brackets first, on variables, numbers, calls and array elements. `score div count` is a whole number. A side that is not a number still leaves the sum unknown, so nothing is written from it.
