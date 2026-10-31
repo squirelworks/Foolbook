@@ -158,3 +158,9 @@ def compile_script(source: str, keywords: list[str] | None = None) -> bytes:
 
 def _compile(source: str, keywords: list[str] | None = None) -> bytes:
     return compile_script(source, keywords)
+
+
+def unknown_words(source: str) -> list[tuple[int, str]]:
+    """Lines of a script the reader's interpreter does not act on, as (line, word)."""
+    from engine.subset import unknown_words as find
+    return find(source)
