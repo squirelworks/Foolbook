@@ -211,6 +211,25 @@ def _handlers_of(raw: dict, name: str = "script") -> list:
     return [Handler(name=name, source=str(script))]
 
 
+def _backgrounds(data: dict) -> dict:
+    """Background pages by lowercase id. Each shape is tagged with its layer.
+
+    A background is a page with `"background": true`. It is not read as a
+    page. A page names it in `uses`, and its shapes are painted first.
+    """
+    found = {}
+    for raw in data.get("pages") or []:
+        if not raw.get("background"):
+            continue
+        shapes = [shape for shape in flatten_groups(raw.get("shapes") or []) if isinstance(shape, dict)]
+        for shape in shapes:
+            shape.setdefault("layer", "background")
+        name = str(raw.get("id") or "").lower()
+        if name:
+            found[name] = shapes
+    return found
+
+
 def flatten_groups(shapes: list) -> list:
     """A ``group`` shape from the editor becomes its children, in its place.
 
@@ -230,8 +249,12 @@ def flatten_groups(shapes: list) -> list:
 
 
 def _book_from_dict(path: Path, data: dict) -> Book:
+    backgrounds = _backgrounds(data)
     pages = []
     for raw in data.get("pages") or []:
+        if raw.get("background"):
+            continue
+        under = backgrounds.get(str(raw.get("uses") or "").lower()) or []
         pages.append(Page(
             id=raw.get("id") or raw.get("name") or "",
             text=list(raw.get("text") or []),
@@ -239,7 +262,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
             jumps=list(raw.get("jumps") or []),
             quiz=raw.get("quiz"),
             handlers=_handlers_of(raw, "enterPage"),
-            shapes=flatten_groups(raw.get("shapes") or []),
+            shapes=under + flatten_groups(raw.get("shapes") or []),
             raw=raw,
         ))
     return Book(
@@ -249,6 +272,8 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         shells=list(data.get("shells") or []),
         handlers=_handlers_of(data),
         props=dict(data.get("props") or {}),
+        author=str(data.get("author") or ""),
+        first_page=str(data.get("firstPage") or ""),
     )
 
 
