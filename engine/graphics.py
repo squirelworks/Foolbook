@@ -204,7 +204,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
 
 
 def _paint_media(canvas, shape, fill, outline):
-    """A media clip: a box with a play mark and the file it names."""
+    """A media clip: a box with a play mark, the file it names, and what a click did."""
     x, y, w, h = _box(shape)
     ink = outline or "black"
     canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "#f0f0f0", outline=ink)
@@ -216,6 +216,13 @@ def _paint_media(canvas, shape, fill, outline):
         text=str(shape.get("text") or shape.get("src") or "(no file)"),
         anchor="w", fill=ink, width=max(1, int(w) - side - 16),
     )
+    if shape.get("note"):
+        note = str(shape["note"])
+        canvas.create_text(
+            x + 6, y + h - 4, text=note, anchor="sw",
+            fill=ink if note.startswith("Playing") else "#8a1c1c",
+            width=max(1, int(w) - 12),
+        )
 
 
 def _flush_caret(canvas, caret):
