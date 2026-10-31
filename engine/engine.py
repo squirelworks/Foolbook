@@ -1240,6 +1240,9 @@ def enter_page(state: RuntimeState, hops: int = 8) -> bool:
     for _ in range(hops):
         if not follow(state, run_page_handlers(state, "enterpage")):
             break
+    if state.page is not None:
+        from engine.records import fill
+        fill(state.page)
     _reader_score(state)
     return state.index != start
 

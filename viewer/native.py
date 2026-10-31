@@ -425,6 +425,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
+        step = ((obj or {}).get("item") or {}).get("record")
+        if step and state.page is not None:
+            from engine.records import step as step_record
+            if step_record(state.page, step):
+                state.variables["__redraw"] = True
         picked = ((obj or {}).get("name") or "").upper()
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
