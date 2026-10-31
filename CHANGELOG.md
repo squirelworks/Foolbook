@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- `send NAME args` runs the nearest `to handle NAME`: the page, the book, then each system book in `sysBooks` order. A `forward` goes on to the next one up, and a send no handler takes is left to the reader as before (`send next`). `send x to button "OK"` names its target and still takes the old path, and `send okClicked` still goes to the quiz until that family is retired.
 - A call such as `x = getQuizScore()` or `get setMenuFlag(1)` runs the `to get` handler it reaches first: the page, the book, then each system book in `sysBooks` order. The built-in answers in `menu`, `fillin` and `quiz` are asked only when no handler is found. Arguments bind to the header's names, `return` gives the value, a `go to` inside goes to the line that called it, and only the handler's `system` variables keep what it did.
 - `push "nc81base.sbk" onto sysBooks` opens that system book from beside the book, one folder up, or `core/`, and keeps it open with its handlers. The last push is first in `sysBooks`, and `sysBooks` reads as that list. A system book that is not found keeps its name. Calls do not reach its handlers yet.
 - Deprecated and gone: the `foolbookeditor` package and the `author*` entry in `pyproject.toml`. The editor lives in [FoolbookEditor](https://github.com/squirelworks/FoolbookEditor), which owns `author` and `foolbookeditor`. Installing both no longer gives two packages of the same name. `python3 -m foolbookeditor` from FoolbookEditor is the editor. The shim here imported `author.gui`, which this repository no longer has.

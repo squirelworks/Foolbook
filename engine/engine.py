@@ -345,6 +345,12 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
                         actions.append({"kind": "goto", "page": page, "book": book})
                 i += 1
                 continue
+            # okClicked still goes to the quiz in follow() until that family is retired.
+            rest = line[m.end(1):].strip()
+            if name.lower() != "okclicked" and not _has_target(rest):
+                if _send(state, name, rest, actions):
+                    i += 1
+                    continue
             actions.append({"kind": "send", "name": name})
             i += 1
             continue
@@ -999,8 +1005,8 @@ def _signature(handler) -> tuple[str, list[str], str]:
     return kind, names, _strip_handler_end(rest)
 
 
-def find_handler(state: RuntimeState, name: str):
-    """The `to get NAME` a call reaches: the page, the book, then sysBooks in order."""
+def find_handlers(state: RuntimeState, name: str, kind: str = "get") -> list:
+    """The handlers for NAME, nearest first: the page, the book, then sysBooks in order."""
     want = (name or "").lower()
     places = []
     if state.page is not None:
@@ -1010,13 +1016,18 @@ def find_handler(state: RuntimeState, name: str):
     for _name, book in getattr(state, "sysbooks", []):
         if book is not None:
             places.append(book.handlers or [])
+    found = []
     for handlers in places:
         for handler in handlers:
-            if handler.name.lower() != want:
-                continue
-            if _signature(handler)[0] in ("", "get"):
-                return handler
-    return None
+            if handler.name.lower() == want and _signature(handler)[0] in ("", kind):
+                found.append(handler)
+    return found
+
+
+def find_handler(state: RuntimeState, name: str):
+    """The `to get NAME` a call reaches."""
+    found = find_handlers(state, name, "get")
+    return found[0] if found else None
 
 
 def _call_args(text: str) -> list[str]:
@@ -1049,19 +1060,29 @@ def call_handler(state: RuntimeState, handler, args: str):
     The handler's own names are its own. When it ends, only its system
     variables and the reader's `__` names keep what it did.
     """
-    _kind, names, body = _signature(handler)
     values = [_eval(arg, state) for arg in _call_args(args or "")]
+    called = state.variables.pop("__called", None)
+    result, actions = _invoke(state, handler, values)
+    pending = list(called or [])
+    pending.extend(action for action in actions if action.get("kind") != "note")
+    if pending:
+        state.variables["__called"] = pending
+    return result
+
+
+def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None):
+    """(returned value, actions) of one handler run in its own names."""
+    _kind, names, body = _signature(handler)
     depth = int(state.variables.get("__depth") or 0)
     if depth >= 64:
         state.note(f"too deep {handler.name}")
-        return None
+        return None, []
     before = dict(state.variables)
     for index, name in enumerate(names):
         state.variables[name] = values[index] if index < len(values) else ""
     state.variables["__depth"] = depth + 1
     state.variables.pop("__return", None)
-    called = state.variables.pop("__called", None)
-    actions = run_handler(state, body)
+    actions = run_handler(state, body, parents)
     result = state.variables.pop("__return", None)
     shared = {
         words[-1].rstrip("[]").lower()
@@ -1077,11 +1098,36 @@ def call_handler(state: RuntimeState, handler, args: str):
     variables.update(before)
     variables.update(kept)
     state.variables["__depth"] = depth
-    pending = list(called or [])
-    pending.extend(action for action in actions if action.get("kind") != "note")
-    if pending:
-        state.variables["__called"] = pending
-    return result
+    return result, actions
+
+
+def _has_target(rest: str) -> bool:
+    """`send x to button "OK"` names its target. That form is not sent up from here."""
+    bare = re.sub(r'"[^"]*"', '""', rest)
+    while True:
+        flat = re.sub(r"\([^()]*\)", "", bare)
+        if flat == bare:
+            break
+        bare = flat
+    return re.search(r"\bto\b", bare, re.IGNORECASE) is not None
+
+
+def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> bool:
+    """`send NAME args` runs the nearest `to handle NAME`. False when there is none.
+
+    A forward goes on to the next handler up. A forward past the last one
+    leaves the message to the reader, as an unhandled send.
+    """
+    found = find_handlers(state, name, "handle")
+    if not found:
+        return False
+    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    rest = [_signature(handler)[2] for handler in found[1:]]
+    _result, done = _invoke(state, found[0], values, rest)
+    actions.extend(done)
+    if not rest and any(action.get("kind") == "forward" for action in done):
+        actions.append({"kind": "send", "name": name})
+    return True
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
