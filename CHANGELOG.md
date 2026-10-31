@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- A book can store `viewers`, a list of records with a name, a size, and the buttons the reader shows. The reader reads the first one and shows a bar under the page with Previous, Next, and the page number (`2 of 3`) if the viewer asks for them. Previous and Next move one page in book order and stop at the ends. A book with no viewer shows no bar. The size is stored and not yet used. Test: `engine/test_viewers.py`.
+
 ## Unreleased
 
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).

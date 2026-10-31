@@ -37,6 +37,7 @@ class Book:
     shells: list[str] = field(default_factory=list)
     handlers: list[Handler] = field(default_factory=list)
     props: dict = field(default_factory=dict)
+    viewers: list[dict] = field(default_factory=list)
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:

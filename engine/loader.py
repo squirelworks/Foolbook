@@ -230,6 +230,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
         shells=list(data.get("shells") or []),
         handlers=_handlers_of(data),
         props=dict(data.get("props") or {}),
+        viewers=[v for v in data.get("viewers") or [] if isinstance(v, dict)],
     )
 
 

@@ -149,6 +149,10 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     main = ttk.Frame(root)
     main.pack(side="left", fill="both", expand=True)
+    # The buttons the book's first viewer asks for. No viewer, no bar.
+    bar = ttk.Frame(main)
+    bar.pack(side="bottom", fill="x")
+    held["bar"] = bar
     gfx = tk.Canvas(main, highlightthickness=0, bg="white")
     gfx.pack(fill="both", expand=True)
     view = {"scale": 1.0, "ox": 0.0, "oy": 0.0, "x0": 0.0, "y0": 0.0}
@@ -234,6 +238,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         finally:
             root.after_idle(lambda: held.__setitem__("lock", False))
         root.title(state.book.title or Path(state.book.path).name)
+        _chrome()
         gfx.delete("all")
         objects = _objects(p)
         realize(state.book.path, objects)
@@ -246,6 +251,21 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             shown = place_window(shown, scale, x0, y0, dx, dy)
         base = Path(state.book.path).parent
         draw(gfx, shown, base=base)
+
+    def _chrome():
+        from engine.viewers import chrome, first_viewer, page_number, step
+        wanted = chrome(first_viewer(state.book))
+        count = len(state.book.pages)
+        bar = held["bar"]
+        for child in bar.winfo_children():
+            child.destroy()
+        for name in wanted:
+            if name == "previous":
+                ttk.Button(bar, text="Previous", command=lambda: show(step(state.index, count, -1))).pack(side="left", padx=4, pady=2)
+            elif name == "next":
+                ttk.Button(bar, text="Next", command=lambda: show(step(state.index, count, 1))).pack(side="left", padx=4, pady=2)
+            elif name == "page":
+                ttk.Label(bar, text=page_number(state.index, count)).pack(side="right", padx=8)
 
     def _paint():
         # One draw, at the size already fitted. Drawing the raw page and
