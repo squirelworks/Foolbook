@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- In a ToolBook file, `go to next page` and `go to previous page` (also `prev`, and `of this book`) go to the page beside this one in book order, through `goto`, so leavePage runs. Before, they were notes and did nothing. A book in Foolbook's own format does not read them; it has `send next` and `send previous`. The converted NIDA courses are FBK1 files, so they are unchanged. Tested in `engine/test_go_next_page.py`.
 - quiz_check finds a `goto` page again. The viewer's page list shows every page id only in developer mode, so a spec's `goto` found no page. quiz_check now opens the developer page list, without `--debug` and the decoded files it writes beside the book. Tested in `tools/quiz_check/test_child_page_ids.py`.
 - `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. This is for books in Foolbook's own format, so a hotspot or text shape can be shown without a ToolBook class word. A ToolBook file does not get this reading. Tested in `engine/test_show_hide_name.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.

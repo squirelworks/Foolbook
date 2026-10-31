@@ -122,6 +122,8 @@ The button's script runs first. A script with no `to handle` line, which is how 
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
+In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. In a Foolbook book, `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.
