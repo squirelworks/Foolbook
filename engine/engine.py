@@ -99,6 +99,7 @@ _TEXT_OF_FIELD = re.compile(
     re.IGNORECASE,
 )
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
+_CLEAR = re.compile(r'clear\s+(.+)$', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
 _PROP_OF_PAGE = re.compile(
     r'(\w+)\s+of\s+(?:this\s+page|page\s+((?:(?!\s(?:and|or)\s)[^=<>])+))',
@@ -484,6 +485,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             at = int(m.group(1)) - 1
             if 0 <= at < len(text):
                 state.variables[name] = text[:at] + text[at + 1:]
+            i += 1
+            continue
+
+        m = _CLEAR.match(line)
+        if m:
+            if not _clear(state, m.group(1).strip()):
+                actions.append({"kind": "note", "text": f"cannot clear: {line}"})
             i += 1
             continue
 
@@ -972,6 +980,86 @@ def _put_chunk(state: RuntimeState, match: re.Match) -> None:
         parts[first - 1:last] = [value]
         text = glue.join(parts)
     state.variables[name] = text
+
+
+_CHUNK_OF = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+(.+)",
+    re.IGNORECASE,
+)
+
+
+def _clear(state: RuntimeState, target: str) -> bool:
+    """`clear text of field "x"`, `clear x`, `clear item 2 of list`, `clear word 1 of data`: empty it.
+
+    A whole container becomes empty. A chunk is taken out with its
+    delimiter, as `clear char N of x` always did: `clear item 1 of "a,b,c"`
+    leaves `b,c`. The container can be a variable, an array element
+    (`__menuOption[1]`) or a field's text. A target it cannot clear gives
+    False, and the caller notes the line and goes on.
+    """
+    if objects.PROPERTY.fullmatch(target) or _FIELD_TEXT.fullmatch(target):
+        _apply_set(state, target, "")
+        return True
+    if _container(state, target, "") is not None:
+        return True
+    chunk = _CHUNK_OF.fullmatch(target)
+    if not chunk:
+        return False
+    container = chunk.group(4).strip()
+    current = _container(state, container)
+    if current is None and (objects.PROPERTY.fullmatch(container) or _FIELD_TEXT.fullmatch(container)):
+        found = _eval(container, state)
+        current = None if found is _UNRESOLVED else _as_text(found)
+    if current is None:
+        return False
+    text = _delete_chunk(state, chunk.group(1), chunk.group(2), chunk.group(3), current)
+    if text is None:
+        return False
+    if _container(state, container, text) is None:
+        _apply_set(state, container, text)
+    return True
+
+
+def _container(state: RuntimeState, name: str, value=None):
+    """The text of a variable or array element by name, after writing value when one is given; else None."""
+    item = _ITEM.fullmatch(name)
+    if item:
+        array = _var(state, item.group(1))
+        if not isinstance(array, _Array):
+            return None
+        key = _item_key(item.group(2), state)
+        if value is not None:
+            array[key] = value
+        return _as_text(array[key])
+    if not re.fullmatch(r"[A-Za-z_]\w*", name):
+        return None
+    if value is not None:
+        state.variables[name] = value
+        return value
+    found = _var(state, name)
+    return None if found is _MISSING else _as_text(found)
+
+
+def _delete_chunk(state: RuntimeState, kind: str, first, last, text: str):
+    """text with chunks first..last of that kind taken out with their delimiter, or None when first is not a number."""
+    kind = kind.lower()
+    first = _number(_eval(first, state))
+    last = _number(_eval(last, state)) if last else first
+    if first is None or last is None:
+        return None
+    first, last = max(int(first), 1), max(int(last), int(first), 1)
+    if kind == "word":
+        spans = [m.span() for m in re.finditer(r"\S+", text)]
+        if first > len(spans):
+            return text
+        start = spans[first - 1][0]
+        stop = spans[last][0] if last < len(spans) else len(text)
+        if last >= len(spans) and first > 1:
+            start = spans[first - 2][1]
+        return text[:start] + text[stop:]
+    parts, glue = _pieces(kind, text)
+    del parts[first - 1:last]
+    return glue.join(parts)
 
 
 def _split_arithmetic(expr: str):

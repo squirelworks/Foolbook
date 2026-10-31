@@ -35,6 +35,7 @@
 - `GetTickCount()` linked from kernel32.dll gives milliseconds as Windows does, so a script can time itself. Tested in `engine/test_linked_dll.py`.
 - A `;` outside quotes ends a statement: `a = 1; b = 2` runs both, and `result = true;` sets true.
 - `uppercase(x)` and `lowercase(x)` change the case of text.
+- `clear` empties a field's text or a variable (`clear text of field "response" of this page`, `clear x`) and takes a chunk out with its delimiter, as `clear char N of x` did: `clear items 1 to 2 of "a,b,c,d"` leaves `c,d`, `clear word 1 of "one two"` leaves `two`. The container can be a variable, an array element (`clear char 1 of __menuOption[1]`) or a field (`clear textline n of text of field "text"`). A target it cannot clear is noted and the handler goes on.
 - `get f()` leaves what f gives in `it`, so `return it` passes it on.
 - A click's `target` is its object, `button "B" of page "P10210"`, so `object of target`, `name of target` and `enabled of target` work. `button temp` names an object by a variable.
 - `increment(x)`, `decrement( x )` and `increment x by n` change the variable. Before, the bracket form did nothing and `by n` added 1.
