@@ -425,6 +425,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = groups.NAMED_SHOW.fullmatch(line)
+        if m:
+            groups.set_named_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of shape", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
         m = groups.GROUP_SHOW.fullmatch(line)
         if m:
             groups.set_visible(state, m, m.group("verb").lower() == "show")
