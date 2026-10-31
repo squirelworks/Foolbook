@@ -6,6 +6,8 @@ stream is decoded to handler source and the engine runs it.
 
   rect, ellipse   x, y, w, h, fill, outline
   roundrect       x, y, w, h, fill, outline, radius (default 8)
+
+stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
   text            x, y, text
   image           x, y, and src (a file beside the book) or data (base64 BMP, PNG, or GIF)
@@ -65,39 +67,40 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             continue
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"
+        pen = _pen(shape)
         if kind == "polygon":
             flat = _points(shape)
             if len(flat) >= 6:
-                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
         elif kind == "line":
             flat = _points(shape)
             if len(flat) >= 4:
-                canvas.create_line(*flat, fill=outline or fill or "black")
+                canvas.create_line(*flat, fill=outline or fill or "black", **pen)
         elif kind == "roundrect":
             x, y, w, h = _box(shape)
             flat = _round_box(x, y, w, h, shape.get("radius"))
             if len(flat) >= 6:
-                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
-            canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+            canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
         elif kind == "arc":
             x, y, w, h = _box(shape)
             ends = shape.get("ends") or []
             if len(ends) >= 2:
                 flat = _arc_between(x, y, w, h, ends)
                 if len(flat) >= 4:
-                    canvas.create_line(*flat, fill=outline or "#ffffff", width=2)
+                    canvas.create_line(*flat, fill=outline or "#ffffff", width=pen.get("width", 2))
             elif int(shape.get("pattern") or 0) == 0x39:
                 flat = _arc_curve(x, y, w, h, shape.get("rays") or [])
                 if len(flat) >= 4:
-                    canvas.create_line(*flat, fill=outline or "#808080")
+                    canvas.create_line(*flat, fill=outline or "#808080", **pen)
             else:
                 flat = _arc_pie(x, y, w, h, shape.get("rays") or [])
                 if len(flat) >= 6:
-                    canvas.create_polygon(*flat, fill=fill, outline=outline or "")
+                    canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
                 else:
-                    canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
+                    canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
         elif kind == "text":
             x, y, w, h = _box(shape)
             if shape.get("focused"):
@@ -201,7 +204,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 )
         else:
             x, y, w, h = _box(shape)
-            canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
+            canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
@@ -731,6 +734,16 @@ def _arc_pie(x, y, w, h, rays) -> list[int]:
         flat.append(int(round(cx + rx * math.cos(angle))))
         flat.append(int(round(cy - ry * math.sin(angle))))
     return flat
+
+
+def _pen(shape: dict) -> dict:
+    """The outline width the shape asks for. Nothing when it names none, so Tk keeps its 1."""
+    if shape.get("stroke") is None:
+        return {}
+    try:
+        return {"width": max(0.0, float(shape["stroke"]))}
+    except (TypeError, ValueError):
+        return {}
 
 
 def _round_box(x, y, w, h, radius=None) -> list[float]:

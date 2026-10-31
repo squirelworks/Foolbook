@@ -415,6 +415,8 @@ def place_window(shapes, scale: float, x0: float, y0: float, dx: float, dy: floa
                     item_run["size"] = max(1, int(round(float(run["size"]) * scale * 96 / 72)))
                 scaled.append(item_run)
             item["runs"] = scaled
+        if shape.get("stroke"):
+            item["stroke"] = max(1.0, float(shape["stroke"]) * scale)
         if shape.get("radius"):
             item["radius"] = float(shape["radius"]) * scale
         for key in ("marginL", "marginR", "indentRest"):
