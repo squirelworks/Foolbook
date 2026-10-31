@@ -205,10 +205,13 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
     The button's script runs first, then the page's buttonClick, then the
     button's item, the way the window's click does it, so a test can click
-    without a window.
+    without a window. A button with a ``choice`` is graded first.
     """
     obj = obj or {}
     start = (id(state.book), state.index)
+    if "choice" in obj and not is_toolbook(state.book):
+        from engine import choice
+        choice.grade(state, obj)
     script = click_script(obj, state.book)
     if script and follow(state, run_handler(state, script)):
         return True

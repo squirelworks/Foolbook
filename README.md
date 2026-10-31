@@ -126,6 +126,8 @@ In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with
 
 `engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open at the end of the script, an `if`, `step`, `while`, or `linkDLL` block left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
 
+A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name, in a book of Foolbook's own format. A ToolBook quiz is still graded by the clicked name against the page's Answer.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.
