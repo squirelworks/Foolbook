@@ -151,6 +151,14 @@ class _Break(Exception):
     """`break` ends the handler it is in."""
 
 
+class _Return(Exception):
+    """`return VALUE` ends the handler and gives the caller the value."""
+
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+
 def run_handler(state: RuntimeState, source: str, parents: list[str] | None = None) -> list[dict]:
     """Execute a handler source against the current state.
 
@@ -168,6 +176,8 @@ def run_handler(state: RuntimeState, source: str, parents: list[str] | None = No
         _run_block(state, lines, 0, len(lines), actions)
     except _Break:
         pass
+    except _Return as done:
+        state.variables["__return"] = done.value
     finally:
         if outer is None:
             state.variables.pop("__parents", None)
@@ -196,6 +206,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
     """Run lines[start:end]. Returns the index after the block consumed."""
     i = start
     while i < end:
+        _take_called(state, actions)
         line = lines[i]
         low = line.lower()
 
@@ -249,6 +260,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "break":
             raise _Break()
+
+        if low == "return" or low.startswith("return "):
+            raise _Return(_eval(line[6:], state) if len(line) > 6 else None)
 
         if low in ("end conditions", "else"):
             return i + 1
@@ -416,7 +430,15 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         actions.append({"kind": "note", "text": line})
         i += 1
+    _take_called(state, actions)
     return i
+
+
+def _take_called(state: RuntimeState, actions: list[dict]) -> None:
+    """What a called handler did, such as a go to, belongs to the line that called it."""
+    called = state.variables.pop("__called", None)
+    if called:
+        actions.extend(called)
 
 
 def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) -> None:
@@ -931,6 +953,9 @@ def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
         return _NOT_A_CALL
+    handler = find_handler(state, match.group(1))
+    if handler is not None:
+        return call_handler(state, handler, match.group(2))
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
@@ -948,6 +973,115 @@ def _call_value(expr: str, state: RuntimeState):
         return hit
     from engine.quiz import call
     return call(state, match.group(1), match.group(2))
+
+
+_HEADER = re.compile(r"\s*to\s+(handle|get|set)\s+[A-Za-z_]\w*(.*)$", re.IGNORECASE)
+
+
+def _signature(handler) -> tuple[str, list[str], str]:
+    """(kind, parameter names, body) of a handler.
+
+    A handler read from a .tbk keeps its `to get NAME params` line. One
+    split from a script starts just after the name, so its first line is
+    the parameters. The kind is "" when the header is not kept.
+    """
+    source = (handler.source or "").replace("\r", "")
+    first, _sep, rest = source.partition("\n")
+    kind = ""
+    found = _HEADER.match(first)
+    if found:
+        kind, first = found.group(1).lower(), found.group(2)
+    names = []
+    for part in first.split(","):
+        words = part.split()
+        if words:
+            names.append(words[-1].rstrip("[]"))
+    return kind, names, _strip_handler_end(rest)
+
+
+def find_handler(state: RuntimeState, name: str):
+    """The `to get NAME` a call reaches: the page, the book, then sysBooks in order."""
+    want = (name or "").lower()
+    places = []
+    if state.page is not None:
+        places.append(state.page.handlers or [])
+    if state.book is not None:
+        places.append(state.book.handlers or [])
+    for _name, book in getattr(state, "sysbooks", []):
+        if book is not None:
+            places.append(book.handlers or [])
+    for handlers in places:
+        for handler in handlers:
+            if handler.name.lower() != want:
+                continue
+            if _signature(handler)[0] in ("", "get"):
+                return handler
+    return None
+
+
+def _call_args(text: str) -> list[str]:
+    """The arguments of a call, split at commas outside quotes and brackets."""
+    found, cur, quote, depth = [], [], "", 0
+    for ch in text:
+        if quote:
+            if ch == quote:
+                quote = ""
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")" and depth:
+            depth -= 1
+        elif ch == "," and depth == 0:
+            found.append("".join(cur).strip())
+            cur = []
+            continue
+        cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail or found:
+        found.append(tail)
+    return found
+
+
+def call_handler(state: RuntimeState, handler, args: str):
+    """Run a `to get` with its arguments bound, and give back what it returns.
+
+    The handler's own names are its own. When it ends, only its system
+    variables and the reader's `__` names keep what it did.
+    """
+    _kind, names, body = _signature(handler)
+    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    depth = int(state.variables.get("__depth") or 0)
+    if depth >= 64:
+        state.note(f"too deep {handler.name}")
+        return None
+    before = dict(state.variables)
+    for index, name in enumerate(names):
+        state.variables[name] = values[index] if index < len(values) else ""
+    state.variables["__depth"] = depth + 1
+    state.variables.pop("__return", None)
+    called = state.variables.pop("__called", None)
+    actions = run_handler(state, body)
+    result = state.variables.pop("__return", None)
+    shared = {
+        words[-1].rstrip("[]").lower()
+        for words in (line.split() for line in body.splitlines())
+        if len(words) >= 2 and words[0].lower() == "system"
+    }
+    variables = state.variables
+    kept = {
+        key: value for key, value in variables.items()
+        if str(key).startswith("__") or str(key).lower() in shared
+    }
+    variables.clear()
+    variables.update(before)
+    variables.update(kept)
+    state.variables["__depth"] = depth
+    pending = list(called or [])
+    pending.extend(action for action in actions if action.get("kind") != "note")
+    if pending:
+        state.variables["__called"] = pending
+    return result
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
