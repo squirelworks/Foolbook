@@ -159,10 +159,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                     ink = "black"
                     if fill and not _pale(fill):
                         ink = "white"
+                    tx, anchor, justify = _caption_place(shape, x, w)
                     canvas.create_text(
-                        x + 8, y + h / 2,
+                        tx, y + h / 2,
                         text=str(shape.get("text")),
-                        anchor="w",
+                        anchor=anchor,
+                        justify=justify,
                         fill=ink,
                         width=max(1, int(w) - 16),
                     )
@@ -199,6 +201,16 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _caption_place(shape: dict, x: int, w: int) -> tuple[float, str, str]:
+    """Where a button's caption sits. A push button centres it; `align` moves it."""
+    align = (shape.get("align") or "center").lower()
+    if align == "left":
+        return x + 8, "w", "left"
+    if align == "right":
+        return x + w - 8, "e", "right"
+    return x + w / 2, "center", "center"
 
 
 def _flush_caret(canvas, caret):
