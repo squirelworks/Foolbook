@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A click turns a `check` shape over, and turns a `radio` on and the other radios of its `group` on the page off. A second click on a chosen radio leaves it on. The state is the shape's `value`. `engine/test_choice_toggle.py`.
 - A `check` shape is drawn as a checkbox and a `radio` shape as a radio button, with the caption beside the mark, ticked or dotted when its `value` is true. Before, both were blank boxes. `engine/test_choices.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
