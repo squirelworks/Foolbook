@@ -449,7 +449,7 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
             call(state, "handleQuizClick", f'"{picked}"')
-        script = click_script(obj)
+        script = click_script(obj, state.book)
         moved = False
         revealed = False
         if script:
