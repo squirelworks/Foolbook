@@ -371,6 +371,13 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             if state.variables.pop("__redraw", None):
                 _paint()
             return
+        if top is not None and top.get("hotwords"):
+            from engine import hotwords
+            word = hotwords.clicked(gfx, top, gfx.canvasx(event.x), gfx.canvasy(event.y))
+            if word is not None:
+                item = word["item"]
+                on_button(item.get("label") or "", item.get("page") or "", item.get("book") or "")
+                return
         _activate(target)
         if state.variables.pop("__beep", None):
             try:

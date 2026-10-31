@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A text shape's `hotwords` are ranges of its words, each with an `item` jump. A click on a character inside a range follows that jump, as a button's item does. Hotwords are not drawn differently yet. `engine/test_hotwords.py`.
 - `graphics.text_index_at(canvas, x, y)` says which character of drawn text is under a point, as Tk laid it out, and `graphics.drawn_text(shape)` is the text those indices count in. Nothing calls it yet; a hotword in a field is the next change. `engine/test_text_index.py` (needs a display).
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
