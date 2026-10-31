@@ -796,6 +796,9 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    m = _CHUNK.fullmatch(expr)
+    if m:
+        return _chunk(state, m)
     split = _split_arithmetic(expr)
     if split is not None:
         return _arithmetic(*split, state)
@@ -817,6 +820,37 @@ _MISSING = object()
 # not text, so nothing is written from it.
 _UNRESOLVED = object()
 _OPERATOR = re.compile(r"[*/^]|(?<=[\w)])\s*[+-]\s*(?=[\w(])")
+
+
+_CHUNK = re.compile(
+    r"(word|item|char|character|textline|line)s?\s+(.+?)(?:\s+to\s+(.+?))?\s+of\s+(.+)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _pieces(kind: str, text: str) -> tuple[list[str], str]:
+    """The parts of text a chunk counts, and the glue that joins a range of them."""
+    if kind == "word":
+        return text.split(), " "
+    if kind == "item":
+        return (text.split(",") if text != "" else []), ","
+    if kind in ("char", "character"):
+        return list(text), ""
+    return (text.replace("\r\n", "\n").replace("\r", "\n").split("\n") if text != "" else []), "\r\n"
+
+
+def _chunk(state: RuntimeState, match: re.Match):
+    """`word 2 of x`, `item i of list`, `chars 1 to 3 of x`, `textline 4 of text of field "a"`."""
+    kind = match.group(1).lower()
+    whole = _eval(match.group(4), state)
+    if whole is _UNRESOLVED:
+        return _UNRESOLVED
+    parts, glue = _pieces(kind, _as_text(whole))
+    first = _number(_eval(match.group(2), state))
+    last = _number(_eval(match.group(3), state)) if match.group(3) else first
+    if first is None or last is None:
+        return _UNRESOLVED
+    return glue.join(parts[max(int(first) - 1, 0):max(int(last), 0)])
 
 
 def _split_arithmetic(expr: str):
