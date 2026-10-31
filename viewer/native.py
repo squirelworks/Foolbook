@@ -426,7 +426,11 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
         picked = ((obj or {}).get("name") or "").upper()
         if "choice" in (obj or {}) and not is_toolbook(state.book):
             from engine import choice
-            choice.grade(state, obj)
+            graded = choice.grade(state, obj)
+            target = choice.after(state, graded) if graded is not None else ""
+            if target and not click_script(obj, state.book) and goto(state, target):
+                show(state.index)
+                return
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
             call(state, "handleQuizClick", f'"{picked}"')

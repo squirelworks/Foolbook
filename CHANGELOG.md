@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- A graded quiz answer goes to the quiz's `next` page when right and its `again` page when wrong, unless the button has a script of its own. The window does this only for a button that has `choice`, so the A–E path is unchanged. Tested in `engine/test_choice_next.py`.
 - A graded quiz answer shows the shape marked `feedback: "right"` or `feedback: "wrong"` for its result and hides the other. Only a Foolbook book is graded, so no ToolBook page changes. Tested in `engine/test_choice_feedback.py`.
 - In a book of Foolbook's own format, a quiz answer button is graded by its `choice` index into `page.quiz.choices`, not by its name, and the answer is kept in `__answer`. Only a button that has `choice` is graded, and a ToolBook file never is, so the A–E `handleQuizClick` path is unchanged. Tested in `engine/test_choice_grade.py`.
 - `engine.subset.check(script)` (and `foolbook.core.check_script`) parses a script in the subset and returns errors with line numbers: an open quote, an open or doubly closed block, `else` outside an `if` or `conditions`, `go to` with no page, `if` with no condition. It reads ToolBook's own forms (`end buttonClick`, `notifyAfter idle`, `while`, `linkDLL32`, `go to` an expression, a stored handler body ending `end enterPage`, a quote that runs onto the next line, a handler closed by the end of its script), and every script in 93950101 checks clean. It is a check, not a compile. Tested in `engine/test_check.py`.

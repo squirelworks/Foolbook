@@ -205,13 +205,18 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
     The button's script runs first, then the page's buttonClick, then the
     button's item, the way the window's click does it, so a test can click
-    without a window. A button with a ``choice`` is graded first.
+    without a window. A button with a ``choice`` is graded first. When it
+    has no script of its own, the quiz's ``next`` or ``again`` page is
+    where it goes.
     """
     obj = obj or {}
     start = (id(state.book), state.index)
     if "choice" in obj and not is_toolbook(state.book):
         from engine import choice
-        choice.grade(state, obj)
+        graded = choice.grade(state, obj)
+        target = choice.after(state, graded) if graded is not None else ""
+        if target and not click_script(obj, state.book) and goto(state, target):
+            return (id(state.book), state.index) != start
     script = click_script(obj, state.book)
     if script and follow(state, run_handler(state, script)):
         return True
