@@ -122,6 +122,8 @@ A script shows or hides a shape by the name the editor gave it: `show "Feedback"
 
 A quiz the editor writes is graded by the choice index on the button (`choice`, into `page.quiz.choices`), not by the button's name. The shape with `feedback: "right"` or `feedback: "wrong"` for that result is shown and the other is hidden. The quiz's `next` or `again` page follows when the button itself does not move. A ToolBook quiz is still graded by the clicked name against the page's Answer.
 
+Each graded page leaves `{"page", "choice", "right"}` in the book's `props["results"]`, one entry per page, the last answer winning. `engine.choice.score(state)` is (right, answered). It is kept in memory and not written to Foolcourse yet.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.

@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- A graded quiz page leaves its result on the book in memory: `props["results"]`, one `{page, choice, right}` per page, the last answer winning. `engine.choice.score` gives (right, answered). Foolcourse does not see it yet. Tested in `engine/test_choice_score.py`.
 - A quiz answer button is graded by its `choice` index into `page.quiz.choices`, not by its name. The `feedback: "right"` or `"wrong"` shape is shown, the other hidden, and the quiz's `next` or `again` page follows when the button does not move by itself. The ToolBook name-against-Answer grading is unchanged. `engine/choice.py`, tested in `engine/test_choice_grade.py`.
 - `engine.subset.check(script)` (and `foolbook.core.check_script`) parses a script in the subset and returns errors with line numbers: an open quote, an open or doubly closed block, `else` outside an `if`, `go to` with no page, `if` with no condition. It is a check, not a compile. Tested in `engine/test_check.py`.
 - `go to next page` and `go to previous page` (also `go to prev page`) move like `send next` and `send previous`, so they take the page's Next or Back item first, as the buttons do. Before, both lines were notes and did nothing. Tested in `engine/test_go_next_page.py`.
