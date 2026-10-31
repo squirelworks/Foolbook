@@ -10,6 +10,7 @@
 - A `chord` shape is drawn as the slice of the ellipse between `start` and `sweep`, closed by a straight line and filled. It was a box.
 - A `hotspot` shape is not drawn. A click inside it is the hotspot, and its `item` is followed like a button's. It was drawn as a box with an outline.
 - An `.fbk` text shape with `underline` is drawn underlined. Before, only face, size, bold, and italic were read.
+- An `.fbk` text shape may name its alignment: `left`, `center`, or `right`. A wrapped field is justified the same way. A named alignment used to stop the page from drawing, because only the `.tbk` number was read.
 
 ## Unreleased
 
