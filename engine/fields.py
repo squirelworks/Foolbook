@@ -11,11 +11,11 @@ Each key is first given to the field's own keyChar handler, as `key`, the
 character code. The key goes in only when that handler forwards it, which is
 how a numeric field refuses a letter.
 
+A Foolbook field says it outright: `editable` true makes a text shape a
+field, and false locks one, even a Response.
+
 The caret is always at the end of the text. Moving it inside the text is
 not read yet.
-
-A Foolbook field with `editable: true` takes the keyboard on a click, and
-what was typed is also kept on the shape as `value`.
 
 When the key is let go the field's own keyUp handler runs (`key_up`).
 """
@@ -40,7 +40,6 @@ def is_field(shape: dict | None) -> bool:
     The file does not mark a locked text, so this is read from the book's
     own conventions: the object carries a key handler, or it is named like
     the answer fields that SetupFillInFields clears. A label has neither.
-    A Foolbook book says it outright: `editable` true or false wins.
     """
     if not shape or (shape.get("kind") or "") != "text":
         return False
@@ -141,9 +140,6 @@ def handle_key(state, keysym: str, char: str) -> bool:
         set_shape_text(state, shape, text[:-1])
     elif code != 13:
         set_shape_text(state, shape, text + chr(code))
-    if shape.get("editable"):
-        # What the reader typed, kept apart from the text the author wrote.
-        shape["value"] = str(shape.get("text") or "")
     return True
 
 

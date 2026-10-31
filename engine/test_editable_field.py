@@ -1,4 +1,4 @@
-"""A Foolbook field marked editable takes the keyboard and keeps what was typed as value."""
+"""`editable` decides whether a Foolbook text shape is a field."""
 
 from __future__ import annotations
 
@@ -30,25 +30,30 @@ class EditableField(unittest.TestCase):
     def test_editable_false_locks_even_an_answer_field(self):
         self.assertFalse(fields.is_field(_shape(name="Response", editable=False)))
 
-    def test_typed_keys_are_kept_as_value(self):
+    def test_an_editable_field_takes_typed_keys(self):
         shape = _shape(editable=True)
         state = _state(shape)
         fields.focus(state, shape)
         for char in "Ada":
             self.assertTrue(fields.handle_key(state, char, char))
-        fields.handle_key(state, "BackSpace", "")
-        self.assertEqual(shape["text"], "Ad")
-        self.assertEqual(shape["value"], "Ad")
-        self.assertTrue(shape.get("focused"))
+        self.assertEqual(shape["text"], "Ada")
 
-    def test_a_field_that_is_not_marked_editable_gets_no_value(self):
+
+class NidaResponse(unittest.TestCase):
+    # A NIDA fill-in, as the .tbk loader hands it over: no `editable` key,
+    # named Response. It is judged as on main, by its name.
+    def test_a_response_field_without_editable_is_still_a_field_and_takes_keys(self):
         shape = _shape(name="Response")
+        self.assertTrue(fields.is_field(shape))
         state = _state(shape)
         fields.focus(state, shape)
-        fields.handle_key(state, "7", "7")
+        self.assertTrue(fields.handle_key(state, "7", "7"))
         self.assertEqual(shape["text"], "7")
         self.assertNotIn("value", shape)
 
+    def test_a_hidden_shape_is_not_a_field_even_when_editable(self):
+        self.assertFalse(fields.is_field(_shape(editable=True, visible=False)))
+        self.assertFalse(fields.is_field({"kind": "button", "name": "Go", "editable": True}))
 
 if __name__ == "__main__":
     unittest.main()
