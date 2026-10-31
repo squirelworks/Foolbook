@@ -2,8 +2,9 @@
 
 A `list` shape has `choices`, a list of strings, and `value`, the index
 of the chosen one. Rows are ROW pixels high. When there are more rows
-than fit, a bar BAR pixels wide sits at the right edge. `scroll` is the
-first row shown.
+than fit, a bar BAR pixels wide sits at the right edge: a click on its
+upper half scrolls up one row, on its lower half down one. `scroll` is
+the first row shown.
 """
 
 from __future__ import annotations
@@ -41,7 +42,12 @@ def visible_rows(shape: dict) -> list[tuple[int, str, float]]:
 
 
 def click(shape: dict, px: float, py: float) -> None:
-    """A click at this page point picks the row under it."""
+    """A click at this page point. Picks a row, or scrolls one row when it is on the bar."""
+    x, y, w, h = _box(shape)
+    if scrolls(shape) and px >= x + w - BAR:
+        shape["scroll"] = _first(shape) + (-1 if py < y + h / 2 else 1)
+        shape["scroll"] = _first(shape)
+        return
     for index, _text, top in visible_rows(shape):
         if top <= py < top + ROW:
             shape["value"] = index
