@@ -130,6 +130,14 @@ class Pie(unittest.TestCase):
         options = drawn({"kind": "pie", "x": 0, "y": 0, "w": 80, "h": 80}).calls[0][2]
         self.assertEqual((options["start"], options["extent"]), (0, 90))
 
+class Chord(unittest.TestCase):
+    def test_a_chord_is_closed_by_a_straight_line(self):
+        canvas = drawn({"kind": "chord", "x": 0, "y": 0, "w": 80, "h": 80, "start": 0, "sweep": 180, "fill": "#00ff00"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        options = canvas.calls[0][2]
+        self.assertEqual((options["start"], options["extent"], options["style"]), (0, 180, "chord"))
+        self.assertEqual(options["fill"], "#00ff00")
+
 
 if __name__ == "__main__":
     unittest.main()
