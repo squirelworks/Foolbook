@@ -1,4 +1,4 @@
-"""kernel32.dll: the private profile (INI) functions.
+"""kernel32.dll: the private profile (INI) functions and GetTickCount.
 
 The INI file is looked for beside the book. A key that is not there gives
 the default the script passed, as Windows does. A write is kept for the
@@ -8,6 +8,7 @@ session and not written to disk.
 from __future__ import annotations
 
 import configparser
+import time
 from pathlib import Path
 
 
@@ -68,7 +69,13 @@ def write_profile_string(state, args, refs):
     return 1
 
 
+def get_tick_count(state, args, refs):
+    """Milliseconds since the reader started, as a 32-bit count like Windows."""
+    return int(time.monotonic() * 1000) & 0xFFFFFFFF
+
+
 FUNCTIONS = {
+    "gettickcount": get_tick_count,
     "getprivateprofileinta": get_profile_int,
     "getprivateprofilestringa": get_profile_string,
     "writeprivateprofilestringa": write_profile_string,
