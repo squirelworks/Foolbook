@@ -26,6 +26,8 @@
 - `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
 - A handler parameter taken `by reference` binds to the caller's variable and writes back; an array passed by value is a copy.
 - The openscript_analysis submodule moves to d741054, which has `formats/tbk/store.py`. Opening a ToolBook 8 object store and the Wingdings face test no longer fail on a missing module.
+- `go to page(n)` goes to the nth page when n is a whole number and no page has that name, and `go to page(pages[3])` takes an array element.
+- `random(n)` gives a whole number from 1 to n.
 - An object can be named on another page or its background: `text of field("index") of parent of page i`, `set checked of button(temp) of page i to false`, `isObject(rectangle("correct") of page i)`. Text, visible, enabled and checked are read and set.
 - Chunks of text: `word 2 of cmdLine`, `item i of pool`, `chars 2 to 4 of name` and `textline 3 of text of field "a"` give that part of the value. The index can be a sum or an array element, and past the end is empty.
 - A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
