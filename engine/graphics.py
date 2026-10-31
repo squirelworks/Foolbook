@@ -629,6 +629,27 @@ def _fit_words(shape, size, width, raw):
     return px
 
 
+def drawn_text(shape: dict) -> str:
+    """The words a text shape puts on the canvas. text_index_at counts in these."""
+    return tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
+
+
+def text_index_at(canvas, x: float, y: float) -> tuple[str, int] | None:
+    """The text item under a canvas point, and the index of the character there.
+
+    Tk lays the words out, so Tk says where they are. None when no text
+    item covers the point.
+    """
+    for item in reversed(canvas.find_all()):
+        if canvas.type(item) != "text":
+            continue
+        box = canvas.bbox(item)
+        if not box or not (box[0] <= x <= box[2] and box[1] <= y <= box[3]):
+            continue
+        return canvas.itemcget(item, "text"), int(canvas.index(item, f"@{int(x)},{int(y)}"))
+    return None
+
+
 def _fit_text(shape, x, y, w, h):
     """Keep the words inside the box they were given.
 
@@ -636,7 +657,7 @@ def _fit_text(shape, x, y, w, h):
     wraps on its spaces. A line that fits, such as a short label, stays one
     line so it is not broken in the middle of a word.
     """
-    raw = tighten(str(shape.get("text") or "").replace("\r\n", "\n").replace("\r", "\n").rstrip("\n"))
+    raw = drawn_text(shape)
     recorded = int(shape.get("size") or 0)
     size = recorded or 12
     # A title stored with no field. Wrapping it at one pixel stacks the letters.
