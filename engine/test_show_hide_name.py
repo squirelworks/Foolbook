@@ -1,10 +1,17 @@
-"""show and hide a shape by its name, whatever its kind, for .fbk scripts."""
+"""show and hide a shape by its name, whatever its kind, for .fbk scripts.
+
+The NIDA guard runs when NIDA_BOOKS names a folder holding the book.
+The books are not in this repository.
+"""
 
 from __future__ import annotations
 
+import os
 import unittest
+from pathlib import Path
 
-from engine.engine import run_handler
+from engine.engine import run_handler, run_page_handlers
+from engine.loader import load
 from foolbook.model import Book, Page, RuntimeState
 
 
@@ -46,6 +53,23 @@ class ShowHideByNameTests(unittest.TestCase):
         actions = run_handler(state, 'show group "feedback"')
         self.assertEqual(actions[0]["target"], "visible of group")
         self.assertIs(shapes[0]["visible"], False)
+
+
+class NidaShowHideTests(unittest.TestCase):
+    def test_93951104_p3080_hide_ellipse_blank_on_leave(self):
+        path = Path(os.environ.get("NIDA_BOOKS") or "/nonexistent") / "93951104.fbk"
+        if not path.exists():
+            raise unittest.SkipTest("93951104.fbk is not here; set NIDA_BOOKS")
+        book = load(path)
+        state = RuntimeState(book=book)
+        state.index = [p.id for p in book.pages].index("P3080")
+        state.variables["syslevel"] = "reader"
+        blank = [s for s in state.page.shapes if (s.get("name") or "").lower() == "blank"]
+        run_page_handlers(state, "enterpage")
+        self.assertEqual([s.get("visible") for s in blank], [True])
+        actions = run_page_handlers(state, "leavepage")
+        self.assertEqual([s.get("visible") for s in blank], [False])
+        self.assertNotIn("visible of shape", [a.get("target") for a in actions])
 
 
 if __name__ == "__main__":
