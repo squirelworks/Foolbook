@@ -765,7 +765,7 @@ def _fit_image(raw: bytes, width: int, height: int) -> bytes:
         return raw
 
 
-def _fit_image(image, width: int, height: int, fit: str | None):
+def _frame_image(image, width: int, height: int, fit: str | None):
     """The picture as its frame shows it, exactly width by height.
 
     fill, or no fit, stretches it to the frame, as every book did before.
@@ -773,7 +773,7 @@ def _fit_image(image, width: int, height: int, fit: str | None):
     and clips it at the frame. Where the picture does not reach is clear.
     """
     from PIL import Image
-    fit = (fit or "fill").lower()
+    fit = fit.lower() if isinstance(fit, str) else "fill"
     if fit == "fill" or fit not in ("contain", "none"):
         if image.size == (width, height):
             return image
@@ -813,7 +813,7 @@ def _photo(canvas, shape: dict, base: str | Path | None):
             _clear_edge(image)
         width, height = int(shape.get("w") or 0), int(shape.get("h") or 0)
         if width > 1 and height > 1:
-            image = _fit_image(image, width, height, shape.get("fit"))
+            image = _frame_image(image, width, height, shape.get("fit"))
         return ImageTk.PhotoImage(image, master=canvas)
     except Exception:
         return None

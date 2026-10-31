@@ -19,15 +19,15 @@ def _wide():
 @unittest.skipIf(graphics is None, "tkinter or Pillow is not installed")
 class Fit(unittest.TestCase):
     def test_fill_stretches_to_the_frame(self):
-        out = graphics._fit_image(_wide(), 30, 30, "fill")
+        out = graphics._frame_image(_wide(), 30, 30, "fill")
         self.assertEqual(out.size, (30, 30))
         self.assertEqual(out.getpixel((0, 0))[3], 255)
 
     def test_no_fit_is_fill_as_before(self):
-        self.assertEqual(graphics._fit_image(_wide(), 30, 30, None).getpixel((0, 0))[3], 255)
+        self.assertEqual(graphics._frame_image(_wide(), 30, 30, None).getpixel((0, 0))[3], 255)
 
     def test_contain_keeps_the_shape_and_centres_it(self):
-        out = graphics._fit_image(_wide(), 30, 30, "contain")
+        out = graphics._frame_image(_wide(), 30, 30, "contain")
         self.assertEqual(out.size, (30, 30))
         # 40 by 20 scaled into 30 by 30 is 30 by 15, with 7 or 8 clear rows above and below.
         self.assertEqual(out.getpixel((15, 2))[3], 0)
@@ -35,10 +35,19 @@ class Fit(unittest.TestCase):
         self.assertEqual(out.getpixel((15, 27))[3], 0)
 
     def test_none_keeps_the_size_and_clips_at_the_frame(self):
-        out = graphics._fit_image(_wide(), 30, 30, "none")
+        out = graphics._frame_image(_wide(), 30, 30, "none")
         self.assertEqual(out.size, (30, 30))
         self.assertEqual(out.getpixel((29, 19))[3], 255)
         self.assertEqual(out.getpixel((29, 20))[3], 0)
+
+
+@unittest.skipIf(graphics is None, "tkinter or Pillow is not installed")
+class TbkPictures(unittest.TestCase):
+    # A .tbk picture has no `fit`: it is stretched exactly as main stretches it.
+    def test_a_picture_without_fit_is_stretched_as_before(self):
+        for fit in (None, 3, "", "stretch"):
+            out = graphics._frame_image(_wide(), 30, 30, fit)
+            self.assertEqual(out.tobytes(), _wide().resize((30, 30), Image.Resampling.NEAREST).tobytes(), fit)
 
 
 if __name__ == "__main__":
