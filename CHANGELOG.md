@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
 - A `.fbk` book can store `author` and `firstPage`. The reader opens at the first page id when that page exists, else at the first page, and so does a book opened with Open. A saved last page the student picks still wins, and a ToolBook book, which has no first page id, still opens on page 0. `engine/test_first_page.py`.
 - `foolbook.core.unknown_words(script)` gives FoolbookEditor the interpreter's answer through the core, so the editor does not import the engine. Tested in `engine/test_core_unknown_words.py`.
 - In a book of Foolbook's own format, a button script with no `to handle` line is the click. Before, it was not run. A ToolBook file does not get this reading (`engine.origin.is_toolbook`). No button in the converted NIDA courses has such a script, so their clicks are unchanged. `engine.engine.click` runs a click in the window's order without a window. Tested in `engine/test_click_order.py`.

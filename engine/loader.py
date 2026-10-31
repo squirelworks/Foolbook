@@ -187,11 +187,12 @@ def _load_foolbook(path: Path) -> Book:
     return _book_from_dict(path, unpack(path.read_bytes()))
 
 
-def _handlers_of(raw: dict) -> list:
+def _handlers_of(raw: dict, name: str = "script") -> list:
     """Handlers stored as a list, or one ToolBook script to split.
 
     An older .fbk page stores a single script with no `to handle` line.
-    That stays one handler. A system book from a TBKX has many.
+    That stays one handler. On a page it is the page's enterPage, so it
+    runs when the page is shown. A system book from a TBKX has many.
     """
     import re
     listed = raw.get("handlers")
@@ -207,7 +208,7 @@ def _handlers_of(raw: dict) -> list:
     if re.search(r"(?im)^\s*to\s+(?:handle|get|set)\s+", str(script)):
         from engine.engine import split_handlers
         return split_handlers(str(script))
-    return [Handler(name="script", source=str(script))]
+    return [Handler(name=name, source=str(script))]
 
 
 def _backgrounds(data: dict) -> dict:
@@ -260,7 +261,7 @@ def _book_from_dict(path: Path, data: dict) -> Book:
             items=list(raw.get("items") or []),
             jumps=list(raw.get("jumps") or []),
             quiz=raw.get("quiz"),
-            handlers=_handlers_of(raw),
+            handlers=_handlers_of(raw, "enterPage"),
             shapes=under + flatten_groups(raw.get("shapes") or []),
             raw=raw,
         ))
