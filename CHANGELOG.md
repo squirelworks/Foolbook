@@ -21,6 +21,7 @@
 
 ## Unreleased
 
+- `pageNumber of this page`, `pageCount of this book`, and a property of another page by number or name, such as `questionno of page i`.
 - A chunk of a variable can be set: `char i of pool = " "`, `item 2 of list = "x"`, `word 3 of s = "four"`. An item or textline past the end pads the list.
 - `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
 - A handler parameter taken `by reference` binds to the caller's variable and writes back; an array passed by value is a copy.
