@@ -93,7 +93,10 @@ _TEXT_OF_FIELD = re.compile(
 )
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
-_PROP_OF_PAGE = re.compile(r'(\w+)\s+of\s+this\s+page', re.IGNORECASE)
+_PROP_OF_PAGE = re.compile(
+    r'(\w+)\s+of\s+(?:this\s+page|page\s+((?:(?!\s(?:and|or)\s)[^=<>])+))',
+    re.IGNORECASE,
+)
 _OF_BOOK = re.compile(r'(.+?)\s+of\s+this\s+book$', re.IGNORECASE)
 _BEEP = re.compile(r'beep(?:\s+\d+)?$', re.IGNORECASE)
 _NUMBER = re.compile(r'[+-]?(?:\d+\.?\d*|\.\d+)')
@@ -743,8 +746,11 @@ def _eval(expr: str, state: RuntimeState):
         return text[at] if 0 <= at < len(text) else ""
     m = _PROP_OF_PAGE.fullmatch(expr)
     if m:
-        return _page_property(state, m.group(1))
+        page = state.page if m.group(2) is None else _page_ref(state, m.group(2))
+        return _page_property(state, m.group(1), page)
     m = _OF_BOOK.fullmatch(expr)
+    if m and m.group(1).strip().lower() == "pagecount":
+        return len(state.book.pages) if state.book is not None else 0
     if m:
         value = _book_property(state, m.group(1).strip())
         if value is not _NO_BOOK_PROP:
@@ -1162,9 +1168,27 @@ def _field_text(state: RuntimeState, name: str) -> str:
     return ""
 
 
-def _page_property(state: RuntimeState, name: str):
-    """`testno of this page` is a property stored on the page."""
-    page = state.page
+def _page_ref(state: RuntimeState, text: str):
+    """The page `page i` or `page "P3"` names: a number counts from 1, else the name."""
+    value = _eval(text, state)
+    pages = state.book.pages if state.book is not None else []
+    number = _number(value)
+    if number is not None and number.is_integer():
+        at = int(number) - 1
+        return pages[at] if 0 <= at < len(pages) else None
+    want = _as_text(value).strip().lower()
+    for page in pages:
+        if page.id.lower() == want or str((page.raw or {}).get("name") or "").lower() == want:
+            return page
+    return None
+
+
+def _page_property(state: RuntimeState, name: str, page=None):
+    """`testno of this page` is a property stored on the page. pageNumber counts from 1."""
+    if page is None:
+        return ""
+    if name.lower() == "pagenumber":
+        return state.book.pages.index(page) + 1
     props = ((page.raw or {}).get("props") or {}) if page is not None else {}
     for key, value in props.items():
         if str(key).lower() == name.lower():

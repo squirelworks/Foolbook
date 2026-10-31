@@ -20,6 +20,7 @@
 
 ## Unreleased
 
+- `pageNumber of this page`, `pageCount of this book`, and a property of another page by number or name, such as `questionno of page i`.
 - Chunks of text: `word 2 of cmdLine`, `item i of pool`, `chars 2 to 4 of name` and `textline 3 of text of field "a"` give that part of the value. The index can be a sum or an array element, and past the end is empty.
 - A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
 - `while ... end while` and `do ... until` loop. `break while`, `break step`, `break do` and `break conditions` leave that block and the handler goes on, and `continue` starts the next pass. A handler with a `while` or `conditions` block inside it is no longer cut short at that block's own `end`.
