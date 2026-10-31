@@ -59,6 +59,18 @@ class Click(unittest.TestCase):
             root.destroy()
 
 
+class NidaShapes(unittest.TestCase):
+    def test_a_shape_without_hotwords_never_asks_the_canvas(self):
+        # The .tbk loader never sets `hotwords`, so a NIDA click goes on to the
+        # button and page handlers as on main. The canvas is not even read.
+        class Untouchable:
+            def __getattr__(self, name):
+                raise AssertionError(f"canvas.{name} read for a shape without hotwords")
+        response = {"kind": "text", "name": "Response", "text": "7", "x": 10, "y": 10, "w": 80, "h": 20}
+        self.assertIsNone(hotwords.clicked(Untouchable(), response, 12, 12))
+        self.assertEqual(hotwords.ranges(response), [])
+
+
 if __name__ == "__main__":
     import tkinter.font  # noqa: F401
     unittest.main()
