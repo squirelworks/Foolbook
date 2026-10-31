@@ -170,6 +170,8 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             _paint_choice(canvas, shape, kind, fill, outline)
         elif kind == "list":
             _paint_list(canvas, shape, fill, outline)
+        elif kind == "combo":
+            _paint_combo(canvas, shape, fill, outline)
         elif kind == "image":
             shown = shape
             face = ""
@@ -203,6 +205,31 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
     canvas._foolbook_photos = photos
+
+
+def _paint_combo(canvas, shape, fill, outline):
+    """The chosen row and an arrow. Open, the rows hang below the box."""
+    from engine import listbox
+    x, y, w, h = _box(shape)
+    ink = outline or "black"
+    canvas.create_rectangle(x, y, x + w, y + h, fill=fill or "#ffffff", outline=ink)
+    left = x + w - listbox.BAR
+    canvas.create_rectangle(left, y, x + w, y + h, fill="#e4e4e4", outline=ink)
+    mid = left + listbox.BAR / 2
+    canvas.create_polygon(left + 3, y + h / 2 - 3, x + w - 3, y + h / 2 - 3, mid, y + h / 2 + 3, fill=ink, outline="")
+    shown = listbox.combo_text(shape)
+    if shown:
+        canvas.create_text(x + 4, y + h / 2, text=shown, anchor="w", fill=ink, width=max(1, int(w - listbox.BAR) - 8))
+    if not shape.get("open"):
+        return
+    rows = listbox.combo_rows(shape)
+    if not rows:
+        return
+    canvas.create_rectangle(x, y + h, x + w, y + h + len(rows) * listbox.ROW, fill="#ffffff", outline=ink)
+    for index, text, top in rows:
+        if index == shape.get("value"):
+            canvas.create_rectangle(x + 1, top + 1, x + w - 1, top + listbox.ROW, fill=listbox.CHOSEN, outline="")
+        canvas.create_text(x + 4, top + listbox.ROW / 2, text=text, anchor="w", fill=ink, width=max(1, int(w) - 8))
 
 
 def _paint_list(canvas, shape, fill, outline):

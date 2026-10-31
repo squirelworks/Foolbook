@@ -53,3 +53,41 @@ def click(shape: dict, px: float, py: float) -> None:
         if top <= py < top + ROW:
             shape["value"] = index
             return
+
+
+# A combo box is a list that opens. Closed, it shows the chosen row and an
+# arrow. A click opens it, and the rows hang below the box. A click on a row
+# picks it and closes the list. Any other click closes it. `open` is only
+# held while the book is shown.
+
+def combo_text(shape: dict) -> str:
+    found = list(shape.get("choices") or [])
+    value = shape.get("value")
+    if isinstance(value, int) and 0 <= value < len(found):
+        return str(found[value])
+    return ""
+
+
+def combo_rows(shape: dict) -> list[tuple[int, str, float]]:
+    """(index, text, top) of each row of the open list, under the box."""
+    _x, y, _w, h = _box(shape)
+    return [(n, str(text), y + h + n * ROW) for n, text in enumerate(shape.get("choices") or [])]
+
+
+def combo_reach(shape: dict) -> float:
+    """How far below its top an open combo box takes clicks."""
+    _x, _y, _w, h = _box(shape)
+    if not shape.get("open"):
+        return h
+    return h + len(shape.get("choices") or []) * ROW
+
+
+def combo_click(shape: dict, px: float, py: float) -> None:
+    if not shape.get("open"):
+        shape["open"] = True
+        return
+    shape["open"] = False
+    for index, _text, top in combo_rows(shape):
+        if top <= py < top + ROW:
+            shape["value"] = index
+            return

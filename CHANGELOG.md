@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A `combo` shape is a combo box: it shows the chosen row and an arrow. A click opens it and the `choices` hang below. A click on a row stores its index as `value` and closes it; a click on the box closes it and keeps the choice. `engine/test_combo.py`.
 - A `list` shape is a list box: its `choices` are drawn one row each, a click picks a row and stores its index as `value`, and the chosen row is marked. A list longer than its box shows a bar at the right; a click on the upper or lower half scrolls one row. `engine/test_listbox.py`.
 - A `check` shape is a checkbox and a `radio` shape is a radio button, drawn with the caption beside the mark. A click turns a checkbox over, and turns a radio on and the other radios of its `group` on the page off. The state is the shape's `value`. `engine/test_choices.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
