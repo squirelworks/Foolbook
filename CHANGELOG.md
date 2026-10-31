@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- An `.fbk` opened and saved again writes the same bytes, compressed or not. `pack` writes the `fbk` and `foolbook` stamps last in one order. Before, the first resave moved them and the file changed though the book had not. The envelope has no timestamp. Test: `engine/test_resave.py` (ten saves).
+
 ## Unreleased
 
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).

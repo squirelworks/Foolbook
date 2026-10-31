@@ -52,7 +52,9 @@ def pack(data: dict, kind: str = FBK, compress: bool = True) -> bytes:
     this file was written for. Neither one is a ToolBook rule.
     """
     from foolbook import __version__
-    stamped = dict(data)
+    # The stamps go last, in one order, so a book opened and saved again
+    # writes the same bytes as the save before it.
+    stamped = {key: value for key, value in data.items() if key not in ("fbk", "foolbook")}
     stamped["fbk"] = FORMAT_VERSION
     stamped["foolbook"] = __version__
     magic = MAGIC.get(kind, MAGIC[FBK])
