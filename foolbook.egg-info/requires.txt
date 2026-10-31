@@ -1,3 +1,0 @@
-cryptography
-pillow
-openscript-analysis @ git+https://github.com/squirelworks/openscript_analysis.git@d741054cf2536bbf9d031bf183f6aedd949ebb8c

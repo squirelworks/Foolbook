@@ -5,3 +5,4 @@ _debug/db-*
 _debug/decoded/
 progress/progress.json
 progress/window.json
+*.egg-info/
