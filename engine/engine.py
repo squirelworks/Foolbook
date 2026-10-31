@@ -1575,16 +1575,28 @@ def push_sysbook(state: RuntimeState, name: str) -> None:
     state.sysbooks.insert(0, (name, book))
 
 
-def leave_page(state: RuntimeState) -> None:
-    """The page being left. P1910 and P2910 set the menu flag here."""
+def leave_page(state: RuntimeState) -> str | None:
+    """The page being left. P1910 and P2910 set the menu flag here.
+
+    Returns the page a leavePage script went to, or None.
+    """
     if state.page is None:
-        return
+        return None
     from engine import fields
     fields.blur(state)
-    run_page_handlers(state, "leavepage")
+    for act in run_page_handlers(state, "leavepage"):
+        if act.get("kind") == "goto" and act.get("page") and not act.get("book"):
+            return str(act["page"])
+    return None
 
 
 def goto(state: RuntimeState, page_id: str, leave: bool = True) -> bool:
+    if (leave and state.page is not None and state.page.id.lower() != str(page_id).lower()
+            and _has_page(state, str(page_id))):
+        instead = leave_page(state)
+        if instead:
+            page_id = instead
+        leave = False
     idx = state.book.index_of(page_id)
     if idx < 0:
         # case-insensitive fallback; real books mix P1292 and p1292
