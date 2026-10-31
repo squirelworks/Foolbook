@@ -16,5 +16,24 @@ class TypeSize(unittest.TestCase):
         graphics._FONTS.clear()
 
 
+class Underline(unittest.TestCase):
+    def setUp(self):
+        graphics._FONTS.clear()
+
+    def tearDown(self):
+        graphics._FONTS.clear()
+
+    def underlined(self, face) -> bool:
+        if isinstance(face, tuple):
+            return "underline" in str(face[2:])
+        return bool(int(face.cget("underline")))
+
+    def test_an_underlined_field_is_drawn_underlined(self):
+        self.assertTrue(self.underlined(graphics._typeface({"font": "Arial", "size": 12, "underline": True}, 12)))
+
+    def test_a_plain_field_is_not(self):
+        self.assertFalse(self.underlined(graphics._typeface({"font": "Arial", "size": 12}, 12)))
+
+
 if __name__ == "__main__":
     unittest.main()

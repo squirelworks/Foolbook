@@ -610,17 +610,26 @@ def _typeface(shape, size):
         size = -max(1, int(round(abs(int(size)) / _ink_factor())))
     weight = "bold" if shape.get("bold") else "normal"
     slant = "italic" if shape.get("italic") else "roman"
-    key = (face, int(size), weight, slant)
+    underline = 1 if shape.get("underline") else 0
+    key = (face, int(size), weight, slant, underline)
     found = _FONTS.get(key)
     if found is not None:
         return found
     try:
         from tkinter import font as tkfont
-        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant)
+        found = tkfont.Font(family=face, size=int(size), weight=weight, slant=slant, underline=underline)
         _FONTS[key] = found
         return found
     except Exception:
-        style = " ".join(part for part in ("bold" if weight == "bold" else "", "italic" if slant == "italic" else "") if part)
+        style = " ".join(
+            part
+            for part in (
+                "bold" if weight == "bold" else "",
+                "italic" if slant == "italic" else "",
+                "underline" if underline else "",
+            )
+            if part
+        )
         if style:
             return (face, size, style)
         return (face, size)

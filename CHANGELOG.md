@@ -9,6 +9,7 @@
 - A `pie` shape is drawn as a filled slice of the ellipse in its bounds, from `start` and `sweep`. It was a box.
 - A `chord` shape is drawn as the slice of the ellipse between `start` and `sweep`, closed by a straight line and filled. It was a box.
 - A `hotspot` shape is not drawn. A click inside it is the hotspot, and its `item` is followed like a button's. It was drawn as a box with an outline.
+- An `.fbk` text shape with `underline` is drawn underlined. Before, only face, size, bold, and italic were read.
 
 ## Unreleased
 
