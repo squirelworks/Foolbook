@@ -23,12 +23,13 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
-from engine import groups
+from engine import groups, objects
+from engine.origin import is_toolbook
 
 
 _GOTO = re.compile(
     r'go\s+to\s+page\s*'
-    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
+    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([^()"]+?)\s*\)|([A-Za-z_]\w*))'
     r'(?:\s+of\s+book\s*'
     r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
     r')?',
@@ -47,7 +48,10 @@ _LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
 _UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
-_INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
+_INC = re.compile(
+    r'(increment|decrement)\s*(?:\(\s*(\w+)\s*\)|(\w+))(?:\s+by\s+(.+))?\s*$',
+    re.IGNORECASE,
+)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
@@ -469,7 +473,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             actions.append({
                 "kind": "goto",
-                "page": _token(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
+                "page": _page_target(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
                 "book": _token(state, m.group(5) or m.group(6), m.group(7) or m.group(8)),
             })
             i += 1
@@ -538,6 +542,9 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if re.fullmatch(r"[A-Za-z_]\w*", call) and _var(state, call) is _MISSING:
                 call += "()"
             value = _eval(call, state)
+            if value is not _UNRESOLVED and not isinstance(value, tuple):
+                # `get f()` leaves what it gives in `it`.
+                state.variables["it"] = value
             if isinstance(value, tuple) and value and value[0] == "goto":
                 actions.append({
                     "kind": "goto",
@@ -550,13 +557,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
         m = _INC.match(line)
         if m:
-            name = m.group(2)
-            cur = state.variables.get(name, 0)
-            try:
-                cur = int(cur)
-            except (TypeError, ValueError):
-                cur = 0
-            cur = cur + 1 if m.group(1).lower() == "increment" else cur - 1
+            name = m.group(2) or m.group(3)
+            cur = _number(state.variables.get(name, 0))
+            cur = 0 if cur is None else cur
+            by = _number(_eval(m.group(4), state)) if m.group(4) else 1
+            by = 1 if by is None else by
+            cur = cur + by if m.group(1).lower() == "increment" else cur - by
+            cur = int(cur) if float(cur).is_integer() else cur
             state.variables[name] = cur
             actions.append({"kind": "set", "name": name, "value": cur})
             i += 1
@@ -594,6 +601,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             groups.set_object_visible(state, m, m.group("verb").lower() == "show")
             actions.append({"kind": "setprop", "target": "visible of object", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
+        m = groups.NAMED_SHOW.fullmatch(line)
+        if m and not is_toolbook(state.book):
+            groups.set_named_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of shape", "value": m.group("verb").lower()})
             i += 1
             continue
 
@@ -743,6 +757,12 @@ def _eval(expr: str, state: RuntimeState):
     m = _TEXT_OF_FIELD.fullmatch(expr)
     if m:
         return _field_text(state, m.group(1))
+    m = objects.IS_OBJECT.fullmatch(expr)
+    if m:
+        return objects.exists(state, m)
+    m = objects.PROPERTY.fullmatch(expr)
+    if m:
+        return objects.get_property(state, m)
     m = _CHAR_OF.fullmatch(expr)
     if m:
         found = _var(state, m.group(2))
@@ -792,13 +812,16 @@ def _eval(expr: str, state: RuntimeState):
         left, negate, right = found_in
         inside = _as_text(_eval(left, state)).lower() in _as_text(_eval(right, state)).lower()
         return inside != negate
-    is_at = re.search(r"\bis\b", expr, re.IGNORECASE)
-    if is_at:
-        left = _eval(expr[:is_at.start()], state)
-        named = re.search(r'"([^"]+)"', expr[is_at.end():])
+    split = _split_is(expr)
+    if split is not None:
+        left, negate, right = split
+        named = _NAMED_OBJECT.match(right)
         if named:
-            return str(left).strip().lower() == named.group(1).lower()
-        return False
+            # `target is button "OK" of parent of this page`: the same object, by name.
+            same = _object_name(_eval(left, state)).lower() == named.group(2).lower()
+        else:
+            same = _cmp("=", _is_side(_eval(left, state)), _is_side(_eval(right, state)))
+        return same != negate
     # comparisons. OpenScript does not need spaces round the operator.
     split = _split_compare(expr)
     if split is not None:
@@ -1081,6 +1104,13 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     if shown is not None:
         groups.set_visible(state, shown, _flag(value))
         return
+    named = objects.PROPERTY.fullmatch(target or "")
+    if named is not None and named.group("prop").lower() != "invert":
+        text = "" if value is None else str(value)
+        unread = "__" in text and "of this book" in text.lower()
+        if (value is None or isinstance(value, (str, int, float, bool))) and not unread:
+            objects.set_property(state, named, value)
+        return
     shown = groups.OBJECT_VISIBLE.fullmatch(target or "")
     if shown is not None:
         groups.set_object_visible(state, shown, _flag(value))
@@ -1138,6 +1168,39 @@ def set_shape_text(state: RuntimeState, shape: dict, text: str) -> None:
             run["end"] = len(text)
     shape["text"] = text
     state.variables["__redraw"] = True
+
+
+def _split_is(expr: str):
+    """(left, negated, right) for `a is b` and `a is not b`, at an `is` outside quotes."""
+    bare = re.sub(r'"[^"]*"', lambda m: "x" * len(m.group(0)), expr)
+    m = re.search(r"\s+is\s+(not\s+)?", bare, re.IGNORECASE)
+    if m and expr[:m.start()].strip() and expr[m.end():].strip():
+        return expr[:m.start()].strip(), bool(m.group(1)), expr[m.end():].strip()
+    return None
+
+
+_NAMED_OBJECT = re.compile(
+    r'\s*(' + "|".join(sorted(groups._CLASSES, key=len, reverse=True)) + r'|page|group)\s*"([^"]*)"',
+    re.IGNORECASE,
+)
+
+
+def _object_name(value) -> str:
+    """The name in an object reference such as `button "OK"`, or the value itself."""
+    text = "" if value is None or value is _UNRESOLVED else str(value)
+    named = _NAMED_OBJECT.match(text)
+    return named.group(2) if named else text.strip()
+
+
+def _is_side(value):
+    """One side of `is`. A flag is the word, null is blank, and a value not worked out is blank."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is _UNRESOLVED or value is None:
+        return ""
+    if isinstance(value, str) and value.strip().lower() == "null":
+        return ""
+    return value
 
 
 def _split_is_in(expr: str):
@@ -1347,6 +1410,13 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    if match.group(1).lower() == "random":
+        # OpenScript's random(n) is a whole number from 1 to n.
+        top = _number(_eval(match.group(2), state))
+        if top is None:
+            return _UNRESOLVED
+        import random
+        return random.randint(1, max(int(top), 1))
     from engine import dll
     linked = dll.find(state, match.group(1))
     if linked is not None:
@@ -1359,6 +1429,17 @@ def _call_value(expr: str, state: RuntimeState):
         if whole is _UNRESOLVED:
             return _UNRESOLVED
         return len(_pieces(counted, _as_text(whole))[0])
+    if match.group(1).lower() in ("ansitochar", "chartoansi"):
+        value = _eval(match.group(2), state)
+        if value is _UNRESOLVED:
+            return _UNRESOLVED
+        if match.group(1).lower() == "chartoansi":
+            text = _as_text(value)
+            return ord(text[0].encode("cp1252", "replace")[:1] or b"\0") if text else 0
+        number = _number(value)
+        if number is None:
+            return _UNRESOLVED
+        return bytes([int(number) & 0xFF]).decode("cp1252", "replace")
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
@@ -1744,6 +1825,25 @@ def goto(state: RuntimeState, page_id: str, leave: bool = True) -> bool:
     state.index = idx
     state.note(f"goto {page_id}")
     return True
+
+
+def _page_target(state: RuntimeState, quoted: str | None, bare: str | None):
+    """The page a `go to page` names. A quoted name is a name. A value
+    worked out from the script is a page number when it is a whole number
+    and no page has it as its name."""
+    if quoted or not bare:
+        return _token(state, quoted, bare)
+    value = _eval(bare, state)
+    if value is _UNRESOLVED:
+        return bare
+    text = _as_text(value).strip()
+    number = _number(value)
+    pages = state.book.pages if state.book is not None else []
+    if number is not None and number.is_integer() and not any(p.id.lower() == text.lower() for p in pages):
+        at = int(number) - 1
+        if 0 <= at < len(pages):
+            return pages[at].id
+    return text
 
 
 def _token(state: RuntimeState, quoted: str | None, bare: str | None):

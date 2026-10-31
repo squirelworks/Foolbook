@@ -125,3 +125,17 @@ def set_object_visible(state: RuntimeState, match: re.Match, flag: bool) -> None
 
 def object_is_visible(state: RuntimeState, match: re.Match) -> bool:
     return any(s.get("visible") is not False for s in object_shapes(state, match))
+
+
+# ---- one shape by name, any kind ------------------------------------------------------------------------
+#   show "feedback"     hide shape "Right"     show "hint" of page "P2"
+# An .fbk script names the shape the editor named. The kind does not matter.
+NAMED_SHOW = re.compile(r'\s*(?P<verb>show|hide)\s+(?:shape\s*)?' + _NAME + _PAGE + _THIS + r'\s*$', re.IGNORECASE)
+
+
+def set_named_visible(state: RuntimeState, match: re.Match, flag: bool) -> None:
+    name = object_name(state, match).strip().lower()
+    for shape in _shapes(state, match) or []:
+        if (shape.get("name") or "").strip().lower() == name:
+            shape["visible"] = flag
+    state.variables["__redraw"] = True
