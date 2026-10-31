@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-31
+
+- Using Foolbook is now written by FoolbookEditor's `examples/using_foolbook.py`, page by page, through the editor's model. Run it into `_books/using_foolbook` to regenerate the sample. The words, buttons, and drawings are unchanged. Each shape now says `layer: page`, as the editor writes it. Test: FoolbookEditor `author/test_using_foolbook.py` compares the script's output with this file.
+
 ## Unreleased
 
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).

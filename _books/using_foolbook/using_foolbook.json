@@ -29,7 +29,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -38,7 +39,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -47,7 +49,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -58,7 +61,8 @@
           "text": "Using Foolbook",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -69,7 +73,8 @@
           "text": "Using Foolbook",
           "outline": "#0b1c3d",
           "size": 40,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -80,7 +85,8 @@
           "text": "How to open a book, move through it,\nand use what is on the page.",
           "outline": "#3d4a5c",
           "size": 18,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         },
         {
           "kind": "ellipse",
@@ -89,7 +95,8 @@
           "w": 170,
           "h": 170,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "ellipse",
@@ -98,7 +105,8 @@
           "w": 150,
           "h": 150,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -107,7 +115,8 @@
           "w": 28,
           "h": 28,
           "fill": "#e36b4a",
-          "outline": "#e36b4a"
+          "outline": "#e36b4a",
+          "layer": "page"
         },
         {
           "kind": "ellipse",
@@ -116,7 +125,8 @@
           "w": 28,
           "h": 28,
           "fill": "#ffffff",
-          "outline": "#ffffff"
+          "outline": "#ffffff",
+          "layer": "page"
         },
         {
           "kind": "polygon",
@@ -135,7 +145,8 @@
             ]
           ],
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -151,7 +162,8 @@
           "item": {
             "label": "Start",
             "page": "P10"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -168,7 +180,8 @@
             "label": "Open First Light",
             "page": "P0",
             "book": "first_light"
-          }
+          },
+          "layer": "page"
         }
       ]
     },
@@ -252,7 +265,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -261,7 +275,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -270,7 +285,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -281,7 +297,8 @@
           "text": "Contents",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -292,7 +309,8 @@
           "text": "Pick a part. Next walks the book in order.",
           "outline": "#3d4a5c",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -308,7 +326,8 @@
           "item": {
             "label": "What a book is",
             "page": "P20"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -324,7 +343,8 @@
           "item": {
             "label": "The window",
             "page": "P30"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -340,7 +360,8 @@
           "item": {
             "label": "The shelf",
             "page": "P40"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -356,7 +377,8 @@
           "item": {
             "label": "Open a file",
             "page": "P50"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -372,7 +394,8 @@
           "item": {
             "label": "Pages",
             "page": "P60"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -388,7 +411,8 @@
           "item": {
             "label": "Next and Back",
             "page": "P70"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -404,7 +428,8 @@
           "item": {
             "label": "A click",
             "page": "P80"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -420,7 +445,8 @@
           "item": {
             "label": "Words",
             "page": "P90"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -436,7 +462,8 @@
           "item": {
             "label": "Pictures",
             "page": "P100"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -452,7 +479,8 @@
           "item": {
             "label": "Shapes",
             "page": "P110"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -468,7 +496,8 @@
           "item": {
             "label": "Another book",
             "page": "P120"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -484,7 +513,8 @@
           "item": {
             "label": "ToolBook files",
             "page": "P130"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -500,7 +530,8 @@
           "item": {
             "label": "Foolcourse",
             "page": "P140"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -516,7 +547,8 @@
           "item": {
             "label": "When a picture is missing",
             "page": "P150"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -532,7 +564,8 @@
           "item": {
             "label": "Check yourself",
             "page": "P160"
-          }
+          },
+          "layer": "page"
         }
       ]
     },
@@ -564,7 +597,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -573,7 +607,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -582,7 +617,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -593,7 +629,8 @@
           "text": "What a book is",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -604,7 +641,8 @@
           "text": "A Foolbook book is a file. The usual name ends in .fbk. Open it and\nyou get pages. A page is a picture made of words, boxes, and\nbuttons.\n\nThis book is one of those files. It is here so the program has\nsomething to show on a new install. First Light is the smaller one\nbeside it.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -636,7 +674,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -645,7 +684,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -654,7 +694,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -665,7 +706,8 @@
           "text": "The window",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -676,7 +718,8 @@
           "text": "The window has three jobs. The shelf is the row of books you can\nopen without hunting for a file. The list on the left is the pages\nof the book that is open. The large area is the page itself.\n\nPrev and Next sit above the page. They move one page at a time. A\nbutton drawn on the page can jump farther than that.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -685,7 +728,8 @@
           "w": 150,
           "h": 70,
           "fill": "#d9d3c5",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -696,7 +740,8 @@
           "text": "Shelf",
           "outline": "#0b1c3d",
           "size": 14,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -707,7 +752,8 @@
           "text": "books you can open",
           "outline": "#3d4a5c",
           "size": 12,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -716,7 +762,8 @@
           "w": 120,
           "h": 160,
           "fill": "#f7f4ee",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -727,7 +774,8 @@
           "text": "Pages",
           "outline": "#0b1c3d",
           "size": 14,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -736,7 +784,8 @@
           "w": 104,
           "h": 16,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -745,7 +794,8 @@
           "w": 104,
           "h": 16,
           "fill": "#e7e1d6",
-          "outline": "#e7e1d6"
+          "outline": "#e7e1d6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -754,7 +804,8 @@
           "w": 104,
           "h": 16,
           "fill": "#e7e1d6",
-          "outline": "#e7e1d6"
+          "outline": "#e7e1d6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -763,7 +814,8 @@
           "w": 330,
           "h": 160,
           "fill": "#ffffff",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -774,7 +826,8 @@
           "text": "The page",
           "outline": "#0b1c3d",
           "size": 16,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -785,7 +838,8 @@
           "text": "Words and pictures\nland here.",
           "outline": "#1a1a1a",
           "size": 15,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -817,7 +871,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -826,7 +881,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -835,7 +891,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -846,7 +903,8 @@
           "text": "The shelf",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -857,7 +915,8 @@
           "text": "The shelf is a convenience, not the library. First Light, Using\nFoolbook, and Using Grok ship with Foolbook. The tax lessons and the\nphone lesson come from Foolcourse.\n\nClicking a name opens that book from its published file. Your own\nfile is not on the shelf until you use Open a book.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -889,7 +948,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -898,7 +958,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -907,7 +968,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -918,7 +980,8 @@
           "text": "Open a file",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -929,7 +992,8 @@
           "text": "Open a book reads a file from your computer. It does not upload it\nanywhere. Foolbook accepts .fbk and .fsk. A ToolBook .tbk or .sbk is\nopened with the ToolBook reader. An .fbk that is really a ToolBook\nfile is still read as ToolBook.\n\nIf the program cannot read the file, the status line under the\nbuttons says so. The page you had open stays put.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -961,7 +1025,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -970,7 +1035,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -979,7 +1045,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -990,7 +1057,8 @@
           "text": "Pages",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1001,7 +1069,8 @@
           "text": "Every page has an id, such as P0 or P10. The list on the left shows\nthat id and the first line of words on the page, so you can tell\nthem apart.\n\nThe order in the list is the order of the book. Next follows that\norder. A button may skip ahead. The id is the name a button uses. It\nis not a page number printed for a student.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1033,7 +1102,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1042,7 +1112,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1051,7 +1122,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1062,7 +1134,8 @@
           "text": "Next and Back",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1073,7 +1146,8 @@
           "text": "Next goes to the following page in the list. Back goes to the one\nbefore it. On the last page, Next stays there. On the first page,\nBack stays there.\n\nThe buttons above the page do the same job. Use those when the page\nitself has no Next of its own. This book puts Next on the pages so\nyou can stay inside the page.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1110,7 +1184,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1119,7 +1194,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1128,7 +1204,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1139,7 +1216,8 @@
           "text": "A click",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1150,7 +1228,8 @@
           "text": "A button is a click that names a page. If the page is in this book,\nyou go there. If the name is another book, Foolbook looks on the\nshelf. First Light, on the cover of this book, is that kind of\nclick.\n\nIf the book is not on the shelf, the status line tells you the name.\nOpen that file yourself. The website viewer can also ask the page\naround it, which is how Foolcourse hands over a lesson.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1182,7 +1261,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1191,7 +1271,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1200,7 +1281,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1211,7 +1293,8 @@
           "text": "Words",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1222,7 +1305,8 @@
           "text": "Words are a text shape. They have a place, a width, a size, and a\ncolor. A line break in the text is a new line. The box clips\nanything that does not fit, so a short box hides the end of a\nsentence.\n\nColor is the ink. On a dark header the ink is white. On the paper it\nis near black. If both the ink and the fill are pale, the viewer\ndarkens the ink so the line can be read.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1254,7 +1338,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1263,7 +1348,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1272,7 +1358,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1283,7 +1370,8 @@
           "text": "Pictures",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1294,7 +1382,8 @@
           "text": "A picture in a Foolbook file is stored with the page and drawn in\nits box. A ToolBook picture is read from the file when the page\nopens and turned into a PNG, because a browser will not reliably\ndraw the original bitmap.\n\nA button face is a picture with a click. If the face is missing, the\nbutton is still a button: the words on it are the click.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1326,7 +1415,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1335,7 +1425,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1344,7 +1435,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1355,7 +1447,8 @@
           "text": "Shapes",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1366,7 +1459,8 @@
           "text": "A page is built from a few kinds of shape. A rect is a box. An\nellipse is a round. A polygon is a run of points, used here as a\nroof. Text is words. A button is a rect that goes somewhere.\n\nNothing on this page is a photograph. It is the same drawing the\nfirst short book used, kept so you can see the pieces.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1375,7 +1469,8 @@
           "w": 200,
           "h": 150,
           "fill": "#8ecae6",
-          "outline": "#8ecae6"
+          "outline": "#8ecae6",
+          "layer": "page"
         },
         {
           "kind": "ellipse",
@@ -1384,7 +1479,8 @@
           "w": 64,
           "h": 64,
           "fill": "#ffb703",
-          "outline": "#ffb703"
+          "outline": "#ffb703",
+          "layer": "page"
         },
         {
           "kind": "polygon",
@@ -1403,7 +1499,8 @@
             ]
           ],
           "fill": "#2a9d8f",
-          "outline": "#2a9d8f"
+          "outline": "#2a9d8f",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1412,7 +1509,8 @@
           "w": 70,
           "h": 78,
           "fill": "#f6f1e7",
-          "outline": "#c4b8a4"
+          "outline": "#c4b8a4",
+          "layer": "page"
         },
         {
           "kind": "polygon",
@@ -1431,7 +1529,8 @@
             ]
           ],
           "fill": "#e36b4a",
-          "outline": "#e36b4a"
+          "outline": "#e36b4a",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1440,7 +1539,8 @@
           "w": 22,
           "h": 46,
           "fill": "#6b3a2a",
-          "outline": "#6b3a2a"
+          "outline": "#6b3a2a",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1451,7 +1551,8 @@
           "text": "Rect, ellipse, polygon.\nThe house is three of each.",
           "outline": "#0b1c3d",
           "size": 16,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         }
       ]
     },
@@ -1483,7 +1584,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1492,7 +1594,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1501,7 +1604,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1512,7 +1616,8 @@
           "text": "Another book",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1523,7 +1628,8 @@
           "text": "Some clicks leave the book. The cover of this one opens First Light\nat its first page. Foolcourse does the same thing when you pick a\nlesson: it tells the viewer the address of that .fbk.\n\nThe viewer does not keep a private copy of every course. It opens\nthe file it was given. That is why a lesson can live in another\nrepository and still show up here.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1555,7 +1661,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1564,7 +1671,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1573,7 +1681,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1584,7 +1693,8 @@
           "text": "ToolBook files",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1595,7 +1705,8 @@
           "text": "ToolBook books end in .tbk. The matching system books end in .sbk.\nFoolbook reads those formats. Pages, fields, buttons, and the\npictures it knows how to pull out are drawn. A click that says go to\na page follows that page.\n\nA click that names a page in a different ToolBook file is reported,\nnot invented. You open the other file. The website does not store\nthose files.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1627,7 +1738,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1636,7 +1748,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1645,7 +1758,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1656,7 +1770,8 @@
           "text": "Foolcourse",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1667,7 +1782,8 @@
           "text": "Foolcourse is the shelf of a curriculum. It lists subjects, modules,\nand lessons. Foolbook is the window a lesson opens in. On the\nwebsite, Foolcourse puts Foolbook in a frame and sends it the\nlesson.\n\nA lesson listed with no file stays in the list and says the book is\nnot in the folder. That is a missing file, not a broken viewer.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1699,7 +1815,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1708,7 +1825,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1717,7 +1835,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1728,7 +1847,8 @@
           "text": "When a picture is missing",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1739,7 +1859,8 @@
           "text": "If a picture does not load, the words and the buttons are still\nthere. Use the words. A blank rectangle with a name is a picture the\nfile named and the viewer could not draw.\n\nButtons at the bottom of a page were added because the page named a\ndestination and did not draw the button itself. They are real\nclicks. They are not a second copy of a button you can already see.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1775,7 +1896,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1784,7 +1906,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1793,7 +1916,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1804,7 +1928,8 @@
           "text": "Check yourself",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1815,7 +1940,8 @@
           "text": "Next, on a page of this book, goes where?",
           "outline": "#1a1a1a",
           "size": 18,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -1831,7 +1957,8 @@
           "item": {
             "label": "It stays on this page.",
             "page": "P161"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -1847,7 +1974,8 @@
           "item": {
             "label": "It opens the next page in the list.",
             "page": "P162"
-          }
+          },
+          "layer": "page"
         }
       ]
     },
@@ -1875,7 +2003,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1884,7 +2013,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1893,7 +2023,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1904,7 +2035,8 @@
           "text": "Not that one",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1915,7 +2047,8 @@
           "text": "Next follows the list. It does not stay put unless you are already\non the last page. Go back and pick the other answer.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -1947,7 +2080,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1956,7 +2090,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -1965,7 +2100,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1976,7 +2112,8 @@
           "text": "That is the one",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -1987,7 +2124,8 @@
           "text": "Next is the next page in the book. A button on the page may jump\nsomewhere else, but Next itself does not.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -2023,7 +2161,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2032,7 +2171,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2041,7 +2181,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2052,7 +2193,8 @@
           "text": "One more",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2063,7 +2205,8 @@
           "text": "You open a .tbk file. What should Foolbook do?",
           "outline": "#1a1a1a",
           "size": 18,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -2079,7 +2222,8 @@
           "item": {
             "label": "Refuse it, because it is not an .fbk.",
             "page": "P171"
-          }
+          },
+          "layer": "page"
         },
         {
           "kind": "button",
@@ -2095,7 +2239,8 @@
           "item": {
             "label": "Read it as a ToolBook book.",
             "page": "P172"
-          }
+          },
+          "layer": "page"
         }
       ]
     },
@@ -2123,7 +2268,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2132,7 +2278,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2141,7 +2288,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2152,7 +2300,8 @@
           "text": "Not that one",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2163,7 +2312,8 @@
           "text": "The ending tells the reader which rules to use. .tbk and .sbk are\nToolBook. An .fbk that still has a ToolBook header is read as\nToolBook too.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -2195,7 +2345,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2204,7 +2355,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2213,7 +2365,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2224,7 +2377,8 @@
           "text": "That is the one",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2235,7 +2389,8 @@
           "text": "ToolBook files open in the same window. Pictures the reader can pull\nout are drawn. A page that lives in a different file is named, and\nyou open that file.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     },
@@ -2272,7 +2427,8 @@
           "w": 720,
           "h": 500,
           "fill": "#f4f0e6",
-          "outline": "#f4f0e6"
+          "outline": "#f4f0e6",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2281,7 +2437,8 @@
           "w": 720,
           "h": 58,
           "fill": "#0b1c3d",
-          "outline": "#0b1c3d"
+          "outline": "#0b1c3d",
+          "layer": "page"
         },
         {
           "kind": "rect",
@@ -2290,7 +2447,8 @@
           "w": 10,
           "h": 500,
           "fill": "#e6b325",
-          "outline": "#e6b325"
+          "outline": "#e6b325",
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2301,7 +2459,8 @@
           "text": "You can read a book",
           "outline": "#ffffff",
           "size": 22,
-          "bold": true
+          "bold": true,
+          "layer": "page"
         },
         {
           "kind": "text",
@@ -2312,7 +2471,8 @@
           "text": "Open a file, or pick one from the shelf. Use the list when you know\nthe page. Use Next when you do not. Click the thing that says where\nit goes.\n\nIf you are writing a book, the pages you just saw are the pieces: a\npaper, a header, words, a few shapes, and a button with a page id.\nFirst Light is the short version of the same idea.",
           "outline": "#1a1a1a",
           "size": 16,
-          "bold": false
+          "bold": false,
+          "layer": "page"
         }
       ]
     }
