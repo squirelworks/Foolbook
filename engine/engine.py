@@ -47,7 +47,10 @@ _LINK_DLL = re.compile(r'linkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _END_LINK = re.compile(r'end(?:\s+linkdll(?:32)?)?\s*$', re.IGNORECASE)
 _UNLINK_DLL = re.compile(r'unlinkdll(?:32)?\s+"([^"]+)"\s*$', re.IGNORECASE)
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
-_INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
+_INC = re.compile(
+    r'(increment|decrement)\s*(?:\(\s*(\w+)\s*\)|(\w+))(?:\s+by\s+(.+))?\s*$',
+    re.IGNORECASE,
+)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
 _ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
 _ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
@@ -550,13 +553,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
         m = _INC.match(line)
         if m:
-            name = m.group(2)
-            cur = state.variables.get(name, 0)
-            try:
-                cur = int(cur)
-            except (TypeError, ValueError):
-                cur = 0
-            cur = cur + 1 if m.group(1).lower() == "increment" else cur - 1
+            name = m.group(2) or m.group(3)
+            cur = _number(state.variables.get(name, 0))
+            cur = 0 if cur is None else cur
+            by = _number(_eval(m.group(4), state)) if m.group(4) else 1
+            by = 1 if by is None else by
+            cur = cur + by if m.group(1).lower() == "increment" else cur - by
+            cur = int(cur) if float(cur).is_integer() else cur
             state.variables[name] = cur
             actions.append({"kind": "set", "name": name, "value": cur})
             i += 1
