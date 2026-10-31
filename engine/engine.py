@@ -760,6 +760,11 @@ def _eval(expr: str, state: RuntimeState):
     m = objects.PROPERTY.fullmatch(expr)
     if m:
         return objects.get_property(state, m)
+    m = objects.OF_VALUE.fullmatch(expr)
+    if m:
+        held = objects.of_value(state, m)
+        if held is not None:
+            return held
     m = _CHAR_OF.fullmatch(expr)
     if m:
         found = _var(state, m.group(2))
