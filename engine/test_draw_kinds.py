@@ -107,6 +107,18 @@ class Arc(unittest.TestCase):
         self.assertEqual((options["start"], options["extent"], options["style"]), (30, 120, "arc"))
         self.assertNotIn("fill", options)
 
+class Pie(unittest.TestCase):
+    def test_a_pie_is_a_filled_slice(self):
+        canvas = drawn({"kind": "pie", "x": 0, "y": 0, "w": 80, "h": 80, "start": 90, "sweep": -45, "fill": "#ff0000"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        options = canvas.calls[0][2]
+        self.assertEqual((options["start"], options["extent"], options["style"]), (90, -45, "pieslice"))
+        self.assertEqual(options["fill"], "#ff0000")
+
+    def test_a_pie_with_no_angles_is_a_quarter(self):
+        options = drawn({"kind": "pie", "x": 0, "y": 0, "w": 80, "h": 80}).calls[0][2]
+        self.assertEqual((options["start"], options["extent"]), (0, 90))
+
 
 if __name__ == "__main__":
     unittest.main()
