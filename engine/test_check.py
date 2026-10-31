@@ -1,9 +1,17 @@
-"""The compile check: errors with line numbers, not a compile."""
+"""The compile check: errors with line numbers, not a compile.
+
+The NIDA guard runs when NIDA_BOOKS names a folder holding the book.
+The books are not in this repository.
+"""
 
 from __future__ import annotations
 
+import os
+import re
 import unittest
+from pathlib import Path
 
+from engine.loader import load
 from engine.subset import check
 
 
@@ -52,6 +60,43 @@ class CheckTests(unittest.TestCase):
     def test_core_gives_the_same_answer(self):
         from foolbook import core
         self.assertEqual(core.check_script("go to"), [(1, "go to needs a page")])
+
+
+class ToolBookFormTests(unittest.TestCase):
+    def test_end_with_the_handler_name(self):
+        self.assertEqual(check("to handle buttonClick\n  beep\nend buttonClick\n"), [])
+
+    def test_else_in_conditions(self):
+        script = 'conditions\n  when n = 1\n    beep\n  else\n    beep\nend conditions\n'
+        self.assertEqual(check(script), [])
+
+    def test_notify_after_is_a_handler(self):
+        self.assertEqual(check("notifyAfter idle\n  beep\nend idle\n"), [])
+
+    def test_go_to_previous_page_of_this_book(self):
+        self.assertEqual(check("go to previous page of this book"), [])
+
+
+def _whole(name, body):
+    """A stored handler is its body. Check it as the handler it came from."""
+    text = body.replace("\r", "")
+    if re.match(r"(?is)\s*to\s+(handle|get|set)\b", text):
+        return [text]
+    return [f"to handle {name}\n{text}", f"to handle {name}\n{text}\nend"]
+
+
+class NidaCheckTests(unittest.TestCase):
+    def test_93950101_every_script_checks_clean(self):
+        path = Path(os.environ.get("NIDA_BOOKS") or "/nonexistent") / "93950101.fbk"
+        if not path.exists():
+            raise unittest.SkipTest("93950101.fbk is not here; set NIDA_BOOKS")
+        book = load(path)
+        handlers = [("book", h) for h in book.handlers] + [(p.id, h) for p in book.pages for h in p.handlers]
+        for where, h in handlers:
+            self.assertEqual(min((check(t) for t in _whole(h.name, h.source)), key=len), [], (where, h.name))
+        for page in book.pages:
+            for shape in page.shapes:
+                self.assertEqual(check(shape.get("script") or ""), [], (page.id, shape.get("name")))
 
 
 if __name__ == "__main__":

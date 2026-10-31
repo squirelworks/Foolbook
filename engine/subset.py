@@ -62,7 +62,7 @@ def unknown_words(source: str) -> list[tuple[int, str]]:
 
 
 _GO = re.compile(
-    r'go\s+to\s+(?:(?:next|previous|prev)\s+page$|page\s*(?:"[^"]*"|\(.+\)|[A-Za-z_]\w*))',
+    r'go\s+to\s+(?:(?:next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$|page\s*(?:"[^"]*"|\(.+\)|[A-Za-z_]\w*))',
     re.IGNORECASE,
 )
 
@@ -76,7 +76,8 @@ def check(source: str) -> list[tuple[int, str]]:
     does not run are warnings, from ``unknown_words``, not errors.
     """
     errors: list[tuple[int, str]] = []
-    open_blocks: list[tuple[str, int]] = []
+    # (kind, line, name). A handler's name is what `end NAME` may close it with.
+    open_blocks: list[tuple[str, int, str]] = []
     for number, raw in enumerate((source or "").replace("\r", "").split("\n"), 1):
         line = raw.strip()
         if not line or line.startswith("--"):
@@ -86,37 +87,38 @@ def check(source: str) -> list[tuple[int, str]]:
             continue
         low = re.sub(r"\s+", " ", line.lower())
         first = low.split(" ", 1)[0]
-        if first == "to" and re.match(r"to (handle|get|set) [a-z_]\w*", low):
-            open_blocks.append(("handler", number))
+        header = re.match(r"(?:to (?:handle|get|set)|notifybefore|notifyafter) ([a-z_]\w*)", low)
+        if header:
+            open_blocks.append(("handler", number, header.group(1)))
         elif first == "if":
             cond = low[2:].strip()
             if cond.endswith(" then") or cond == "then":
                 cond = cond[:-4].strip()
             if not cond:
                 errors.append((number, "if has no condition"))
-            open_blocks.append(("if", number))
+            open_blocks.append(("if", number, "if"))
         elif first == "step":
             if not re.match(r"step [a-z_]\w* from .+ to .+", low):
                 errors.append((number, "step needs NAME from A to B"))
-            open_blocks.append(("step", number))
+            open_blocks.append(("step", number, "step"))
         elif first == "conditions":
-            open_blocks.append(("conditions", number))
+            open_blocks.append(("conditions", number, "conditions"))
         elif first == "else":
-            if not open_blocks or open_blocks[-1][0] != "if":
-                errors.append((number, "else is not inside an if"))
+            if not open_blocks or open_blocks[-1][0] not in ("if", "conditions"):
+                errors.append((number, "else is not inside an if or conditions"))
         elif first == "end":
             want = low[4:].strip() or None
             if not open_blocks:
                 errors.append((number, "end with nothing open"))
                 continue
-            kind, _ = open_blocks[-1]
-            if want is not None and want != kind:
+            kind, _, name = open_blocks[-1]
+            if want is not None and want not in (kind, name):
                 errors.append((number, f"end {want} closes {kind}"))
                 continue
             open_blocks.pop()
         elif first == "go" and not _GO.match(line):
             errors.append((number, "go to needs a page"))
-    for kind, number in reversed(open_blocks):
+    for kind, number, _ in reversed(open_blocks):
         errors.append((number, f"{kind} is not closed with end"))
     errors.sort(key=lambda error: error[0])
     return errors
