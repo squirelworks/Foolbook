@@ -210,34 +210,21 @@ def _handlers_of(raw: dict) -> list:
     return [Handler(name="script", source=str(script))]
 
 
-def flatten_groups(shapes: list, chain: tuple = ()) -> list:
-    """A ``group`` shape from the editor becomes its children, in order.
+def flatten_groups(shapes: list) -> list:
+    """A ``group`` shape from the editor becomes its children, in its place.
 
     The editor stores a group as ``{"kind": "group", "name": ..., "children": [...]}``
-    with each child's bounds already on the page. The reader draws, clicks and
-    hides children one by one, as it does for a ToolBook group, so each child is
-    put in the group's place and given the group's name in ``groups``, nearest
-    first. A hidden group hides its children. A child with no layer takes the
-    group's. The stored book keeps the group; only the copy the reader runs is flat.
+    with each child's bounds already on the page. The reader paints and clicks
+    single shapes, so the children take the group's place in paint order and
+    nested groups open the same way. Every other shape is passed through as it
+    is. The stored book keeps the group; only the list the reader runs is flat.
     """
     out = []
     for shape in shapes or []:
-        if not isinstance(shape, dict) or (shape.get("kind") or "").lower() != "group":
+        if isinstance(shape, dict) and (shape.get("kind") or "").lower() == "group":
+            out.extend(flatten_groups(shape.get("children") or []))
+        else:
             out.append(shape)
-            continue
-        name = shape.get("name") or ""
-        inner = ((name,) if name else ()) + tuple(chain)
-        for child in flatten_groups(shape.get("children") or [], inner):
-            if not isinstance(child, dict):
-                continue
-            child = dict(child)
-            own = [g for g in child.get("groups") or [] if g not in inner]
-            child["groups"] = own + [g for g in inner if g not in own]
-            if shape.get("visible") is False:
-                child["visible"] = False
-            if "layer" not in child and shape.get("layer"):
-                child["layer"] = shape["layer"]
-            out.append(child)
     return out
 
 
