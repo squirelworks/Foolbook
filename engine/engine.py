@@ -99,6 +99,7 @@ _TEXT_OF_FIELD = re.compile(
     re.IGNORECASE,
 )
 _CHAR_OF = re.compile(r'char\s+(\d+)\s+of\s+(\w+)', re.IGNORECASE)
+_CLEAR = re.compile(r'clear\s+(.+)$', re.IGNORECASE)
 _CLEAR_CHAR = re.compile(r'clear\s+char\s+(\d+)\s+of\s+(\w+)$', re.IGNORECASE)
 _PROP_OF_PAGE = re.compile(
     r'(\w+)\s+of\s+(?:this\s+page|page\s+((?:(?!\s(?:and|or)\s)[^=<>])+))',
@@ -461,6 +462,12 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             at = int(m.group(1)) - 1
             if 0 <= at < len(text):
                 state.variables[name] = text[:at] + text[at + 1:]
+            i += 1
+            continue
+
+        m = _CLEAR.match(line)
+        if m:
+            _clear(state, m.group(1).strip())
             i += 1
             continue
 
@@ -949,6 +956,19 @@ def _put_chunk(state: RuntimeState, match: re.Match) -> None:
         parts[first - 1:last] = [value]
         text = glue.join(parts)
     state.variables[name] = text
+
+
+def _clear(state: RuntimeState, target: str) -> None:
+    """`clear text of field "x"`, `clear x`, `clear item 2 of list`: make it empty."""
+    if objects.PROPERTY.fullmatch(target) or _FIELD_TEXT.fullmatch(target):
+        _apply_set(state, target, "")
+        return
+    chunk = _ASSIGN_CHUNK.fullmatch(f"{target} = \"\"")
+    if chunk and _var(state, chunk.group(4)) is not _MISSING:
+        _put_chunk(state, chunk)
+        return
+    if re.fullmatch(r"[A-Za-z_]\w*", target):
+        state.variables[target] = ""
 
 
 def _split_arithmetic(expr: str):
