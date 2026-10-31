@@ -37,6 +37,21 @@ class Book:
     shells: list[str] = field(default_factory=list)
     handlers: list[Handler] = field(default_factory=list)
     props: dict = field(default_factory=dict)
+    author: str = ""
+    first_page: str = ""
+
+    def start(self, last: str = "") -> int:
+        """Where a reader opens the book.
+
+        The student's saved last page when there is one and it exists, else
+        the book's first page id when that page exists, else the first page.
+        A ToolBook book has no first page id, so it opens on page 0 as before.
+        """
+        for wanted in (last, self.first_page):
+            found = self.index_of(wanted) if wanted else -1
+            if found >= 0:
+                return found
+        return 0
 
     def page(self, page_id: str) -> Page | None:
         for p in self.pages:
