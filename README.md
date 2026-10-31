@@ -116,7 +116,7 @@ The button's script runs first. A script with no `to handle` line, which is how 
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
-`go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
+In a ToolBook file, `go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. In a Foolbook book, `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
 `engine.subset.check(script)` checks a script without running it and returns errors with line numbers: a quote left open, an `if`, `step`, or handler left open, an `end` with nothing open, a `go to` with no page. FoolbookEditor shows the first one. It does not stop a save.
 
