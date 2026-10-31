@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- `engine.subset.check(script)` (and `foolbook.core.check_script`) parses a script in the subset and returns errors with line numbers: an open quote, an open or doubly closed block, `else` outside an `if`, `go to` with no page, `if` with no condition. It is a check, not a compile. Tested in `engine/test_check.py`.
 - `go to next page` and `go to previous page` (also `go to prev page`) move like `send next` and `send previous`, so they take the page's Next or Back item first, as the buttons do. Before, both lines were notes and did nothing. Tested in `engine/test_go_next_page.py`.
 - `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. An `.fbk` hotspot or text shape can be shown without a ToolBook class word. Tested in `engine/test_show_hide_name.py`.
 - `to handle leavePage` runs before the next page is shown. A `go to` in it is where the reader lands instead, and the leave script runs once per departure, so a leave script that navigates does not loop. Before, a `go to` in leavePage was dropped. Tested in `engine/test_page_leave.py`.
