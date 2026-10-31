@@ -13,7 +13,7 @@ and asserts what the book's own scripts say should happen. PASS or FAIL per spec
 
 Run it from the repository root. No course file is in this repository: a spec names a book by file stem and the
 folder comes from `--courses` or `FOOLBOOK_COURSES`. Screenshots (`--shots`, default `quiz_check_shots/`) and a
-JSON result (`--json`) are written outside the books. The viewer's progress file is redirected to a scratch folder.
+JSON result (`--json`) are written outside the books. The viewer's progress file is redirected to a scratch folder. The page list is the developer one, which shows every page id, so a `goto` step can find its page.
 
 Types covered: letter choice (handleQuizClick), keyboard (handleQuizKey), embedded answers (saveEmbedded /
 incorrectEmbedded), fill-in (doNumeric / doAlphabetic / incorrectFillin), form fields (setupFormFields), the

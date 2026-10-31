@@ -50,6 +50,9 @@ import foolbook.model as model  # noqa: E402
 
 scratch = tempfile.mkdtemp(prefix="quizcheck_")
 native._progress_path = lambda: Path(scratch) / "progress.json"
+# A spec goes to a page by its id, and the page list shows every id only to a developer.
+# This is the list --debug shows, without --debug writing decoded files beside the book.
+native._developer = lambda state: True
 
 held: dict = {}
 _Original = model.RuntimeState
