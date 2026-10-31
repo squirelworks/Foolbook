@@ -7,6 +7,7 @@
 - A `curve` shape is drawn as a polyline through its `points`. It was a box at its bounds. knownbugs.md says it is not smoothed yet.
 - An `arc` that stores `start` and `sweep` is drawn as that part of the ellipse in its bounds, unfilled. An arc read from a `.tbk` (endpoints or rays) is drawn as before.
 - A `pie` shape is drawn as a filled slice of the ellipse in its bounds, from `start` and `sweep`. It was a box.
+- A `chord` shape is drawn as the slice of the ellipse between `start` and `sweep`, closed by a straight line and filled. It was a box.
 
 ## Unreleased
 
