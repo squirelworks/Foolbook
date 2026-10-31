@@ -1264,6 +1264,15 @@ def _truth(value) -> bool:
 _NOT_A_CALL = object()
 
 
+# OpenScript's counting functions, and the chunk each one counts.
+_COUNTS = {
+    "charcount": "char",
+    "wordcount": "word",
+    "itemcount": "item",
+    "textlinecount": "textline",
+}
+
+
 def _call_value(expr: str, state: RuntimeState):
     match = re.fullmatch(r"([A-Za-z_]\w*)\s*\((.*)\)", expr.strip(), re.DOTALL)
     if not match:
@@ -1277,6 +1286,12 @@ def _call_value(expr: str, state: RuntimeState):
         parts = _call_args(match.group(2))
         refs = [part if re.fullmatch(r"[A-Za-z_]\w*", part) else "" for part in parts]
         return linked[1](state, [_eval(part, state) for part in parts], refs)
+    counted = _COUNTS.get(match.group(1).lower())
+    if counted is not None:
+        whole = _eval(match.group(2), state)
+        if whole is _UNRESOLVED:
+            return _UNRESOLVED
+        return len(_pieces(counted, _as_text(whole))[0])
     if match.group(1).lower() == "getfirst":
         # No INI on this machine. The profile default for First is Student.
         found = _var(state, "__studentFirst")
