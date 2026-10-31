@@ -17,6 +17,7 @@ MESSAGES = {
     "back": "the previous page",
     "exit": "close the reader",
     "tryagain": "hide the page's quiz feedback; the book's results stay",
+    "resetscore": "forget the book's quiz results",
 }
 
 # Lines that open or close a block. The interpreter reads them as part of

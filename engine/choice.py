@@ -74,3 +74,8 @@ def try_again(state: RuntimeState) -> None:
             shape["visible"] = False
     state.variables.pop("__answer", None)
     state.variables["__redraw"] = True
+
+
+def reset_score(state: RuntimeState) -> None:
+    """Forget every page result on the book. Only when the reader asks."""
+    results(state).clear()

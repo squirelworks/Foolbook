@@ -1259,6 +1259,10 @@ def follow(state: RuntimeState, actions: list[dict]) -> bool:
                 from engine import choice
                 choice.try_again(state)
                 continue
+            if name == "resetscore" and not is_toolbook(state.book):
+                from engine import choice
+                choice.reset_score(state)
+                continue
             if name == "next":
                 if _follow_label(state, "next"):
                     return True

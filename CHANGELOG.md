@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- In a book of Foolbook's own format, `send resetScore` forgets the book's quiz results. A ToolBook file does not take the message. Tested in `engine/test_choice_reset_score.py`.
 - In a book of Foolbook's own format, `send tryAgain` puts the page's quiz back (both feedback shapes hidden) and keeps the book's results. A ToolBook file does not take the message, and the NIDA `system logical tryagain` variable is a different thing and is unchanged. Tested in `engine/test_choice_try_again.py`.
 - A graded quiz page leaves its result on the book in memory: `props["results"]`, one `{page, choice, right}` per page, the last answer winning. A ToolBook file is never graded here, so it records nothing. Foolcourse does not see it yet. Tested in `engine/test_choice_score.py`.
 - A graded quiz answer goes to the quiz's `next` page when right and its `again` page when wrong, unless the button has a script of its own. The window does this only for a button that has `choice`, so the A–E path is unchanged. Tested in `engine/test_choice_next.py`.
