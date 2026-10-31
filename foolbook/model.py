@@ -61,6 +61,8 @@ class RuntimeState:
     # Books already open. ToolBook does not close one to show another.
     shelf: dict = field(default_factory=dict)
     where: dict = field(default_factory=dict)
+    # sysBooks, first searched first: (name as pushed, Book or None).
+    sysbooks: list = field(default_factory=list)
 
     @property
     def page(self) -> Page | None:
