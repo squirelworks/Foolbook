@@ -139,10 +139,13 @@ def _strip_handler_end(body: str) -> str:
         low = raw.strip().lower()
         if not low or low.startswith("--"):
             continue
-        if low.startswith("if ") or low.startswith("step ") or low.startswith("conditions"):
+        if low.startswith(("if ", "step ", "conditions", "while ")) or low == "do":
             depth += 1
             continue
-        if low in ("end", "end if", "end step", "end handler"):
+        if low.startswith("until ") and depth:
+            depth -= 1
+            continue
+        if low in ("end", "end if", "end step", "end handler", "end while", "end conditions"):
             if depth == 0:
                 cut = i
                 break
@@ -206,6 +209,18 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
 class _Break(Exception):
     """`break` ends the handler it is in."""
+
+
+class _LoopBreak(Exception):
+    """`break while`, `break step`, `break conditions`, `break do`."""
+
+    def __init__(self, kind: str):
+        super().__init__()
+        self.kind = kind
+
+
+class _LoopNext(Exception):
+    """`continue` goes round the loop it is in again."""
 
 
 class _Return(Exception):
@@ -351,6 +366,48 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low == "break":
             raise _Break()
+
+        if low in ("break while", "break step", "break conditions", "break do"):
+            raise _LoopBreak(low.split()[1])
+
+        if low == "continue" or low in ("continue while", "continue step", "continue do"):
+            raise _LoopNext()
+
+        if low.startswith("while "):
+            end_at = _find_block_end(lines, i + 1, end, ("end while",))
+            cond = line[6:].strip()
+            guard = 0
+            while guard < 10000 and _truth(_eval(cond, state)):
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "while":
+                        raise
+                    break
+                except _LoopNext:
+                    continue
+            i = end_at + 1
+            continue
+
+        if low == "do":
+            end_at = _find_block_end(lines, i + 1, end, (), until=True)
+            cond = lines[end_at][6:].strip() if end_at < end else "true"
+            guard = 0
+            while guard < 10000:
+                guard += 1
+                try:
+                    _run_block(state, lines, i + 1, end_at, actions)
+                except _LoopBreak as stop:
+                    if stop.kind != "do":
+                        raise
+                    break
+                except _LoopNext:
+                    pass
+                if _truth(_eval(cond, state)):
+                    break
+            i = end_at + 1
+            continue
 
         if low == "return" or low.startswith("return "):
             raise _Return(_eval(line[6:], state) if len(line) > 6 else None)
@@ -609,9 +666,44 @@ def _run_step(state, name, a, b, by, lines, start, end, actions):
     guard = 0
     while (cur <= hi if step > 0 else cur >= hi) and guard < 10000:
         state.variables[name] = cur
-        _run_block(state, lines, start, end, actions)
+        try:
+            _run_block(state, lines, start, end, actions)
+        except _LoopBreak as stop:
+            if stop.kind != "step":
+                raise
+            break
+        except _LoopNext:
+            pass
         cur += step
         guard += 1
+
+
+_OPENERS = ("if ", "step ", "while ", "linkdll")
+
+
+def _find_block_end(lines: list[str], start: int, end: int, closers: tuple, until: bool = False) -> int:
+    """The line that closes the block opened just before start.
+
+    Blocks inside are skipped. A bare `end` closes the nearest open block.
+    """
+    depth = 0
+    for i in range(start, end):
+        low = lines[i].lower()
+        if low.startswith(_OPENERS) or low in ("conditions", "do"):
+            depth += 1
+            continue
+        if low.startswith("until ") and depth:
+            depth -= 1
+            continue
+        if low.startswith("until ") and until:
+            return i
+        if low == "end" or low.startswith("end "):
+            if depth == 0:
+                if low == "end" or low in closers:
+                    return i
+                continue
+            depth -= 1
+    return end
 
 
 def _whole_quote(expr: str) -> str | None:
@@ -1365,10 +1457,18 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     for index, at in enumerate(branches):
         nxt = branches[index + 1] if index + 1 < len(branches) else (otherwise if otherwise is not None else end)
         if _truth(_eval(lines[at][5:].strip(), state)):
-            _run_block(state, lines, at + 1, nxt, actions)
+            _run_conditions_branch(state, lines, at + 1, nxt, actions)
             return
     if otherwise is not None:
-        _run_block(state, lines, otherwise + 1, end, actions)
+        _run_conditions_branch(state, lines, otherwise + 1, end, actions)
+
+
+def _run_conditions_branch(state, lines, start, end, actions) -> None:
+    try:
+        _run_block(state, lines, start, end, actions)
+    except _LoopBreak as stop:
+        if stop.kind != "conditions":
+            raise
 
 
 def _book_keyup(state: RuntimeState, actions: list[dict]) -> bool:
