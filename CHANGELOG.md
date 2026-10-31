@@ -9,6 +9,7 @@
 - An `arc` that stores `start` and `sweep` is drawn as that part of the ellipse in its bounds, unfilled. An arc read from a `.tbk` (endpoints or rays) is drawn as before.
 - A `pie` shape is drawn as a filled slice of the ellipse in its bounds, from `start` and `sweep`. It was a box.
 - A `chord` shape is drawn as the slice of the ellipse between `start` and `sweep`, closed by a straight line and filled. It was a box.
+- A `hotspot` shape is not drawn. A click inside it is the hotspot, and its `item` is followed like a button's. It was drawn as a box with an outline.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 - `engine.origin.is_toolbook(book)` says whether a book's file is a ToolBook file, from its first bytes (`toolbook.format.is_toolbook`) or a TBKX, not from its name. An FBK1 envelope is Foolbook whatever it is called. Behavior that differs between the two asks here. Nothing calls it yet. Tested in `engine/test_origin.py`.
 

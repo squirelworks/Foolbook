@@ -9,6 +9,7 @@ stream is decoded to handler source and the engine runs it.
   arc             x, y, w, h, start, sweep: degrees, zero east, counterclockwise
   pie             the same, filled back to the centre (start 0, sweep 90 when missing)
   chord           the same, closed by the straight line between the two ends
+  hotspot         x, y, w, h and an item. Clicked, never drawn.
 
 stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
@@ -67,7 +68,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
     for shape in shapes:
         caret = _flush_caret(canvas, caret)
         kind = (shape.get("kind") or "rect").lower()
-        if shape.get("visible") is False:
+        if shape.get("visible") is False or kind == "hotspot":
             continue
         fill = shape.get("fill") or ""
         outline = shape["outline"] if "outline" in shape else "black"

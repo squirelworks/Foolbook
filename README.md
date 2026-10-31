@@ -107,6 +107,7 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 - `arc`: the open curve between its endpoints. It is not filled. An `.fbk` arc that stores `start` and `sweep` (degrees, zero east, counterclockwise) is that part of the ellipse in its bounds.
 - `pie`: the same `start` and `sweep`, filled back to the centre. Missing angles are 0 and 90.
 - `chord`: the same `start` and `sweep`, closed by the straight line between the two ends and filled.
+- `hotspot`: `x`, `y`, `w`, `h`, and an `item`. It is not drawn. A click inside it follows the item.
 - `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
 - `button`: the picture stored for that button, or a caption when there is no picture.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).
