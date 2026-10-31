@@ -5,6 +5,7 @@ A ToolBook page stream is not a shape source. When a .tbk is open, that
 stream is decoded to handler source and the engine runs it.
 
   rect, ellipse   x, y, w, h, fill, outline
+  roundrect       x, y, w, h, fill, outline, radius (default 8)
   line, polygon   points: [[x, y], ...]
   text            x, y, text
   image           x, y, and src (a file beside the book) or data (base64 BMP, PNG, or GIF)
@@ -72,6 +73,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             flat = _points(shape)
             if len(flat) >= 4:
                 canvas.create_line(*flat, fill=outline or fill or "black")
+        elif kind == "roundrect":
+            x, y, w, h = _box(shape)
+            flat = _round_box(x, y, w, h, shape.get("radius"))
+            if len(flat) >= 6:
+                canvas.create_polygon(*flat, fill=fill, outline=outline or "")
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "")
@@ -197,6 +203,11 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
                 )
         else:
             x, y, w, h = _box(shape)
+            tiled = _tiled(canvas, shape, w, h, fill, outline)
+            if tiled is not None:
+                photos.append(tiled)
+                canvas.create_image(x, y, image=tiled, anchor="nw")
+                fill = ""
             canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline=outline or "")
     _flush_caret(canvas, caret)
     # Tk drops an image the moment nothing else references it.
@@ -750,6 +761,30 @@ def _arc_pie(x, y, w, h, rays) -> list[int]:
     return flat
 
 
+def _round_box(x, y, w, h, radius=None) -> list[float]:
+    """A rectangle whose corners are quarter circles. The radius is clamped to half the short side."""
+    if w < 1 or h < 1:
+        return []
+    r = 8.0 if radius is None else max(0.0, float(radius))
+    r = min(r, w / 2, h / 2)
+    if r <= 0:
+        return [x, y, x + w, y, x + w, y + h, x, y + h]
+    steps = 6
+    flat = []
+    # Corner centres, clockwise from top left, with the angle each quarter starts at.
+    for cx, cy, start in (
+        (x + r, y + r, 180),
+        (x + w - r, y + r, 270),
+        (x + w - r, y + h - r, 0),
+        (x + r, y + h - r, 90),
+    ):
+        for step in range(steps + 1):
+            angle = math.radians(start + 90 * step / steps)
+            flat.append(cx + r * math.cos(angle))
+            flat.append(cy + r * math.sin(angle))
+    return flat
+
+
 def _box(shape: dict) -> tuple[int, int, int, int]:
     bounds = shape.get("bounds")
     if isinstance(bounds, (list, tuple)) and len(bounds) >= 4:
@@ -768,6 +803,19 @@ def _points(shape: dict) -> list[int]:
         if len(pt) >= 2:
             flat.extend((int(pt[0]), int(pt[1])))
     return flat
+
+
+def _tiled(canvas, shape: dict, w: int, h: int, fill: str, outline: str):
+    """The shape's 8 by 8 pattern, repeated to its size. None when it has none."""
+    from engine import patterns
+    grid = patterns.pixels(shape.get("tile"), outline or "#000000", fill or "#ffffff", shape.get("cell") or 1)
+    if not grid or w < 1 or h < 1:
+        return None
+    tile = tk.PhotoImage(master=canvas, width=len(grid[0]), height=len(grid))
+    tile.put(" ".join("{" + " ".join(line) + "}" for line in grid))
+    photo = tk.PhotoImage(master=canvas, width=int(w), height=int(h))
+    photo.tk.call(photo, "copy", tile, "-to", 0, 0, int(w), int(h))
+    return photo
 
 
 def _fit_image(raw: bytes, width: int, height: int) -> bytes:
