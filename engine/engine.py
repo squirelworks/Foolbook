@@ -23,7 +23,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
-from engine import groups
+from engine import groups, objects
+from engine.origin import is_toolbook
 
 
 _GOTO = re.compile(
@@ -597,6 +598,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             i += 1
             continue
 
+        m = groups.NAMED_SHOW.fullmatch(line)
+        if m and not is_toolbook(state.book):
+            groups.set_named_visible(state, m, m.group("verb").lower() == "show")
+            actions.append({"kind": "setprop", "target": "visible of shape", "value": m.group("verb").lower()})
+            i += 1
+            continue
+
         m = groups.GROUP_SHOW.fullmatch(line)
         if m:
             groups.set_visible(state, m, m.group("verb").lower() == "show")
@@ -743,6 +751,12 @@ def _eval(expr: str, state: RuntimeState):
     m = _TEXT_OF_FIELD.fullmatch(expr)
     if m:
         return _field_text(state, m.group(1))
+    m = objects.IS_OBJECT.fullmatch(expr)
+    if m:
+        return objects.exists(state, m)
+    m = objects.PROPERTY.fullmatch(expr)
+    if m:
+        return objects.get_property(state, m)
     m = _CHAR_OF.fullmatch(expr)
     if m:
         found = _var(state, m.group(2))
@@ -1083,6 +1097,13 @@ def _apply_set(state: RuntimeState, target: str, value) -> None:
     shown = groups.GROUP_VISIBLE.fullmatch(target or "")
     if shown is not None:
         groups.set_visible(state, shown, _flag(value))
+        return
+    named = objects.PROPERTY.fullmatch(target or "")
+    if named is not None and named.group("prop").lower() != "invert":
+        text = "" if value is None else str(value)
+        unread = "__" in text and "of this book" in text.lower()
+        if (value is None or isinstance(value, (str, int, float, bool))) and not unread:
+            objects.set_property(state, named, value)
         return
     shown = groups.OBJECT_VISIBLE.fullmatch(target or "")
     if shown is not None:
