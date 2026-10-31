@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. This is for books in Foolbook's own format, so a hotspot or text shape can be shown without a ToolBook class word. A ToolBook file does not get this reading. Tested in `engine/test_show_hide_name.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.
 - An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
 - A `.fbk` book can store `author` and `firstPage`. The reader opens at the first page id when that page exists, else at the first page, and so does a book opened with Open. A saved last page the student picks still wins, and a ToolBook book, which has no first page id, still opens on page 0. `engine/test_first_page.py`.
@@ -27,6 +28,10 @@
 - `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
 - A handler parameter taken `by reference` binds to the caller's variable and writes back; an array passed by value is a copy.
 - The openscript_analysis submodule moves to d741054, which has `formats/tbk/store.py`. Opening a ToolBook 8 object store and the Wingdings face test no longer fail on a missing module.
+- `go to page(n)` goes to the nth page when n is a whole number and no page has that name, and `go to page(pages[3])` takes an array element.
+- `random(n)` gives a whole number from 1 to n.
+- `a is b` and `a is not b` compare like `=` and `<>` with a variable, number, flag, bare word or `null` on the right. `is not "x"` no longer reads as `is "x"`.
+- An object can be named on another page or its background: `text of field("index") of parent of page i`, `set checked of button(temp) of page i to false`, `isObject(rectangle("correct") of page i)`. Text, visible, enabled and checked are read and set.
 - Chunks of text: `word 2 of cmdLine`, `item i of pool`, `chars 2 to 4 of name` and `textline 3 of text of field "a"` give that part of the value. The index can be a sum or an array element, and past the end is empty.
 - A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
 - `while ... end while` and `do ... until` loop. `break while`, `break step`, `break do` and `break conditions` leave that block and the handler goes on, and `continue` starts the next pass. A handler with a `while` or `conditions` block inside it is no longer cut short at that block's own `end`.
