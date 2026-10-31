@@ -35,6 +35,9 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
+# ToolBook's `go to next page` and `go to previous page` (of this book) are
+# the pages beside this one in the book's order. Only for ToolBook files.
+_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$', re.IGNORECASE)
 _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
@@ -466,6 +469,16 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         m = _PUSH_SYSBOOKS.match(line)
         if m:
             push_sysbook(state, _as_text(_eval(m.group(1), state)))
+            i += 1
+            continue
+
+        m = _GO_STEP.match(line)
+        if m and is_toolbook(state.book):
+            to = state.index + (1 if m.group(1).lower() == "next" else -1)
+            if 0 <= to < len(state.book.pages):
+                actions.append({"kind": "goto", "page": state.book.pages[to].id, "book": None})
+            else:
+                state.note(f"no page beside: {line}")
             i += 1
             continue
 
