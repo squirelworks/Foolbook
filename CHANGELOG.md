@@ -21,6 +21,7 @@
 
 ## Unreleased
 
+- A chunk of a variable can be set: `char i of pool = " "`, `item 2 of list = "x"`, `word 3 of s = "four"`. An item or textline past the end pads the list.
 - `charCount`, `wordCount`, `itemCount` and `textlineCount` give how many of that chunk a value has.
 - A handler parameter taken `by reference` binds to the caller's variable and writes back; an array passed by value is a copy.
 - The openscript_analysis submodule moves to d741054, which has `formats/tbk/store.py`. Opening a ToolBook 8 object store and the Wingdings face test no longer fail on a missing module.
