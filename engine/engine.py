@@ -132,20 +132,23 @@ def one_handler(script: str, name: str) -> str:
     return ""
 
 
-def click_script(obj: dict | None) -> str:
+def click_script(obj: dict | None, book=None) -> str:
     """The buttonClick a click should run.
 
     The object's own script wins when it handles the click. Otherwise the
-    group's script runs. A field's mouse handlers are not that click.
+    group's script runs. A field's mouse handlers are not that click. In a
+    book of Foolbook's own format, a script with no `to handle` line is the
+    click. A ToolBook book does not get that reading.
     """
     if not obj:
         return ""
     own = obj.get("script") or ""
     if "buttonclick" in own.lower():
         return own
-    if own.strip() and not _TO_HANDLE.search(own):
-        # An authored .fbk script with no `to handle` line is the click.
-        return own
+    if book is not None and own.strip() and not _TO_HANDLE.search(own):
+        from engine.origin import is_toolbook
+        if not is_toolbook(book):
+            return own
     return obj.get("group_script") or ""
 
 
@@ -158,7 +161,7 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
     """
     obj = obj or {}
     start = (id(state.book), state.index)
-    script = click_script(obj)
+    script = click_script(obj, state.book)
     if script and follow(state, run_handler(state, script)):
         return True
     if follow(state, run_page_handlers(state, "buttonclick")):
