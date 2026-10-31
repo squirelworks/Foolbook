@@ -102,7 +102,9 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `roundrect`: a `rect` with quarter-circle corners. `radius` is in pixels, 8 when missing, and never more than half the short side.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
-- `arc`: the open curve between its endpoints. It is not filled.
+- `curve`: `points` as `[[x, y], ...]`. It is drawn as straight segments through the points until a real curve is drawn.
+- `stroke` on any of those is the outline or line width in pixels. Missing means 1.
+- `arc`: the open curve between its endpoints. It is not filled. An `.fbk` arc that stores `start` and `sweep` (degrees, zero east, counterclockwise) is that part of the ellipse in its bounds.
 - `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.
 - `button`: the picture stored for that button, or a caption when there is no picture.
 - `image`: `x`, `y`, and either `src` (a file beside the book) or `data` (base64 PNG or GIF).

@@ -68,5 +68,55 @@ class RoundRect(unittest.TestCase):
         self.assertEqual(placed[0]["radius"], 20)
 
 
+class Stroke(unittest.TestCase):
+    def test_stroke_is_the_outline_width(self):
+        for shape in (
+            {"kind": "rect", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "roundrect", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "ellipse", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "line", "points": [[0, 0], [40, 20]]},
+            {"kind": "polygon", "points": [[0, 0], [40, 0], [20, 20]]},
+        ):
+            shape["stroke"] = 3
+            canvas = drawn(shape)
+            self.assertEqual(canvas.calls[0][2].get("width"), 3, shape["kind"])
+
+    def test_no_stroke_leaves_the_width_alone(self):
+        canvas = drawn({"kind": "rect", "x": 0, "y": 0, "w": 40, "h": 20})
+        self.assertNotIn("width", canvas.calls[0][2])
+
+    def test_the_window_scale_scales_the_stroke(self):
+        placed = place_window([{"kind": "rect", "x": 0, "y": 0, "w": 10, "h": 10, "stroke": 2}], 1.5, 0, 0, 0, 0)
+        self.assertEqual(placed[0]["stroke"], 3)
+
+
+class Curve(unittest.TestCase):
+    def test_a_curve_goes_through_every_point(self):
+        points = [[0, 0], [20, 30], [40, 0], [60, 30]]
+        canvas = drawn({"kind": "curve", "points": points, "outline": "#071428"})
+        self.assertEqual(canvas.kinds(), ["line"])
+        self.assertEqual(canvas.calls[0][1], [0, 0, 20, 30, 40, 0, 60, 30])
+        self.assertEqual(canvas.calls[0][2]["fill"], "#071428")
+
+class Arc(unittest.TestCase):
+    def test_an_arc_with_angles_is_not_the_whole_ellipse(self):
+        canvas = drawn({"kind": "arc", "x": 0, "y": 0, "w": 80, "h": 60, "start": 30, "sweep": 120, "fill": "#ff0000"})
+        self.assertEqual(canvas.kinds(), ["arc"])
+        _kind, box, options = canvas.calls[0]
+        self.assertEqual(box, [0, 0, 80, 60])
+        self.assertEqual((options["start"], options["extent"], options["style"]), (30, 120, "arc"))
+        self.assertNotIn("fill", options)
+
+    def test_a_tbk_arc_with_ends_draws_as_before(self):
+        # What main drew for this arc before start and sweep were read.
+        canvas = drawn({"kind": "arc", "x": 0, "y": 0, "w": 80, "h": 60, "ends": [[80, 30], [40, 0]], "outline": "#071428"})
+        self.assertEqual(canvas.calls, [("line", [
+            80, 30, 80, 29, 80, 28, 80, 26, 80, 25, 79, 24, 79, 23, 78, 22, 78, 21, 78, 20,
+            77, 19, 76, 17, 76, 16, 75, 15, 74, 14, 73, 13, 72, 12, 71, 11, 70, 11, 69, 10,
+            68, 9, 67, 8, 66, 7, 65, 6, 64, 6, 62, 5, 61, 4, 60, 4, 58, 3, 57, 3,
+            55, 2, 54, 2, 52, 1, 51, 1, 49, 1, 48, 1, 46, 0, 45, 0, 43, 0, 42, 0, 40, 0,
+        ], {"fill": "#071428", "width": 2})])
+
+
 if __name__ == "__main__":
     unittest.main()
