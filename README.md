@@ -112,7 +112,7 @@ A new install opens `using_foolbook`. Its First Light button opens `first_light`
 
 ## A click on a button
 
-The button's script runs first. A script with no `to handle` line is read as the click. When the script is empty, the click is the button's `item` (a page, a book, or the Next or Back label). When both are set, the item runs only if the script did not change the page. `engine.engine.click` is that order, and `engine/test_click_order.py` tests it.
+The button's script runs first. A script with no `to handle` line, which is how FoolbookEditor saves one, is read as the click. Then the page's `buttonClick` runs, then the button's `item` (a page, a book, or the Next or Back label), each only if nothing before it changed the page. `engine.engine.click` is that order without a window, and `engine/test_click_order.py` tests it.
 
 ## Page scripts
 
