@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- `foolbook.core.unknown_words(script)` gives FoolbookEditor the interpreter's answer through the core, so the editor does not import the engine. Tested in `engine/test_core_unknown_words.py`.
 - `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 
 ## Unreleased
