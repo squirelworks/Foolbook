@@ -53,16 +53,26 @@ class PageLeaveTests(unittest.TestCase):
 
 
 class NidaLeaveTests(unittest.TestCase):
-    """93951204 P3910 sets the menu flag in leavePage. It runs once a departure."""
+    """93951204 P3910 and 93950101 P1910 set the menu flag in leavePage. It runs once a departure."""
 
-    def _p3910(self):
-        path = Path(os.environ.get("NIDA_BOOKS") or "/nonexistent") / "93951204.fbk"
+    def _page(self, name, page_id):
+        path = Path(os.environ.get("NIDA_BOOKS") or "/nonexistent") / name
         if not path.exists():
-            raise unittest.SkipTest("93951204.fbk is not here; set NIDA_BOOKS")
+            raise unittest.SkipTest(f"{name} is not here; set NIDA_BOOKS")
         book = load(path)
         state = RuntimeState(book=book)
-        state.index = [p.id for p in book.pages].index("P3910")
+        state.index = [p.id for p in book.pages].index(page_id)
         return state
+
+    def _p3910(self):
+        return self._page("93951204.fbk", "P3910")
+
+    def test_93950101_p1910_next_leaves_once(self):
+        state = self._page("93950101.fbk", "P1910")
+        button = next(s for s in state.page.shapes if s.get("name") == "Next")
+        leaves = self._leaves(state, lambda s: follow(s, run_handler(s, click_script(button))))
+        self.assertEqual(len(leaves), 1)
+        self.assertEqual(state.page.id, "P1001")
 
     def _leaves(self, state, act):
         real = engine.run_page_handlers
