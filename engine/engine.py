@@ -46,6 +46,30 @@ _STEP = re.compile(
 _PUSH_SYSBOOKS = re.compile(r'push\s+(.+?)\s+onto\s+sysbooks$', re.IGNORECASE)
 _INC = re.compile(r'(increment|decrement)\s+(\w+)', re.IGNORECASE)
 _ASSIGN = re.compile(r'(\w+)\s*=\s*(.+)')
+_ASSIGN_ITEM = re.compile(r'(\w+)\[([^\]]+)\]\s*=\s*(.+)')
+_ITEM = re.compile(r'(\w+)\[([^\]]+)\]')
+_NUMBER_TYPES = ("int", "long", "word", "byte", "logical", "dword", "real", "float", "double")
+
+
+class _Array(dict):
+    """An OpenScript array, `system int __menuFlags[10]`. An element never set is blank."""
+
+    def __init__(self, blank):
+        super().__init__()
+        self.blank = blank
+
+    def __missing__(self, key):
+        return self.blank
+
+
+def _item_key(text: str, state):
+    """`a[i]` is keyed by the number i. `a[i, j]` by both."""
+    keys = []
+    for part in _call_args(text):
+        value = _eval(part, state)
+        number = _number(value)
+        keys.append(int(number) if number is not None and number.is_integer() else value)
+    return keys[0] if len(keys) == 1 else tuple(keys)
 _FILL = re.compile(
     r'rgbfill\s+of\s+field\s+"([^"]+)"\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)',
     re.IGNORECASE,
@@ -235,9 +259,10 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         if low.startswith("system "):
             parts = line.split()
-            if len(parts) >= 3 and parts[-1].rstrip("[]") not in state.variables:
-                kind = parts[-2].lower()
-                state.variables[parts[-1].rstrip("[]")] = 0 if kind in ("int", "long", "word", "byte", "logical") else ""
+            name = parts[-1].split("[")[0] if len(parts) >= 3 else ""
+            if name and name not in state.variables:
+                blank = 0 if parts[-2].lower() in _NUMBER_TYPES else ""
+                state.variables[name] = _Array(blank) if "[" in parts[-1] else blank
             i += 1
             continue
 
@@ -402,6 +427,21 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             cur = cur + 1 if m.group(1).lower() == "increment" else cur - 1
             state.variables[name] = cur
             actions.append({"kind": "set", "name": name, "value": cur})
+            i += 1
+            continue
+        m = _ASSIGN_ITEM.match(line)
+        if m:
+            name = m.group(1)
+            found = _var(state, name)
+            if found is _MISSING or found in ("", 0, None):
+                found = _Array("")
+                state.variables[name] = found
+            if not isinstance(found, _Array):
+                # A value the reader keeps in its own form is not written over.
+                actions.append({"kind": "note", "text": line})
+                i += 1
+                continue
+            found[_item_key(m.group(2), state)] = _eval(m.group(3).strip().rstrip("."), state)
             i += 1
             continue
         m = _ASSIGN.match(line)
@@ -608,6 +648,11 @@ def _eval(expr: str, state: RuntimeState):
     found = _var(state, expr)
     if found is not _MISSING:
         return found
+    m = _ITEM.fullmatch(expr)
+    if m:
+        array = _var(state, m.group(1))
+        if isinstance(array, _Array):
+            return array[_item_key(m.group(2), state)]
     called = _call_value(expr, state)
     if called is not _NOT_A_CALL:
         return called
@@ -1085,7 +1130,7 @@ def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | Non
     actions = run_handler(state, body, parents)
     result = state.variables.pop("__return", None)
     shared = {
-        words[-1].rstrip("[]").lower()
+        words[-1].split("[")[0].lower()
         for words in (line.split() for line in body.splitlines())
         if len(words) >= 2 and words[0].lower() == "system"
     }
