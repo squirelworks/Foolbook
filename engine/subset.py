@@ -1,40 +1,14 @@
 """The words an authored script can use and the reader acts on.
 
-This is the table FoolbookEditor reads to warn about a word the reader
-does not run. It is written down once, here, beside the engine that runs
-the words. A line is judged by its first word. ``send`` is judged by the
-message it sends, because the reader acts on only a few of them.
+FoolbookEditor warns about a line the reader does not run. That answer is
+asked of the interpreter, line by line, so it cannot drift from what the
+interpreter does. ``MESSAGES`` lists the ``send`` messages that move the
+reader, and its test checks each one against ``follow``.
 """
 
 from __future__ import annotations
 
 import re
-
-# First word of a line -> what the reader does with it.
-COMMANDS = {
-    "go": "go to page \"P\" [of book \"B\"]",
-    "send": "send a message; see MESSAGES",
-    "put": "put EXPR into NAME",
-    "set": "set PROP of TARGET to EXPR",
-    "get": "get EXPR",
-    "increment": "increment NAME",
-    "decrement": "decrement NAME",
-    "if": "if COND [then]",
-    "else": "else",
-    "end": "end, end if, end step",
-    "step": "step NAME from A to B [by C]",
-    "forward": "forward the message to the next handler",
-    "break": "end the handler",
-    "beep": "beep",
-    "show": "show CLASS \"name\"",
-    "hide": "hide CLASS \"name\"",
-    "request": "request \"text\"",
-    "conditions": "conditions ... end conditions",
-    "when": "when COND inside conditions",
-    "system": "system TYPE NAME",
-    "clear": "clear char N of NAME",
-    "to": "to handle NAME",
-}
 
 # Messages ``send`` moves the reader with.
 MESSAGES = {
@@ -46,30 +20,44 @@ MESSAGES = {
     "resetscore": "forget the book's quiz results",
 }
 
-_ASSIGN = re.compile(r"^[A-Za-z_]\w*\s*=")
+# Lines that open or close a block. The interpreter reads them as part of
+# the block around them, so a line on its own is not judged.
+_STRUCTURE = re.compile(
+    r"^(?:end\b.*|else|when\b.*|to\s+(?:handle|get|set)\b.*)$",
+    re.IGNORECASE,
+)
 _WORD = re.compile(r"[A-Za-z_]\w*")
 
 
-def unknown_words(source: str) -> list[tuple[int, str]]:
-    """Each line whose word the reader does not run, as (line number, word).
+def _runs(line: str) -> bool:
+    """True when the interpreter acts on this line, rather than noting it."""
+    from engine.engine import run_handler
+    from foolbook.model import Book, Page, RuntimeState
+    state = RuntimeState(book=Book(path="", pages=[Page(id="P1"), Page(id="P2")]))
+    try:
+        actions = run_handler(state, line)
+    except Exception:
+        return False
+    return not any(a.get("kind") == "note" for a in actions)
 
-    Line numbers start at 1. Blank lines, comments, and ``name = value``
-    are not judged.
+
+def unknown_words(source: str) -> list[tuple[int, str]]:
+    """Each line the reader's interpreter does not act on, as (line number, first word).
+
+    The answer comes from the interpreter itself: each line is run on its own
+    against an empty book, and a line the interpreter only notes is named.
+    Line numbers start at 1. Blank lines, comments, and the lines that open
+    or close a block are not judged.
     """
     out = []
     for number, raw in enumerate((source or "").replace("\r", "").split("\n"), 1):
         line = raw.strip()
-        if not line or line.startswith("--") or _ASSIGN.match(line):
+        if not line or line.startswith("--") or _STRUCTURE.match(line):
+            continue
+        if _runs(line):
             continue
         words = _WORD.findall(line)
-        if not words:
-            continue
-        first = words[0].lower()
-        if first not in COMMANDS:
-            out.append((number, words[0]))
-            continue
-        if first == "send" and len(words) > 1 and words[1].lower() not in MESSAGES:
-            out.append((number, f"send {words[1]}"))
+        out.append((number, words[0] if words else line))
     return out
 
 
