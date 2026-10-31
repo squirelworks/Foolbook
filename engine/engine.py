@@ -34,8 +34,9 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
-# `go to next page` and `go to previous page` are the Next and Back buttons.
-_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page$', re.IGNORECASE)
+# `go to next page` and `go to previous page` (of this book) are the pages
+# beside this one in the book's order.
+_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$', re.IGNORECASE)
 _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
@@ -317,8 +318,11 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
 
         m = _GO_STEP.match(line)
         if m:
-            step = m.group(1).lower()
-            actions.append({"kind": "send", "name": "next" if step == "next" else "previous"})
+            to = state.index + (1 if m.group(1).lower() == "next" else -1)
+            if 0 <= to < len(state.book.pages):
+                actions.append({"kind": "goto", "page": state.book.pages[to].id, "book": None})
+            else:
+                state.note(f"no page beside: {line}")
             i += 1
             continue
 

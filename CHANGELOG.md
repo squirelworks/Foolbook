@@ -2,7 +2,7 @@
 
 ## 2026-10-31
 
-- `go to next page` and `go to previous page` (also `go to prev page`) move like `send next` and `send previous`, so they take the page's Next or Back item first, as the buttons do. Before, both lines were notes and did nothing. Tested in `engine/test_go_next_page.py`.
+- `go to next page` and `go to previous page` (also `prev`, and `of this book`) go to the page beside this one in book order, through `goto`, so leavePage runs. Before, they were notes and did nothing. 9395T903 uses the form on 90 buttons. They land where main's window landed by its quiz fallback, and a click on P16201 now goes back to P16200 as its page buttonClick says. Tested in `engine/test_go_next_page.py`.
 - `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. An `.fbk` hotspot or text shape can be shown without a ToolBook class word. Tested in `engine/test_show_hide_name.py`.
 - `to handle leavePage` runs before the next page is shown. A `go to` in it is where the reader lands instead, and the leave script runs once per departure, so a leave script that navigates does not loop. Before, a `go to` in leavePage was dropped. Tested in `engine/test_page_leave.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.

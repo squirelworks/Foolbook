@@ -116,7 +116,7 @@ The button's script runs first. A script with no `to handle` line, which is how 
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
-`go to next page` and `go to previous page` (or `prev`) move the way the Next and Back buttons do, including a Next or Back item the page names.
+`go to next page` and `go to previous page` (or `prev`, with or without `of this book`) go to the page beside this one in the book's order. `send next` and `send previous` are the Next and Back buttons, and take the page's Next or Back item first.
 
 ## Page scripts
 
