@@ -1081,19 +1081,13 @@ def _builtin_page(state: RuntimeState, call: str) -> str | None:
 def leave_page(state: RuntimeState) -> str | None:
     """The page being left. P1910 and P2910 set the menu flag here.
 
-    Returns the page a leavePage script went to, or None. The leave script
-    runs once per departure: a `go to` inside it does not run it again.
+    Returns the page a leavePage script went to, or None.
     """
-    if state.page is None or state.variables.get("__leaving"):
+    if state.page is None:
         return None
     from engine import fields
     fields.blur(state)
-    state.variables["__leaving"] = True
-    try:
-        actions = run_page_handlers(state, "leavepage")
-    finally:
-        state.variables.pop("__leaving", None)
-    for act in actions:
+    for act in run_page_handlers(state, "leavepage"):
         if act.get("kind") == "goto" and act.get("page") and not act.get("book"):
             return str(act["page"])
     return None
