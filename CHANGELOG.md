@@ -2,7 +2,7 @@
 
 ## 2026-10-31
 
-- `engine.subset.check(script)` (and `foolbook.core.check_script`) parses a script in the subset and returns errors with line numbers: an open quote, an open or doubly closed block, `else` outside an `if`, `go to` with no page, `if` with no condition. It is a check, not a compile. Tested in `engine/test_check.py`.
+- `engine.subset.check(script)` (and `foolbook.core.check_script`) parses a script in the subset and returns errors with line numbers: an open quote, an open or doubly closed block, `else` outside an `if` or `conditions`, `go to` with no page, `if` with no condition. It reads ToolBook's own forms (`end buttonClick`, `notifyAfter idle`, `go to next page of this book`), and every script in 93950101 checks clean. It is a check, not a compile. Tested in `engine/test_check.py`.
 - `go to next page` and `go to previous page` (also `go to prev page`) move like `send next` and `send previous`, so they take the page's Next or Back item first, as the buttons do. Before, both lines were notes and did nothing. Tested in `engine/test_go_next_page.py`.
 - `go to next page` and `go to previous page` (also `prev`, and `of this book`) go to the page beside this one in book order, through `goto`, so leavePage runs. Before, they were notes and did nothing. 9395T903 uses the form on 90 buttons. They land where main's window landed by its quiz fallback, and a click on P16201 now goes back to P16200 as its page buttonClick says. Tested in `engine/test_go_next_page.py`.
 - `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. An `.fbk` hotspot or text shape can be shown without a ToolBook class word. Tested in `engine/test_show_hide_name.py`.
