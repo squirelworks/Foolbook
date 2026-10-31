@@ -131,6 +131,16 @@ def split_handlers(source: str) -> list[Handler]:
     return out
 
 
+def _opens(low: str) -> bool:
+    """A line that opens a block: if, step, while, do, conditions, linkDLL."""
+    return low.startswith(("if ", "step ", "while ", "linkdll")) or low in ("conditions", "do")
+
+
+def _closes(low: str) -> bool:
+    """A line that closes a block. A bare `end` closes whatever block is open."""
+    return low == "end" or low.startswith("end ") or low.startswith("until ")
+
+
 def _strip_handler_end(body: str) -> str:
     lines = body.replace("\r", "").split("\n")
     depth = 0
@@ -139,13 +149,9 @@ def _strip_handler_end(body: str) -> str:
         low = raw.strip().lower()
         if not low or low.startswith("--"):
             continue
-        if low.startswith(("if ", "step ", "conditions", "while ")) or low == "do":
+        if _opens(low):
             depth += 1
-            continue
-        if low.startswith("until ") and depth:
-            depth -= 1
-            continue
-        if low in ("end", "end if", "end step", "end handler", "end while", "end conditions"):
+        elif _closes(low):
             if depth == 0:
                 cut = i
                 break
@@ -374,7 +380,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             raise _LoopNext()
 
         if low.startswith("while "):
-            end_at = _find_block_end(lines, i + 1, end, ("end while",))
+            end_at = _close_of(lines, i + 1, end)
             cond = line[6:].strip()
             guard = 0
             while guard < 10000 and _truth(_eval(cond, state)):
@@ -391,7 +397,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
 
         if low == "do":
-            end_at = _find_block_end(lines, i + 1, end, (), until=True)
+            end_at = _close_of(lines, i + 1, end)
             cond = lines[end_at][6:].strip() if end_at < end else "true"
             guard = 0
             while guard < 10000:
@@ -624,31 +630,36 @@ def _recolor(state: RuntimeState, name: str, red: int, green: int, blue: int) ->
 
 def _split_if(lines: list[str], start: int, end: int) -> tuple[int, int]:
     """Return (else_index_or_end, end_if_index) for the if that opened before start."""
-    depth = 1
+    depth = 0
     else_at = end
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("if "):
+        if _opens(low):
             depth += 1
-        elif low.startswith("else") and depth == 1 and else_at == end:
-            else_at = i
-        elif low in ("end", "end if"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return (else_at if else_at < i else i), i
+            depth -= 1
+        elif low.startswith("else") and depth == 0 and else_at == end:
+            else_at = i
     return end, end
 
 
 def _find_end_step(lines: list[str], start: int, end: int) -> int:
-    depth = 1
+    return _close_of(lines, start, end)
+
+
+def _close_of(lines: list[str], start: int, end: int) -> int:
+    """The line that closes the block opened just before start, with the blocks inside skipped."""
+    depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low.startswith("step "):
+        if _opens(low):
             depth += 1
-        elif low in ("end", "end step"):
-            depth -= 1
+        elif _closes(low):
             if depth == 0:
                 return i
+            depth -= 1
     return end
 
 
@@ -678,32 +689,6 @@ def _run_step(state, name, a, b, by, lines, start, end, actions):
         guard += 1
 
 
-_OPENERS = ("if ", "step ", "while ", "linkdll")
-
-
-def _find_block_end(lines: list[str], start: int, end: int, closers: tuple, until: bool = False) -> int:
-    """The line that closes the block opened just before start.
-
-    Blocks inside are skipped. A bare `end` closes the nearest open block.
-    """
-    depth = 0
-    for i in range(start, end):
-        low = lines[i].lower()
-        if low.startswith(_OPENERS) or low in ("conditions", "do"):
-            depth += 1
-            continue
-        if low.startswith("until ") and depth:
-            depth -= 1
-            continue
-        if low.startswith("until ") and until:
-            return i
-        if low == "end" or low.startswith("end "):
-            if depth == 0:
-                if low == "end" or low in closers:
-                    return i
-                continue
-            depth -= 1
-    return end
 
 
 def _whole_quote(expr: str) -> str | None:
@@ -1427,16 +1412,7 @@ def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> boo
 
 
 def _find_conditions(lines: list[str], start: int, end: int) -> int:
-    depth = 0
-    for i in range(start, end):
-        low = lines[i].lower()
-        if low == "conditions":
-            depth += 1
-        elif low == "end conditions" or (low == "end" and depth == 0):
-            if depth == 0:
-                return i
-            depth -= 1
-    return end
+    return _close_of(lines, start, end)
 
 
 def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int, actions: list[dict]) -> None:
@@ -1446,9 +1422,9 @@ def _run_conditions(state: RuntimeState, lines: list[str], start: int, end: int,
     depth = 0
     for i in range(start, end):
         low = lines[i].lower()
-        if low == "conditions":
+        if _opens(low):
             depth += 1
-        elif low == "end conditions":
+        elif _closes(low):
             depth = max(0, depth - 1)
         elif depth == 0 and low.startswith("when "):
             branches.append(i)

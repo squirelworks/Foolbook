@@ -18,6 +18,7 @@
 
 ## Unreleased
 
+- A bare `end` closes the block that is open, whatever kind it is. A `conditions` closed by `end` inside another `conditions`, or an `if` closed by `end` inside a `when`, no longer swallows the branches after it. nc81test's `gotoNextQuestionEx` closes its inner `conditions` this way.
 - `while ... end while` and `do ... until` loop. `break while`, `break step`, `break do` and `break conditions` leave that block and the handler goes on, and `continue` starts the next pass. A handler with a `while` or `conditions` block inside it is no longer cut short at that block's own `end`.
 - `linkDLL32 "kernel32.dll"` ... `end linkDLL32` declares DLL functions, `unlinkDLL` drops them, and `sysLinkedDLLs` lists the DLLs. A declared function with a shim in `engine/dlls/` answers. The first shim is kernel32's private profile calls: `GetPrivateProfileIntA` and `GetPrivateProfileStringA` read the INI beside the book and give the script's default when the key is not there, and `WritePrivateProfileStringA` keeps the value for the session without writing a file.
 - `r is in "0,1,2"`, `"nc81base.sbk" is not in sysBooks` and `word contains "bc"` test for text inside text, ignoring case. A course's `if "nc81base.sbk" is not in sysBooks` guard now pushes its system books, so nc81base, nc81test, nc81recs and nc81trnr are open when its enterBook ends.
