@@ -127,6 +127,20 @@ class Chord(unittest.TestCase):
         self.assertEqual((options["start"], options["extent"], options["style"]), (0, 180, "chord"))
         self.assertEqual(options["fill"], "#00ff00")
 
+class Hotspot(unittest.TestCase):
+    spot = {"kind": "hotspot", "name": "Door", "x": 10, "y": 10, "w": 40, "h": 40, "outline": "#071428",
+            "item": {"page": "P200"}}
+
+    def test_a_hotspot_is_not_drawn(self):
+        self.assertEqual(drawn(dict(self.spot)).calls, [])
+
+    def test_a_click_inside_a_hotspot_is_the_hotspot(self):
+        from engine.place import click_target
+        under = {"kind": "rect", "x": 0, "y": 0, "w": 100, "h": 100, "fill": "#ffffff"}
+        target = click_target([under, dict(self.spot)], 20, 20)
+        self.assertEqual(target["name"], "Door")
+        self.assertEqual(target["item"]["page"], "P200")
+
 
 if __name__ == "__main__":
     unittest.main()
