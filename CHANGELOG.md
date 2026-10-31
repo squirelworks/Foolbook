@@ -2,7 +2,7 @@
 
 ## 2026-10-31
 
-- `engine/subset.py` is the table of script words the reader runs (`COMMANDS`, and `MESSAGES` for `send`). `unknown_words(script)` names each line whose word is not in it, with its line number. FoolbookEditor warns from this table. Tested in `engine/test_subset.py`.
+- `engine.subset.unknown_words(script)` names each line the interpreter does not act on, with its line number, by running the line through the interpreter on an empty book. Nothing is typed twice, so the warning cannot drift from what runs. FoolbookEditor warns from it. `MESSAGES` lists the `send` messages that move the reader. Tested in `engine/test_subset.py`.
 
 ## Unreleased
 
