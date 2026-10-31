@@ -68,5 +68,27 @@ class RoundRect(unittest.TestCase):
         self.assertEqual(placed[0]["radius"], 20)
 
 
+class Stroke(unittest.TestCase):
+    def test_stroke_is_the_outline_width(self):
+        for shape in (
+            {"kind": "rect", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "roundrect", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "ellipse", "x": 0, "y": 0, "w": 40, "h": 20},
+            {"kind": "line", "points": [[0, 0], [40, 20]]},
+            {"kind": "polygon", "points": [[0, 0], [40, 0], [20, 20]]},
+        ):
+            shape["stroke"] = 3
+            canvas = drawn(shape)
+            self.assertEqual(canvas.calls[0][2].get("width"), 3, shape["kind"])
+
+    def test_no_stroke_leaves_the_width_alone(self):
+        canvas = drawn({"kind": "rect", "x": 0, "y": 0, "w": 40, "h": 20})
+        self.assertNotIn("width", canvas.calls[0][2])
+
+    def test_the_window_scale_scales_the_stroke(self):
+        placed = place_window([{"kind": "rect", "x": 0, "y": 0, "w": 10, "h": 10, "stroke": 2}], 1.5, 0, 0, 0, 0)
+        self.assertEqual(placed[0]["stroke"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()
