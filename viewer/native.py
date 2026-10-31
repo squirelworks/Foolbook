@@ -17,7 +17,7 @@ from engine.graphics import bottom, draw, extract
 from engine.outline import every_page, outline
 from engine.place import fit_view, page_box, place_window, click_target, shapes_at, blank_book_lines, opening_size, plain_page
 from engine.engine import enter_book, enter_page, follow, goto, leave_page, open_book as open_other, press, run_handler, run_page_handlers, click_script, one_handler
-from engine import fields
+from engine import fields, listbox
 from engine.window import arrive, visible
 from foolbook.model import RuntimeState
 from progress.progress import Progress
@@ -371,6 +371,9 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
             if state.variables.pop("__redraw", None):
                 _paint()
             return
+        if (target.get("kind") or "") == "list":
+            listbox.click(target, *point)
+            state.variables["__redraw"] = True
         _activate(target)
         if state.variables.pop("__beep", None):
             try:

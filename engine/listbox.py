@@ -38,3 +38,11 @@ def visible_rows(shape: dict) -> list[tuple[int, str, float]]:
     first = _first(shape)
     shown = found[first:first + rows_that_fit(shape)]
     return [(first + n, str(text), y + n * ROW) for n, text in enumerate(shown)]
+
+
+def click(shape: dict, px: float, py: float) -> None:
+    """A click at this page point picks the row under it."""
+    for index, _text, top in visible_rows(shape):
+        if top <= py < top + ROW:
+            shape["value"] = index
+            return

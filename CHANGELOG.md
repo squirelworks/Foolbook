@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A click on a row of a list box picks it: its index is the shape's `value`. A click below the last row picks nothing. `engine/test_list_pick.py`.
 - A `list` shape is drawn as a list box: the `choices` that fit, one row each, from row `scroll`, with the chosen row (`value`) marked and a bar at the right when the list is longer than its box. Before, it was a blank box. `engine/test_listbox.py`.
 - Objects the file stores as hidden are on the page, not shown: the TRY AGAIN! and CORRECT! boxes (a group stored hidden), a Response field a script shows, a mark or highlight rectangle. Before, the reader dropped the ones with their own hidden bit, and drew the members of a hidden group, so 93950404 P1720 opened with CORRECT! and TRY AGAIN! on top of each other. `send playAnimation to group "X"` ends with that group shown, so a hidden group an animation brings in is not lost. The reader depends on openscript_analysis#3 (commit 1466a94).
 - `set visible of button "next" to true`, `show field "response"`, `hide rectangle "mark"` and `visible of button "x"` act on the object of that class and name, on this page or `of page "P"`. A Next the file stores hidden and a script shows (93950404 P1720 after the right answer) can now be shown.
