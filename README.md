@@ -116,6 +116,8 @@ The button's script runs first. A script with no `to handle` line is read as the
 
 A script shows or hides a shape by the name the editor gave it: `show "Feedback"`, `hide shape "Hint"`, `show "Hint" of page "P2"`. The kind does not matter. `show button "Next"` with a class still works.
 
+`go to next page` and `go to previous page` (or `prev`) move the way the Next and Back buttons do, including a Next or Back item the page names.
+
 ## Page scripts
 
 A page's script runs when the page is shown. A page script with no `to handle` line is the page's `enterPage`. A script with `to handle enterPage` works the same way. `engine/test_page_enter.py` tests it.

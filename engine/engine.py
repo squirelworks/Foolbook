@@ -34,6 +34,8 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
+# `go to next page` and `go to previous page` are the Next and Back buttons.
+_GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page$', re.IGNORECASE)
 _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
 _SET = re.compile(r'set\s+(.+?)\s+to\s+(.+)', re.IGNORECASE)
@@ -316,6 +318,13 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             if ask is not None:
                 answer = ask(m.group(1)) or "No"
             state.variables["it"] = answer
+            i += 1
+            continue
+
+        m = _GO_STEP.match(line)
+        if m:
+            step = m.group(1).lower()
+            actions.append({"kind": "send", "name": "next" if step == "next" else "previous"})
             i += 1
             continue
 
