@@ -24,6 +24,7 @@ import re
 from pathlib import Path
 from foolbook.model import RuntimeState, Page
 from engine import groups
+from engine.origin import is_toolbook
 
 
 _GOTO = re.compile(
@@ -34,8 +35,8 @@ _GOTO = re.compile(
     r')?',
     re.IGNORECASE,
 )
-# `go to next page` and `go to previous page` (of this book) are the pages
-# beside this one in the book's order.
+# ToolBook's `go to next page` and `go to previous page` (of this book) are
+# the pages beside this one in the book's order. Only for ToolBook files.
 _GO_STEP = re.compile(r'go\s+to\s+(next|previous|prev)\s+page(?:\s+of\s+this\s+book)?$', re.IGNORECASE)
 _SEND = re.compile(r'send\s+(\w+)(?:\s+(\w+))?', re.IGNORECASE)
 _PUT = re.compile(r'put\s+(.+?)\s+into\s+(\w+)', re.IGNORECASE)
@@ -135,20 +136,23 @@ def one_handler(script: str, name: str) -> str:
     return ""
 
 
-def click_script(obj: dict | None) -> str:
+def click_script(obj: dict | None, book=None) -> str:
     """The buttonClick a click should run.
 
     The object's own script wins when it handles the click. Otherwise the
-    group's script runs. A field's mouse handlers are not that click.
+    group's script runs. A field's mouse handlers are not that click. In a
+    book of Foolbook's own format, a script with no `to handle` line is the
+    click. A ToolBook book does not get that reading.
     """
     if not obj:
         return ""
     own = obj.get("script") or ""
     if "buttonclick" in own.lower():
         return own
-    if own.strip() and not _TO_HANDLE.search(own):
-        # An authored .fbk script with no `to handle` line is the click.
-        return own
+    if book is not None and own.strip() and not _TO_HANDLE.search(own):
+        from engine.origin import is_toolbook
+        if not is_toolbook(book):
+            return own
     return obj.get("group_script") or ""
 
 
@@ -157,19 +161,19 @@ def click(state: RuntimeState, obj: dict | None) -> bool:
 
     The button's script runs first, then the page's buttonClick, then the
     button's item, the way the window's click does it, so a test can click
-    without a window. A quiz answer (a ``choice`` index) is graded first.
-    When the button has no script of its own, the quiz's ``next`` or
-    ``again`` page is where it goes, as in the window.
+    without a window. A button with a ``choice`` is graded first. When it
+    has no script of its own, the quiz's ``next`` or ``again`` page is
+    where it goes.
     """
     obj = obj or {}
     start = (id(state.book), state.index)
-    from engine import choice
-    graded = choice.grade(state, obj)
-    if graded is not None:
-        target = choice.after(state, graded)
-        if target and not click_script(obj) and goto(state, target):
+    if "choice" in obj:
+        from engine import choice
+        graded = choice.grade(state, obj)
+        target = choice.after(state, graded) if graded is not None else ""
+        if target and not click_script(obj, state.book) and goto(state, target):
             return (id(state.book), state.index) != start
-    script = click_script(obj)
+    script = click_script(obj, state.book)
     if script and follow(state, run_handler(state, script)):
         return True
     if follow(state, run_page_handlers(state, "buttonclick")):
@@ -325,7 +329,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
 
         m = _GO_STEP.match(line)
-        if m:
+        if m and is_toolbook(state.book):
             to = state.index + (1 if m.group(1).lower() == "next" else -1)
             if 0 <= to < len(state.book.pages):
                 actions.append({"kind": "goto", "page": state.book.pages[to].id, "book": None})
@@ -441,7 +445,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
             continue
 
         m = groups.NAMED_SHOW.fullmatch(line)
-        if m:
+        if m and not is_toolbook(state.book):
             groups.set_named_visible(state, m, m.group("verb").lower() == "show")
             actions.append({"kind": "setprop", "target": "visible of shape", "value": m.group("verb").lower()})
             i += 1
@@ -1251,9 +1255,9 @@ def follow(state: RuntimeState, actions: list[dict]) -> bool:
                 if isinstance(result, tuple) and result and result[0] == "goto" and result[1]:
                     return goto(state, result[1])
                 return False
-            if name in ("tryagain", "resetscore"):
+            if name == "tryagain" and not is_toolbook(state.book):
                 from engine import choice
-                choice.try_again(state) if name == "tryagain" else choice.reset_score(state)
+                choice.try_again(state)
                 continue
             if name == "next":
                 if _follow_label(state, "next"):
