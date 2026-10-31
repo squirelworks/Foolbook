@@ -1,12 +1,8 @@
-"""A media clip shows its path, and a clip the reader cannot play says so on the page."""
+"""A media clip is drawn as a play box that shows its path."""
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
-
-from engine import media
 
 try:
     from engine import graphics
@@ -18,36 +14,6 @@ def _clip(src="sounds/bell.wav", **extra):
     shape = {"kind": "media", "name": "Bell", "src": src, "x": 10, "y": 10, "w": 160, "h": 40}
     shape.update(extra)
     return shape
-
-
-class Play(unittest.TestCase):
-    def test_a_missing_file_is_named_on_the_clip(self):
-        shape = _clip()
-        with tempfile.TemporaryDirectory() as tmp:
-            media.click(shape, tmp, players=[])
-        self.assertEqual(shape["note"], "Not found: sounds/bell.wav")
-
-    def test_a_file_no_player_takes_is_named_on_the_clip(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "sounds").mkdir()
-            (Path(tmp) / "sounds" / "bell.wav").write_bytes(b"RIFF")
-            shape = _clip()
-            media.click(shape, tmp, players=[])
-        self.assertEqual(shape["note"], "Cannot play here: sounds/bell.wav")
-
-    def test_a_player_that_takes_the_file_clears_the_note(self):
-        played = []
-        with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "bell.wav").write_bytes(b"RIFF")
-            shape = _clip("bell.wav", note="old")
-            media.click(shape, tmp, players=[lambda path: played.append(path.name) or True])
-        self.assertEqual(played, ["bell.wav"])
-        self.assertEqual(shape["note"], "Playing bell.wav")
-
-    def test_a_clip_with_no_path_says_so(self):
-        shape = _clip("")
-        media.click(shape, None, players=[])
-        self.assertEqual(shape["note"], "No file named")
 
 
 class _Canvas:
@@ -63,12 +29,34 @@ class _Canvas:
 
 @unittest.skipIf(graphics is None, "tkinter is not installed")
 class Draw(unittest.TestCase):
-    def test_the_clip_shows_its_path_and_its_note(self):
+    def _drawn(self, shape):
         canvas = _Canvas()
-        graphics.draw(canvas, [_clip(note="Cannot play here: sounds/bell.wav")])
-        texts = [kw["text"] for name, _a, kw in canvas.calls if name == "create_text"]
-        self.assertIn("sounds/bell.wav", texts[0])
-        self.assertIn("Cannot play here: sounds/bell.wav", texts)
+        graphics.draw(canvas, [shape])
+        return canvas.calls
+
+    def test_the_clip_is_a_box_with_a_play_mark(self):
+        names = [name for name, _a, _kw in self._drawn(_clip())]
+        self.assertIn("create_rectangle", names)
+        self.assertIn("create_polygon", names)
+
+    def test_the_clip_shows_its_path(self):
+        texts = [kw["text"] for name, _a, kw in self._drawn(_clip()) if name == "create_text"]
+        self.assertEqual(texts, ["sounds/bell.wav"])
+
+    def test_a_clip_with_no_path_says_so(self):
+        texts = [kw["text"] for name, _a, kw in self._drawn(_clip("")) if name == "create_text"]
+        self.assertEqual(texts, ["(no file)"])
+
+
+class NidaShapes(unittest.TestCase):
+    """The .tbk loader never makes a `media` shape (0 mmPlay, mmOpen or .wav lines in
+    the course scripts), so no NIDA page draws one. Synthetic loader-shaped input."""
+
+    @unittest.skipIf(graphics is None, "tkinter is not installed")
+    def test_a_tbk_button_draws_no_play_mark(self):
+        canvas = _Canvas()
+        graphics.draw(canvas, [{"kind": "button", "name": "Next", "text": "Next", "x": 10, "y": 10, "w": 80, "h": 24}])
+        self.assertNotIn("create_polygon", [name for name, _a, _kw in canvas.calls])
 
 
 if __name__ == "__main__":

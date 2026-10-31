@@ -425,11 +425,6 @@ def open_book(path: str | Path, student: str = "", course: str = "", splash: boo
 
     def _activate(obj):
         state.variables["target"] = (obj or {}).get("name") or "page"
-        if (obj or {}).get("kind") == "media":
-            from engine import media
-            base = Path(state.book.path).parent if state.book is not None and state.book.path else None
-            media.click(obj, base)
-            state.variables["__redraw"] = True
         picked = ((obj or {}).get("name") or "").upper()
         if picked in ("A", "B", "C", "D", "E"):
             from engine.quiz import call
