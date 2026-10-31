@@ -1312,12 +1312,50 @@ def _signature(handler) -> tuple[str, list[str], str]:
     found = _HEADER.match(first)
     if found:
         kind, first = found.group(1).lower(), found.group(2)
-    names = []
-    for part in first.split(","):
-        words = part.split()
-        if words:
-            names.append(words[-1].rstrip("[]"))
+    names = [name for name, _ref in _params(first)]
     return kind, names, _strip_handler_end(rest)
+
+
+_BY_REFERENCE = re.compile(r"\s+by\s+reference\s*$", re.IGNORECASE)
+
+
+def _params(text: str) -> list[tuple[str, bool]]:
+    """(name, by reference) of each parameter: `int numbers[] by reference, int n`."""
+    found = []
+    for part in text.split(","):
+        ref = _BY_REFERENCE.search(part) is not None
+        words = _BY_REFERENCE.sub("", part).split()
+        if words:
+            found.append((words[-1].split("[")[0], ref))
+    return found
+
+
+def _references(handler) -> set[int]:
+    """The places of the parameters a handler takes by reference."""
+    first = (handler.source or "").replace("\r", "").partition("\n")[0]
+    found = _HEADER.match(first)
+    if found:
+        first = found.group(2)
+    return {index for index, (_name, ref) in enumerate(_params(first)) if ref}
+
+
+def _bind(state: RuntimeState, handler, args: str) -> tuple[list, dict[int, str]]:
+    """(values, references) for a call. A by-reference argument that names a
+    variable is written back to it. An array passed by value is a copy."""
+    texts = _call_args(args or "")
+    refs = _references(handler)
+    values, back = [], {}
+    for index, text in enumerate(texts):
+        value = _eval(text, state)
+        if index in refs:
+            if re.fullmatch(r"[A-Za-z_]\w*", text.strip()):
+                back[index] = text.strip()
+        elif isinstance(value, _Array):
+            copy = _Array(value.blank)
+            copy.update(value)
+            value = copy
+        values.append(value)
+    return values, back
 
 
 def find_handlers(state: RuntimeState, name: str, kind: str = "get") -> list:
@@ -1375,9 +1413,9 @@ def call_handler(state: RuntimeState, handler, args: str):
     The handler's own names are its own. When it ends, only its system
     variables and the reader's `__` names keep what it did.
     """
-    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    values, back = _bind(state, handler, args)
     called = state.variables.pop("__called", None)
-    result, actions = _invoke(state, handler, values)
+    result, actions = _invoke(state, handler, values, refs=back)
     pending = list(called or [])
     pending.extend(action for action in actions if action.get("kind") != "note")
     if pending:
@@ -1385,8 +1423,13 @@ def call_handler(state: RuntimeState, handler, args: str):
     return result
 
 
-def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None):
-    """(returned value, actions) of one handler run in its own names."""
+def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | None = None,
+            refs: dict[int, str] | None = None):
+    """(returned value, actions) of one handler run in its own names.
+
+    refs maps a parameter's place to the caller's variable that gets its
+    last value, for a parameter taken by reference.
+    """
     _kind, names, body = _signature(handler)
     depth = int(state.variables.get("__depth") or 0)
     if depth >= 64:
@@ -1409,6 +1452,9 @@ def _invoke(state: RuntimeState, handler, values: list, parents: list[str] | Non
         key: value for key, value in variables.items()
         if str(key).startswith("__") or str(key).lower() in shared
     }
+    for index, caller in (refs or {}).items():
+        if index < len(names):
+            kept[caller] = variables.get(names[index], "")
     variables.clear()
     variables.update(before)
     variables.update(kept)
@@ -1436,9 +1482,9 @@ def _send(state: RuntimeState, name: str, args: str, actions: list[dict]) -> boo
     found = find_handlers(state, name, "handle")
     if not found:
         return False
-    values = [_eval(arg, state) for arg in _call_args(args or "")]
+    values, back = _bind(state, found[0], args)
     rest = [_signature(handler)[2] for handler in found[1:]]
-    _result, done = _invoke(state, found[0], values, rest)
+    _result, done = _invoke(state, found[0], values, rest, refs=back)
     actions.extend(done)
     if not rest and any(action.get("kind") == "forward" for action in done):
         actions.append({"kind": "send", "name": name})
