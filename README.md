@@ -102,6 +102,7 @@ A page may carry `shapes`. The window draws the page on screen. The other pictur
 - `rect` and `ellipse`: `x`, `y`, `w`, `h`, `fill`, `outline`. `bounds` as `[x, y, w, h]` works in place of those four.
 - `roundrect`: a `rect` with quarter-circle corners. `radius` is in pixels, 8 when missing, and never more than half the short side.
 - `line` and `polygon`: `points` as `[[x, y], ...]`. A class `0x10` outline is mapped onto the object's bounds.
+- `curve`: `points` as `[[x, y], ...]`. It is drawn as straight segments through the points until a real curve is drawn.
 - `stroke` on any of those is the outline or line width in pixels. Missing means 1.
 - `arc`: the open curve between its endpoints. It is not filled.
 - `text`: `x`, `y`, `text`, and the face, `size`, `bold`, and `italic` from the field's font entry. `marginL` is the first-line indent. `indentRest` is the indent of every line under it, when the two differ. `marginR` is the right indent.

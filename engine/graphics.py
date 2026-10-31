@@ -9,6 +9,7 @@ stream is decoded to handler source and the engine runs it.
 
 stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
+  curve           points: [[x, y], ...], drawn as a polyline through them for now
   text            x, y, text
   image           x, y, and src (a file beside the book) or data (base64 BMP, PNG, or GIF)
 
@@ -72,7 +73,7 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
             flat = _points(shape)
             if len(flat) >= 6:
                 canvas.create_polygon(*flat, fill=fill, outline=outline or "", **pen)
-        elif kind == "line":
+        elif kind in ("line", "curve"):
             flat = _points(shape)
             if len(flat) >= 4:
                 canvas.create_line(*flat, fill=outline or fill or "black", **pen)
