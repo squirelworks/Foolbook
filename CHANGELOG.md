@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A `combo` shape is drawn as a combo box: the chosen row (`value`) and an arrow. When it is `open`, its `choices` hang below the box, in front of every other shape on the page. `engine/test_combo.py`.
 - A click on the upper half of a long list box's bar scrolls up one row, on the lower half down one, and stops at the first and last rows. It does not pick a row. `engine/test_list_scroll.py`.
 - A click on a row of a list box picks it: its index is the shape's `value`. A click below the last row picks nothing. `engine/test_list_pick.py`.
 - A `list` shape is drawn as a list box: the `choices` that fit, one row each, from row `scroll`, with the chosen row (`value`) marked and a bar at the right when the list is longer than its box. Before, it was a blank box. `engine/test_listbox.py`.

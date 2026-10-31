@@ -52,6 +52,9 @@ def in_front(shapes: list[dict]) -> list[dict]:
 
     def rank(item):
         index, shape = item
+        if shape.get("kind") == "combo" and shape.get("open"):
+            # An open combo box's rows hang over whatever is below it.
+            return (3, 0, index)
         if shape.get("kind") == "text" and not covers_drawing(shape):
             return (2, 0, index)
         cover = sum(1 for picture in pictures if picture is not shape and holds(picture, shape))
