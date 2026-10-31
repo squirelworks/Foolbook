@@ -28,7 +28,7 @@ from engine import groups
 
 _GOTO = re.compile(
     r'go\s+to\s+page\s*'
-    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
+    r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([^()"]+?)\s*\)|([A-Za-z_]\w*))'
     r'(?:\s+of\s+book\s*'
     r'(?:\(\s*"([^"]+)"\s*\)|"([^"]+)"|\(\s*([A-Za-z_]\w*)\s*\)|([A-Za-z_]\w*))'
     r')?',
@@ -469,7 +469,7 @@ def _run_block(state: RuntimeState, lines: list[str], start: int, end: int, acti
         if m:
             actions.append({
                 "kind": "goto",
-                "page": _token(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
+                "page": _page_target(state, m.group(1) or m.group(2), m.group(3) or m.group(4)),
                 "book": _token(state, m.group(5) or m.group(6), m.group(7) or m.group(8)),
             })
             i += 1
@@ -1383,6 +1383,13 @@ def _call_value(expr: str, state: RuntimeState):
     handler = find_handler(state, match.group(1))
     if handler is not None:
         return call_handler(state, handler, match.group(2))
+    if match.group(1).lower() == "random":
+        # OpenScript's random(n) is a whole number from 1 to n.
+        top = _number(_eval(match.group(2), state))
+        if top is None:
+            return _UNRESOLVED
+        import random
+        return random.randint(1, max(int(top), 1))
     from engine import dll
     linked = dll.find(state, match.group(1))
     if linked is not None:
@@ -1780,6 +1787,25 @@ def goto(state: RuntimeState, page_id: str, leave: bool = True) -> bool:
     state.index = idx
     state.note(f"goto {page_id}")
     return True
+
+
+def _page_target(state: RuntimeState, quoted: str | None, bare: str | None):
+    """The page a `go to page` names. A quoted name is a name. A value
+    worked out from the script is a page number when it is a whole number
+    and no page has it as its name."""
+    if quoted or not bare:
+        return _token(state, quoted, bare)
+    value = _eval(bare, state)
+    if value is _UNRESOLVED:
+        return bare
+    text = _as_text(value).strip()
+    number = _number(value)
+    pages = state.book.pages if state.book is not None else []
+    if number is not None and number.is_integer() and not any(p.id.lower() == text.lower() for p in pages):
+        at = int(number) - 1
+        if 0 <= at < len(pages):
+            return pages[at].id
+    return text
 
 
 def _token(state: RuntimeState, quoted: str | None, bare: str | None):
