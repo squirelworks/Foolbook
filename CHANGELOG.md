@@ -2,6 +2,7 @@
 
 ## 2026-10-31
 
+- `show "Name"`, `hide "Name"`, and `show shape "Name"` act on every shape of that name on the page, or `of page "P"`, whatever its kind. This is for books in Foolbook's own format, so a hotspot or text shape can be shown without a ToolBook class word. A ToolBook file does not get this reading. Tested in `engine/test_show_hide_name.py`.
 - A `go to` in a page's leavePage is where the reader lands. Before, `goto` ran leavePage and dropped its `go to`. No leavePage in the NIDA books checked goes anywhere, so NIDA pages land where they did. Tested in `engine/test_page_leave.py`.
 - An `.fbk` page script with no `to handle` line runs when the page is shown, as the page's `enterPage`. Before, it was loaded as a handler named `script` and never ran. Tested in `engine/test_page_enter.py`.
 - A `.fbk` book can store `author` and `firstPage`. The reader opens at the first page id when that page exists, else at the first page, and so does a book opened with Open. A saved last page the student picks still wins, and a ToolBook book, which has no first page id, still opens on page 0. `engine/test_first_page.py`.
