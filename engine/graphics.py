@@ -7,6 +7,7 @@ stream is decoded to handler source and the engine runs it.
   rect, ellipse   x, y, w, h, fill, outline
   roundrect       x, y, w, h, fill, outline, radius (default 8)
   arc             x, y, w, h, start, sweep: degrees, zero east, counterclockwise
+  pie             the same, filled back to the centre (start 0, sweep 90 when missing)
 
 stroke, when present, is the width of the outline or line in pixels.
   line, polygon   points: [[x, y], ...]
@@ -86,6 +87,12 @@ def draw(canvas, shapes: list[dict], base: str | Path | None = None) -> None:
         elif kind in ("ellipse", "oval"):
             x, y, w, h = _box(shape)
             canvas.create_oval(x, y, x + w, y + h, fill=fill, outline=outline or "", **pen)
+        elif kind == "pie":
+            x, y, w, h = _box(shape)
+            start, sweep = _angles(shape)
+            canvas.create_arc(
+                x, y, x + w, y + h, start=start, extent=sweep, style="pieslice", fill=fill, outline=outline or "", **pen
+            )
         elif kind == "arc":
             x, y, w, h = _box(shape)
             ends = shape.get("ends") or []
